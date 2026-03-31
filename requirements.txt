@@ -22,6 +22,8 @@ dtw-python>=1.5,<2.0
 python-dotenv>=1.0,<2.0
 openai>=1.75,<3.0
 pyttsx3>=2.98,<3.0
+fastapi>=0.115,<1.0
+uvicorn[standard]>=0.30,<1.0
 
 # Optional frameworks
 # Install one or both in conda depending on the final training/inference stack.
