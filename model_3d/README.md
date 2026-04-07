@@ -15,13 +15,15 @@ model_3d/
   diagnostics.py     # QA images, fitting checks, metrics, and graphs
   fitter.py          # Phase 1 SMPL-X optimization and Phase 2 interface
   joint_mapper.py    # SMPL-X to COCO 17 joint mapper
+  run_pipeline.py    # Standalone pipeline runner without FastAPI
   pipeline.py        # One-frame processing pipeline
   preprocessing.py   # MoveNet keypoint validation and pixel conversion
   schemas.py         # FitResult, SquatFeedback, and COCO constants
 ```
 
 `server.py` only handles FastAPI, ngrok, and WebSocket transport. Model
-execution is routed through `PosePipeline`.
+execution is routed through `PosePipeline`. If you do not want to start the
+server, run the pipeline directly with `python -m model_3d`.
 
 ## Run
 
@@ -37,6 +39,78 @@ For local testing without ngrok:
 ```powershell
 $env:ENABLE_NGROK="false"
 python server.py
+```
+
+## Run Pipeline Without Server
+
+Smoke-test the pipeline and diagnostics without SMPL-X assets:
+
+```powershell
+python -m model_3d --dummy --frame-id smoke-test
+```
+
+Run the real SMPL-X pipeline from a keypoint JSON file:
+
+```powershell
+$env:SMPLX_MODEL_PATH="C:\path\to\SMPLX_NEUTRAL.pkl"
+$env:COCO_J_REGRESSOR_PATH="C:\path\to\coco_j_regressor.npy"
+python -m model_3d --input sample_keypoints.json --output artifacts\last_response.json
+```
+
+Run the analyzer and diagnostics directly from existing `pose_3d_v3` 3D labels:
+
+```powershell
+python -m model_3d --pose3d-path pose_3d_v3 --pose3d-split train --max-frames 3 --output artifacts\pose3d_response.json
+```
+
+This mode uses `data_label` as 3D joints and `data_input` as the 2D diagnostic
+overlay source. It bypasses SMPL-X optimization so it does not need
+`SMPLX_MODEL_PATH`.
+
+## Train the Actual 2D-to-3D Model
+
+Train a real PyTorch pose lifting model from `pose_3d_v3/data_input` to
+`pose_3d_v3/data_label`:
+
+```powershell
+python -m model_3d.train_lifter --data pose_3d_v3 --epochs 5 --max-files 500 --eval-max-files 100 --checkpoint artifacts\model_3d\checkpoints\pose_lifter_latest.pt
+```
+
+For a quick smoke test:
+
+```powershell
+python -m model_3d.train_lifter --data pose_3d_v3 --epochs 1 --max-files 2 --eval-max-files 1 --batch-size 64 --checkpoint artifacts\model_3d\checkpoints\pose_lifter_smoke.pt
+```
+
+Run inference with the trained checkpoint:
+
+```powershell
+python -m model_3d --lifter-checkpoint artifacts\model_3d\checkpoints\pose_lifter_latest.pt --input sample_keypoints.json --output artifacts\lifter_response.json
+```
+
+Use the trained lifter in the FastAPI server:
+
+```powershell
+$env:LIFTER_CHECKPOINT="artifacts\model_3d\checkpoints\pose_lifter_latest.pt"
+python server.py
+```
+
+Training artifacts:
+
+```text
+artifacts/model_3d/
+  checkpoints/pose_lifter_latest.pt
+  pose_lifter_metrics.json
+  pose_lifter_training_curve.png
+```
+
+The file can be either raw 17x3 keypoints or an object:
+
+```json
+{
+  "frame_id": "local-test-001",
+  "payload": [[0.52, 0.48, 0.91]]
+}
 ```
 
 ## WebSocket Input

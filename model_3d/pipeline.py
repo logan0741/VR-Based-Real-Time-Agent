@@ -1,13 +1,16 @@
-"""Frame-level 3D pose analysis pipeline used by the FastAPI server."""
+"""Frame-level 3D pose analysis pipeline shared by the server and CLI runner."""
 
 from __future__ import annotations
 
+import os
 import time
+from pathlib import Path
 from typing import Any, Dict, Optional
 
 from model_3d.analyzer import analyze_squat
 from model_3d.diagnostics import DiagnosticsRecorder
 from model_3d.fitter import BasePoseFitter, build_pose_fitter
+from model_3d.lifter_model import PoseLifterFitter
 from model_3d.schemas import COCO_17_NAMES, FitResult, SquatFeedback
 
 
@@ -76,6 +79,9 @@ class PosePipeline:
 
 
 def build_pose_pipeline() -> PosePipeline:
+    lifter_checkpoint = os.getenv("LIFTER_CHECKPOINT")
+    if lifter_checkpoint:
+        return PosePipeline(fitter=PoseLifterFitter(Path(lifter_checkpoint)))
     return PosePipeline()
 
 
