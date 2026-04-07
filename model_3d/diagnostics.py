@@ -16,7 +16,7 @@ matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 import numpy as np
 
-from model_3d.config import env_bool, project_root
+from model_3d.config import env_bool, package_root
 from model_3d.schemas import COCO_SKELETON, FitResult, SquatFeedback
 
 
@@ -43,7 +43,7 @@ class DiagnosticsRecorder:
         self.frame_index = 0
         self.metrics: List[Dict[str, Any]] = []
 
-        base_dir = Path(output_root) if output_root else project_root() / "artifacts" / "pose_debug"
+        base_dir = Path(output_root) if output_root else package_root() / "artifacts" / "pose_debug"
         session_name = datetime.now().strftime("%Y%m%d_%H%M%S")
         self.session_dir = base_dir / session_name
         self.frames_dir = self.session_dir / "frames"
@@ -104,6 +104,8 @@ class DiagnosticsRecorder:
                 self._save_reprojection_check(result, frame_slug)
             )
             artifacts["joints_3d_check"] = str(self._save_joints_3d(result, frame_slug))
+            if result.vertices is not None:
+                artifacts["smplx_mesh_preview"] = str(self._save_mesh_preview(result, frame_slug))
             if result.loss_history:
                 artifacts["optimization_loss_graph"] = str(
                     self._save_loss_history(result.loss_history, frame_slug)
@@ -198,6 +200,36 @@ class DiagnosticsRecorder:
         ax.set_ylabel("y")
         ax.set_zlabel("z")
         _set_equal_3d_axes(ax, joints)
+        fig.tight_layout()
+        fig.savefig(path)
+        plt.close(fig)
+        return path
+
+    def _save_mesh_preview(self, result: FitResult, frame_slug: str) -> Path:
+        path = self.frames_dir / f"{frame_slug}_smplx_mesh_preview.png"
+        vertices = result.vertices
+        if vertices is None:
+            raise ValueError("SMPL-X mesh preview requested without vertices.")
+
+        step = max(1, vertices.shape[0] // 3000)
+        sampled_vertices = vertices[::step]
+        fig = plt.figure(figsize=(6, 6), dpi=120)
+        ax = fig.add_subplot(111, projection="3d")
+        ax.set_title("SMPL-X Mesh Vertex Preview")
+        ax.scatter(
+            sampled_vertices[:, 0],
+            sampled_vertices[:, 1],
+            sampled_vertices[:, 2],
+            c="#80cbc4",
+            s=1,
+            alpha=0.35,
+        )
+        joints = result.joints_3d
+        ax.scatter(joints[:, 0], joints[:, 1], joints[:, 2], c="#d32f2f", s=20)
+        ax.set_xlabel("x")
+        ax.set_ylabel("y")
+        ax.set_zlabel("z")
+        _set_equal_3d_axes(ax, sampled_vertices)
         fig.tight_layout()
         fig.savefig(path)
         plt.close(fig)

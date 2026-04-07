@@ -39,6 +39,7 @@ from model_3d.lifter_model import (
     save_lifter_checkpoint,
     write_json,
 )
+from model_3d.config import package_root, resolve_workspace_path
 
 
 def main(argv: Optional[List[str]] = None) -> int:
@@ -60,9 +61,9 @@ def main(argv: Optional[List[str]] = None) -> int:
     parser.add_argument(
         "--checkpoint",
         type=Path,
-        default=Path("artifacts/model_3d/checkpoints/pose_lifter_latest.pt"),
+        default=package_root() / "artifacts" / "checkpoints" / "pose_lifter_latest.pt",
     )
-    parser.add_argument("--artifacts-dir", type=Path, default=Path("artifacts/model_3d"))
+    parser.add_argument("--artifacts-dir", type=Path, default=package_root() / "artifacts" / "training")
     parser.add_argument("--eval-only", action="store_true")
     args = parser.parse_args(argv)
 
@@ -90,7 +91,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     train_history: List[Dict[str, float]] = []
     optimizer = None
     if not args.eval_only:
-        train_dataset = Pose3DFrameDataset(args.data, split="train", max_files=args.max_files)
+        data_root = resolve_workspace_path(args.data)
+        train_dataset = Pose3DFrameDataset(data_root, split="train", max_files=args.max_files)
         train_loader = DataLoader(
             train_dataset,
             batch_size=args.batch_size,
@@ -120,7 +122,8 @@ def main(argv: Optional[List[str]] = None) -> int:
                 {"train": train_metrics},
             )
 
-    eval_dataset = Pose3DFrameDataset(args.data, split="test", max_files=args.eval_max_files)
+    data_root = resolve_workspace_path(args.data)
+    eval_dataset = Pose3DFrameDataset(data_root, split="test", max_files=args.eval_max_files)
     eval_loader = DataLoader(
         eval_dataset,
         batch_size=args.batch_size,

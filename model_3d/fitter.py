@@ -6,12 +6,12 @@ import os
 import threading
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Any, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import numpy as np
 
 from model_3d.camera import CameraIntrinsics
-from model_3d.config import env_bool, project_root
+from model_3d.config import env_bool, package_root, project_root
 from model_3d.joint_mapper import COCOJointMapper
 from model_3d.preprocessing import parse_keypoints_payload
 from model_3d.schemas import FitResult
@@ -100,11 +100,13 @@ class OptimizationPoseFitter(BasePoseFitter):
         self.device = torch.device("cuda" if use_cuda else "cpu")
         self._thread_lock = threading.Lock()
 
-        resolved_model_path = Path(model_path or resolve_smplx_model_path()).resolve()
+        resolved_model_path = prepare_smplx_model_path(
+            prefer_npz_model_path(Path(model_path or resolve_smplx_model_path()).resolve())
+        )
         if not resolved_model_path.exists():
             raise FileNotFoundError(
                 f"SMPL-X model asset not found: {resolved_model_path}. "
-                "Set SMPLX_MODEL_PATH to SMPLX_NEUTRAL.pkl or your SMPL-X model file."
+                "Set SMPLX_MODEL_PATH to a SMPL-X .npz model file when available."
             )
 
         j_regressor_extra, use_extra_regressor = self._load_coco_regressor(
@@ -118,6 +120,9 @@ class OptimizationPoseFitter(BasePoseFitter):
             gender="neutral",
             num_betas=self.num_betas,
             use_pca=False,
+            flat_hand_mean=True,
+            num_pca_comps=6,
+            use_face_contour=False,
             batch_size=1,
             joint_mapper=joint_mapper,
             J_regressor_extra=j_regressor_extra,
@@ -137,11 +142,15 @@ class OptimizationPoseFitter(BasePoseFitter):
             self.model = smplx.create(**model_kwargs)
         except Exception:
             # smplx.create can infer the model type from a file name. Generic
-            # files such as smplx_locked_head/neutral/model.pkl may fail that
+            # files such as smplx_locked_head/neutral/model.npz may fail that
             # inference, so fall back to the direct SMPLX constructor.
-            if resolved_model_path.is_file() and resolved_model_path.name.lower() == "model.pkl":
+            if resolved_model_path.is_file() and resolved_model_path.suffix.lower() in {
+                ".npz",
+                ".pkl",
+            }:
                 model_kwargs.pop("model_path")
                 model_kwargs.pop("model_type")
+                model_kwargs["ext"] = resolved_model_path.suffix.lower().lstrip(".")
                 self.model = smplx.SMPLX(str(resolved_model_path), **model_kwargs)
             else:
                 raise
@@ -273,13 +282,17 @@ def resolve_smplx_model_path() -> str:
     """Resolve a practical default while still allowing explicit production paths."""
     env_path = os.getenv("SMPLX_MODEL_PATH")
     if env_path:
-        return env_path
+        return str(prefer_npz_model_path(Path(env_path)))
 
     root = project_root()
     candidates = [
+        root / "SMPLX_NEUTRAL.npz",
         root / "SMPLX_NEUTRAL.pkl",
+        root / "models" / "SMPLX_NEUTRAL.npz",
         root / "models" / "SMPLX_NEUTRAL.pkl",
+        root / "models" / "smplx" / "SMPLX_NEUTRAL.npz",
         root / "models" / "smplx" / "SMPLX_NEUTRAL.pkl",
+        root / "smplx_locked_head" / "neutral" / "model.npz",
         root / "smplx_locked_head" / "neutral" / "model.pkl",
     ]
     for candidate in candidates:
@@ -287,7 +300,84 @@ def resolve_smplx_model_path() -> str:
             return str(candidate)
 
     # Return the preferred file name so the FileNotFoundError is actionable.
-    return str(root / "SMPLX_NEUTRAL.pkl")
+    return str(root / "SMPLX_NEUTRAL.npz")
+
+
+def prefer_npz_model_path(path: Path) -> Path:
+    """
+    Prefer SMPL-X NPZ assets over same-folder PKL assets.
+
+    The local `smplx_locked_head/neutral/model.pkl` requires the deprecated
+    `chumpy` package in many Python 3.10 environments. The sibling `model.npz`
+    carries the same model data in the path that smplx can load without chumpy.
+    """
+    if env_bool("SMPLX_ALLOW_PKL", False):
+        return path
+
+    if path.name.lower() == "model.pkl":
+        npz_path = path.with_name("model.npz")
+        if npz_path.exists():
+            return npz_path
+
+    return path
+
+
+def prepare_smplx_model_path(path: Path) -> Path:
+    """
+    Return a loadable SMPL-X asset path for the installed smplx package.
+
+    The local locked-head NPZ contains the body model data needed for fitting,
+    but it omits hand PCA and face landmark metadata that smplx.SMPLX expects
+    during construction. For the body-pose feasibility test those parts are not
+    optimized, so zero/default placeholders are safe and keep all generated
+    compatibility files inside model_3d/artifacts.
+    """
+    path = prefer_npz_model_path(path)
+    if path.suffix.lower() != ".npz" or not path.exists():
+        return path
+
+    with np.load(path, allow_pickle=True) as model_data:
+        missing_keys = [key for key in smplx_placeholder_fields() if key not in model_data.files]
+        if not missing_keys:
+            return path
+
+        signature = f"{path.stem}_{path.stat().st_size}_{int(path.stat().st_mtime)}_compat.npz"
+        cache_path = package_root() / "artifacts" / "smplx_cache" / signature
+        if cache_path.exists():
+            return cache_path
+
+        cache_path.parent.mkdir(parents=True, exist_ok=True)
+        arrays: Dict[str, Any] = {key: model_data[key] for key in model_data.files}
+        arrays.update({key: value for key, value in smplx_placeholder_fields().items() if key not in arrays})
+
+    np.savez(cache_path, **arrays)
+    print(
+        "[PoseFitter] SMPL-X asset is missing hand/landmark metadata; "
+        f"using compatibility cache: {cache_path}"
+    )
+    return cache_path
+
+
+def smplx_placeholder_fields() -> Dict[str, np.ndarray]:
+    """Placeholder metadata for local locked-head SMPL-X body fitting assets."""
+    static_landmark_count = 51
+    dynamic_landmark_count = 17
+    return {
+        "hands_componentsl": np.zeros((6, 45), dtype=np.float32),
+        "hands_componentsr": np.zeros((6, 45), dtype=np.float32),
+        "hands_meanl": np.zeros(45, dtype=np.float32),
+        "hands_meanr": np.zeros(45, dtype=np.float32),
+        "lmk_faces_idx": np.zeros(static_landmark_count, dtype=np.int64),
+        "lmk_bary_coords": np.tile(
+            np.array([[1.0, 0.0, 0.0]], dtype=np.float32),
+            (static_landmark_count, 1),
+        ),
+        "dynamic_lmk_faces_idx": np.zeros(dynamic_landmark_count, dtype=np.int64),
+        "dynamic_lmk_bary_coords": np.tile(
+            np.array([[1.0, 0.0, 0.0]], dtype=np.float32),
+            (dynamic_landmark_count, 1),
+        ),
+    }
 
 
 def weighted_reprojection_loss(predicted_2d: Any, target_2d: Any, confidence: Any) -> Any:

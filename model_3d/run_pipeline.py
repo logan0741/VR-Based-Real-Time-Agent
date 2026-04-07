@@ -25,6 +25,11 @@ from model_3d.lifter_model import PoseLifterFitter
 from model_3d.pipeline import PosePipeline
 from model_3d.pose3d_dataset import DirectPose3DFitter, load_pose3d_frames
 from model_3d.schemas import FitResult
+from model_3d.config import package_root, resolve_workspace_path
+from model_3d.smplx_coordinate_fitter import (
+    SMPLXCoordinateFitter,
+    smplx_coordinate_fit_available,
+)
 
 
 class DummyFitter:
@@ -50,6 +55,7 @@ class DummyFitter:
 
 
 def main(argv: Optional[List[str]] = None) -> int:
+    raw_argv = sys.argv[1:] if argv is None else argv
     parser = argparse.ArgumentParser(description="Run the model_3d pose pipeline once or many times.")
     parser.add_argument(
         "--input",
@@ -84,6 +90,11 @@ def main(argv: Optional[List[str]] = None) -> int:
         help="Run a trained 2D-to-3D pose lifter checkpoint instead of SMPL-X.",
     )
     parser.add_argument(
+        "--smplx-fit-pose3d",
+        action="store_true",
+        help="Fit SMPL-X directly to pose_3d_v3 3D coordinates. This is the main SMPL-X feasibility test.",
+    )
+    parser.add_argument(
         "--pose3d-split",
         default="train",
         choices=["train", "valid", "test"],
@@ -95,18 +106,51 @@ def main(argv: Optional[List[str]] = None) -> int:
         default=None,
         help="Maximum pose_3d_v3 frames to process.",
     )
-    args = parser.parse_args(argv)
+    parser.add_argument(
+        "--check-all",
+        action="store_true",
+        help="Run available pipeline checks: dummy, pose_3d_v3 direct, and lifter checkpoint if present.",
+    )
+    args = parser.parse_args(raw_argv)
 
-    if args.pose3d_path and (args.input or args.payload or args.dummy or args.lifter_checkpoint):
+    # A direct run of model_3d/run_pipeline.py should never fall through to the
+    # SMPL-X optimizer by accident. No args means: run the local model_3d checks.
+    if not raw_argv:
+        args.check_all = True
+        args.output = package_root() / "artifacts" / "model_3d_check_all.json"
+
+    if args.check_all:
+        return run_check_all(args)
+
+    if args.pose3d_path and (
+        args.input
+        or args.payload
+        or args.dummy
+        or args.lifter_checkpoint
+    ):
         raise ValueError(
-            "Use --pose3d-path by itself, without --input, --payload, --dummy, or --lifter-checkpoint."
+            "Use --pose3d-path by itself for direct dataset checks, or with --smplx-fit-pose3d."
         )
     if args.lifter_checkpoint and args.dummy:
         raise ValueError("Use either --lifter-checkpoint or --dummy, not both.")
 
-    if args.pose3d_path:
+    if args.smplx_fit_pose3d:
+        availability = smplx_coordinate_fit_available()
+        if not availability["available"]:
+            raise RuntimeError(
+                "SMPL-X coordinate fitting is not available: "
+                f"{availability['reason']} Install smplx and set SMPLX_MODEL_PATH if needed."
+            )
+        pose3d_path = resolve_workspace_path(args.pose3d_path or Path("pose_3d_v3"))
         frames = load_pose3d_frames(
-            args.pose3d_path,
+            pose3d_path,
+            split=args.pose3d_split,
+            max_frames=args.max_frames or 1,
+        )
+        fitter = SMPLXCoordinateFitter(return_vertices=True)
+    elif args.pose3d_path:
+        frames = load_pose3d_frames(
+            resolve_workspace_path(args.pose3d_path),
             split=args.pose3d_split,
             max_frames=args.max_frames,
         )
@@ -116,7 +160,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         if not frames:
             frames = [{"frame_id": args.frame_id, "payload": _sample_movenet_payload()}]
         if args.lifter_checkpoint:
-            fitter = PoseLifterFitter(args.lifter_checkpoint)
+            fitter = PoseLifterFitter(resolve_workspace_path(args.lifter_checkpoint))
         else:
             fitter = DummyFitter() if args.dummy else None
 
@@ -126,13 +170,12 @@ def main(argv: Optional[List[str]] = None) -> int:
         diagnostics=diagnostics,
     )
 
-    last_response: Dict[str, Any] = {}
-    repeat_count = max(1, args.repeat)
-    for repeat_index in range(repeat_count):
-        for frame_index, frame in enumerate(frames, start=1):
-            frame_id = frame.get("frame_id", f"{args.frame_id}-{repeat_index + 1}-{frame_index}")
-            last_response = pipeline.process_keypoints(frame["payload"], frame_id=frame_id)
-            _print_summary(last_response)
+    last_response = run_pipeline_frames(
+        pipeline=pipeline,
+        frames=frames,
+        repeat_count=max(1, args.repeat),
+        default_frame_id=args.frame_id,
+    )
 
     if args.output:
         args.output.parent.mkdir(parents=True, exist_ok=True)
@@ -146,11 +189,178 @@ def main(argv: Optional[List[str]] = None) -> int:
     return 0
 
 
+def run_check_all(args: argparse.Namespace) -> int:
+    diagnostics = DiagnosticsRecorder.from_env()
+    summary: Dict[str, Any] = {
+        "diagnostics_session": str(diagnostics.session_dir),
+        "checks": {},
+    }
+
+    sample_frames = [{"frame_id": "check-all-dummy", "payload": _sample_movenet_payload()}]
+    dummy_response = run_pipeline_frames(
+        pipeline=PosePipeline(fitter=DummyFitter(), diagnostics=diagnostics),
+        frames=sample_frames,
+        repeat_count=1,
+        default_frame_id="check-all-dummy",
+    )
+    summary["checks"]["dummy"] = summarize_response(dummy_response)
+
+    pose3d_root = resolve_workspace_path("pose_3d_v3")
+    if pose3d_root.exists():
+        pose3d_frames = load_pose3d_frames(pose3d_root, split="train", max_frames=1)
+        pose3d_response = run_pipeline_frames(
+            pipeline=PosePipeline(fitter=DirectPose3DFitter(), diagnostics=diagnostics),
+            frames=pose3d_frames,
+            repeat_count=1,
+            default_frame_id="check-all-pose3d",
+        )
+        summary["checks"]["pose3d_direct"] = summarize_response(pose3d_response)
+    else:
+        summary["checks"]["pose3d_direct"] = {
+            "status": "skipped",
+            "reason": "pose_3d_v3 directory not found.",
+        }
+
+    smplx_availability = smplx_coordinate_fit_available()
+    if pose3d_root.exists() and smplx_availability["available"]:
+        try:
+            smplx_frames = load_pose3d_frames(pose3d_root, split="train", max_frames=1)
+            smplx_response = run_pipeline_frames(
+                pipeline=PosePipeline(
+                    fitter=SMPLXCoordinateFitter(return_vertices=True),
+                    diagnostics=diagnostics,
+                ),
+                frames=smplx_frames,
+                repeat_count=1,
+                default_frame_id="check-all-smplx-coordinate-fit",
+            )
+            summary["checks"]["smplx_coordinate_fit"] = {
+                **summarize_response(smplx_response),
+                "model_path": smplx_availability.get("model_path"),
+            }
+        except Exception as exc:
+            summary["checks"]["smplx_coordinate_fit"] = {
+                "status": "failed",
+                "model_path": smplx_availability.get("model_path"),
+                "reason": f"{type(exc).__name__}: {exc}",
+                "command": "python run_pipeline.py --smplx-fit-pose3d --pose3d-path pose_3d_v3 --max-frames 1",
+            }
+    else:
+        summary["checks"]["smplx_coordinate_fit"] = {
+            "status": "unavailable",
+            "reason": smplx_availability.get("reason", "pose_3d_v3 directory not found."),
+            "command": "pip install smplx; python run_pipeline.py --smplx-fit-pose3d --pose3d-path pose_3d_v3 --max-frames 1",
+        }
+
+    checkpoint = resolve_workspace_path(args.lifter_checkpoint) if args.lifter_checkpoint else find_or_train_lifter_checkpoint(pose3d_root)
+    if checkpoint and checkpoint.exists():
+        lifter_frames = _load_frames(args.input, args.payload)
+        if not lifter_frames:
+            lifter_frames = [{"frame_id": "check-all-lifter", "payload": _sample_movenet_payload()}]
+        lifter_response = run_pipeline_frames(
+            pipeline=PosePipeline(fitter=PoseLifterFitter(checkpoint), diagnostics=diagnostics),
+            frames=lifter_frames[:1],
+            repeat_count=1,
+            default_frame_id="check-all-lifter",
+        )
+        summary["checks"]["lifter_checkpoint"] = {
+            **summarize_response(lifter_response),
+            "checkpoint": str(checkpoint),
+        }
+    else:
+        summary["checks"]["lifter_checkpoint"] = {
+            "status": "skipped",
+            "reason": "No lifter checkpoint found. Run model_3d.train_lifter first.",
+        }
+
+    if args.output:
+        args.output.parent.mkdir(parents=True, exist_ok=True)
+        args.output.write_text(
+            json.dumps(summary, indent=2, ensure_ascii=False, allow_nan=False),
+            encoding="utf-8",
+        )
+        print(f"[check-all] summary saved: {args.output}")
+
+    print(json.dumps(summary, indent=2, ensure_ascii=False, allow_nan=False))
+    return 0
+
+
+def run_pipeline_frames(
+    pipeline: PosePipeline,
+    frames: List[Dict[str, Any]],
+    repeat_count: int,
+    default_frame_id: str,
+) -> Dict[str, Any]:
+    last_response: Dict[str, Any] = {}
+    for repeat_index in range(repeat_count):
+        for frame_index, frame in enumerate(frames, start=1):
+            frame_id = frame.get("frame_id", f"{default_frame_id}-{repeat_index + 1}-{frame_index}")
+            last_response = pipeline.process_keypoints(frame["payload"], frame_id=frame_id)
+            _print_summary(last_response)
+    return last_response
+
+
+def summarize_response(response: Dict[str, Any]) -> Dict[str, Any]:
+    return {
+        "status": response.get("status"),
+        "backend": response.get("fit", {}).get("backend"),
+        "frame_id": response.get("frame_id"),
+        "feedback": response.get("feedback", {}).get("label"),
+        "knee_angle_deg": response.get("feedback", {}).get("knee_angle_deg"),
+        "artifact_count": len(response.get("diagnostics", {}).get("artifacts", {})),
+    }
+
+
+def find_default_lifter_checkpoint() -> Optional[Path]:
+    candidates = [
+        package_root() / "artifacts" / "checkpoints" / "pose_lifter_latest.pt",
+        package_root() / "artifacts" / "checkpoints" / "pose_lifter_smoke.pt",
+    ]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return None
+
+
+def find_or_train_lifter_checkpoint(pose3d_root: Path) -> Optional[Path]:
+    checkpoint = find_default_lifter_checkpoint()
+    if checkpoint is not None:
+        return checkpoint
+
+    if not pose3d_root.exists():
+        return None
+
+    print("[check-all] no lifter checkpoint found; training a small smoke model in model_3d/artifacts.")
+    from model_3d.train_lifter import main as train_lifter_main
+
+    smoke_checkpoint = package_root() / "artifacts" / "checkpoints" / "pose_lifter_smoke.pt"
+    train_lifter_main(
+        [
+            "--data",
+            str(pose3d_root),
+            "--epochs",
+            "1",
+            "--max-files",
+            "2",
+            "--eval-max-files",
+            "1",
+            "--batch-size",
+            "64",
+            "--checkpoint",
+            str(smoke_checkpoint),
+            "--artifacts-dir",
+            str(package_root() / "artifacts" / "training_smoke"),
+        ]
+    )
+    return smoke_checkpoint if smoke_checkpoint.exists() else None
+
+
 def _load_frames(input_path: Optional[Path], inline_payload: Optional[str]) -> List[Dict[str, Any]]:
     if input_path and inline_payload:
         raise ValueError("Use either --input or --payload, not both.")
 
     if input_path:
+        input_path = resolve_workspace_path(input_path)
         if not input_path.exists():
             raise FileNotFoundError(
                 f"Input JSON not found: {input_path}. "

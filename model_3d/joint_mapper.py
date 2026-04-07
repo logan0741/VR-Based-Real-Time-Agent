@@ -54,7 +54,7 @@ class COCOJointMapper(torch.nn.Module if torch is not None else object):
             self.register_buffer("fallback_indices", fallback_indices, persistent=False)
         self.use_extra_regressor = use_extra_regressor
 
-    def forward(self, joints: Any) -> Any:
+    def forward(self, joints: Any, vertices: Any = None, **_: Any) -> Any:
         if self.use_extra_regressor:
             if joints.shape[1] < 17:
                 raise ValueError("SMPL-X output has fewer than 17 joints.")

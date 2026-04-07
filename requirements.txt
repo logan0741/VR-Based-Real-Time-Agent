@@ -15,8 +15,11 @@ tqdm>=4.66,<5.0
 opencv-python>=4.10,<5.0
 mediapipe>=0.10.14,<0.11
 
-# 3D avatar fitting
+# 3D avatar fitting / model_3d standalone pipeline
 smplx>=0.1.28,<0.2
+# Use smplx_locked_head/neutral/model.npz when possible. The sibling model.pkl
+# can require deprecated chumpy on Python 3.10, so chumpy is intentionally not
+# added here.
 
 # Posture comparison
 dtw-python>=1.5,<2.0
@@ -31,6 +34,8 @@ pyngrok>=7.2,<8.0
 
 # Optional frameworks
 # Install one or both in conda depending on the final training/inference stack.
+# model_3d requires torch for SMPL-X fitting and pose lifting, but the exact
+# CPU/CUDA wheel should be selected per machine instead of pinned here.
 # tensorflow
 # torch
 # torchvision
