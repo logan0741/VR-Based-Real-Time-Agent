@@ -7,10 +7,17 @@ __pycache__/
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
+.tox/
+.nox/
+.hypothesis/
+.pytype/
 .coverage
 .coverage.*
 htmlcov/
 .ipynb_checkpoints/
+*.egg-info/
+pip-wheel-metadata/
+dist/
 
 # Virtual environments / package managers
 .venv/
@@ -19,16 +26,20 @@ env/
 ENV/
 .conda/
 conda-meta/
+.direnv/
+.uv-cache/
 
 # Local IDE / editor settings
 .vscode/
 .idea/
+.vs/
 *.code-workspace
 
 # Environment files and secrets
 .env
 .env.*
 !.env.example
+.envrc
 *.key
 *.pem
 *.p12
@@ -41,10 +52,20 @@ data/
 datasets/
 artifacts/
 outputs/
+results/
+reports/
 logs/
 checkpoints/
 runs/
 cache/
+.cache/
+tmp/
+temp/
+wandb/
+mlruns/
+lightning_logs/
+tensorboard/
+events.out.tfevents.*
 *.csv
 *.tsv
 *.parquet
@@ -58,9 +79,11 @@ cache/
 *.pt
 *.pth
 *.ckpt
+*.safetensors
 *.onnx
 *.tflite
 *.pb
+*.pbtxt
 *.mp4
 *.avi
 *.mov
@@ -72,8 +95,24 @@ cache/
 *.aac
 *.sqlite
 *.sqlite3
+*.log
+*.tmp
+*.bak
+*.zip
+*.tar
+*.tar.gz
+*.tgz
+*.7z
+*.rar
+
+# External datasets and licensed model assets
+/AthletePose3D/
+/pose_2d/
+/pose_3d_v3/
+/smplx_locked_head/
 
 # OS noise
+.DS_Store
 Thumbs.db
 Desktop.ini
 .python-version
