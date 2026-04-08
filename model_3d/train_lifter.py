@@ -2,6 +2,7 @@
 
 Examples:
     python -m model_3d.train_lifter --data pose_3d_v3 --epochs 1 --max-files 20
+    python -m model_3d.train_lifter --data 013.피트니스자세/prepared_train_eval_body01_compact --dataset-format fitness_json --epochs 5
     python -m model_3d.train_lifter --data pose_3d_v3 --eval-only --checkpoint artifacts/model_3d/checkpoints/pose_lifter_latest.pt
 """
 
@@ -32,7 +33,8 @@ except ImportError:  # pragma: no cover - command raises a clear error when used
     DataLoader = None
 
 from model_3d.lifter_model import (
-    Pose3DFrameDataset,
+    build_pose_lifter_dataset,
+    detect_training_dataset_format,
     PoseLifterMLP,
     load_lifter_checkpoint,
     mpjpe,
@@ -47,7 +49,20 @@ def main(argv: Optional[List[str]] = None) -> int:
         raise RuntimeError("torch is required. Install torch before training the 3D model.")
 
     parser = argparse.ArgumentParser(description="Train/evaluate the model_3d 2D-to-3D pose lifter.")
-    parser.add_argument("--data", type=Path, default=Path("pose_3d_v3"), help="pose_3d_v3 root path.")
+    parser.add_argument(
+        "--data",
+        type=Path,
+        default=Path("pose_3d_v3"),
+        help="Dataset root. Supports pose_3d_v3 or the prepared fitness subset.",
+    )
+    parser.add_argument(
+        "--dataset-format",
+        default="auto",
+        choices=["auto", "pose3d_v3", "fitness_json"],
+        help="Dataset format. Use auto to infer from the provided root.",
+    )
+    parser.add_argument("--train-split", default=None, help="Train split name. Defaults depend on dataset format.")
+    parser.add_argument("--eval-split", default=None, help="Eval split name. Defaults depend on dataset format.")
     parser.add_argument("--epochs", type=int, default=3)
     parser.add_argument("--batch-size", type=int, default=256)
     parser.add_argument("--lr", type=float, default=1e-3)
@@ -69,6 +84,12 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     device = torch.device(args.device or ("cuda" if torch.cuda.is_available() else "cpu"))
     args.artifacts_dir.mkdir(parents=True, exist_ok=True)
+    data_root = resolve_workspace_path(args.data)
+    dataset_format = detect_training_dataset_format(data_root) if args.dataset_format == "auto" else args.dataset_format
+    train_split = args.train_split or "train"
+    eval_split = args.eval_split or ("val" if dataset_format == "fitness_json" else "test")
+    print(f"[data] root={data_root}")
+    print(f"[data] format={dataset_format} train_split={train_split} eval_split={eval_split}")
 
     if args.eval_only:
         checkpoint = load_lifter_checkpoint(args.checkpoint, device=str(device))
@@ -86,13 +107,22 @@ def main(argv: Optional[List[str]] = None) -> int:
             "dropout": args.dropout,
             "input_shape": [17, 3],
             "output_shape": [17, 3],
+            "dataset_format": dataset_format,
+            "data_root": str(data_root),
+            "train_split": train_split,
+            "eval_split": eval_split,
         }
 
     train_history: List[Dict[str, float]] = []
     optimizer = None
     if not args.eval_only:
-        data_root = resolve_workspace_path(args.data)
-        train_dataset = Pose3DFrameDataset(data_root, split="train", max_files=args.max_files)
+        train_dataset = build_pose_lifter_dataset(
+            data_root,
+            split=train_split,
+            max_files=args.max_files,
+            dataset_format=dataset_format,
+        )
+        print(f"[train] samples={len(train_dataset)}")
         train_loader = DataLoader(
             train_dataset,
             batch_size=args.batch_size,
@@ -122,8 +152,13 @@ def main(argv: Optional[List[str]] = None) -> int:
                 {"train": train_metrics},
             )
 
-    data_root = resolve_workspace_path(args.data)
-    eval_dataset = Pose3DFrameDataset(data_root, split="test", max_files=args.eval_max_files)
+    eval_dataset = build_pose_lifter_dataset(
+        data_root,
+        split=eval_split,
+        max_files=args.eval_max_files,
+        dataset_format=dataset_format,
+    )
+    print(f"[eval] samples={len(eval_dataset)}")
     eval_loader = DataLoader(
         eval_dataset,
         batch_size=args.batch_size,
@@ -141,6 +176,10 @@ def main(argv: Optional[List[str]] = None) -> int:
 
     metrics = {
         "device": str(device),
+        "dataset_format": dataset_format,
+        "data_root": str(data_root),
+        "train_split": train_split,
+        "eval_split": eval_split,
         "checkpoint": str(args.checkpoint),
         "train_history": train_history,
         "eval": eval_metrics,

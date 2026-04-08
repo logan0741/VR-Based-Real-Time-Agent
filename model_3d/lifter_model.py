@@ -1,11 +1,11 @@
-"""Trainable 2D-to-3D pose lifting model for pose_3d_v3."""
+"""Trainable 2D-to-3D pose lifting models and dataset adapters."""
 
 from __future__ import annotations
 
 import json
 import pickle
 from collections import OrderedDict
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Dict, List, Optional, Sequence, Tuple
 
 import numpy as np
@@ -23,6 +23,29 @@ from model_3d.camera import CameraIntrinsics
 from model_3d.fitter import BasePoseFitter
 from model_3d.preprocessing import parse_keypoints_payload
 from model_3d.schemas import FitResult
+
+
+COCO_17_JOINT_NAMES: Tuple[str, ...] = (
+    "Nose",
+    "Left Eye",
+    "Right Eye",
+    "Left Ear",
+    "Right Ear",
+    "Left Shoulder",
+    "Right Shoulder",
+    "Left Elbow",
+    "Right Elbow",
+    "Left Wrist",
+    "Right Wrist",
+    "Left Hip",
+    "Right Hip",
+    "Left Knee",
+    "Right Knee",
+    "Left Ankle",
+    "Right Ankle",
+)
+
+DEFAULT_FITNESS_IMAGE_SIZE: Tuple[int, int] = (1920, 1080)
 
 
 class PoseLifterMLP(nn.Module if nn is not None else object):
@@ -112,6 +135,46 @@ class Pose3DFrameDataset(Dataset):
         return data_input, data_label
 
 
+class FitnessLabelDataset(Dataset):
+    """Frame/view-level dataset backed by the prepared fitness JSON labels."""
+
+    def __init__(
+        self,
+        root: Path,
+        split: str,
+        max_files: Optional[int] = None,
+    ) -> None:
+        if torch is None:
+            raise RuntimeError("torch is required to use FitnessLabelDataset.")
+
+        resolved_split = resolve_fitness_split(root, split)
+        self.root = root.resolve()
+        self.split = resolved_split
+        self.label_pairs = resolve_fitness_label_pairs(self.root, resolved_split)
+        if max_files is not None:
+            self.label_pairs = self.label_pairs[:max_files]
+        if not self.label_pairs:
+            raise FileNotFoundError(f"No fitness label pairs found for split={resolved_split} under {root}.")
+
+        self.samples = load_fitness_samples(self.root, resolved_split, self.label_pairs)
+        if not self.samples:
+            raise ValueError(f"No training samples were parsed from {root} split={resolved_split}.")
+
+    def __len__(self) -> int:
+        return len(self.samples)
+
+    def __getitem__(self, index: int) -> Dict[str, Any]:
+        sample = self.samples[index]
+        return {
+            "input": torch.from_numpy(sample["input"]),
+            "target": torch.from_numpy(sample["target"]),
+            "source": sample["source"],
+            "frame_index": sample["frame_index"],
+            "view": sample["view"],
+            "image_path": sample["image_path"],
+        }
+
+
 class PoseLifterFitter(BasePoseFitter):
     """PosePipeline adapter that runs a trained PoseLifterMLP checkpoint."""
 
@@ -129,7 +192,12 @@ class PoseLifterFitter(BasePoseFitter):
 
     def forward(self, payload: Any) -> FitResult:
         target_2d, confidence = parse_keypoints_payload(payload, self.camera)
-        model_input = pixels_to_normalized_lifter_input(target_2d, confidence)
+        model_input = pixels_to_normalized_lifter_input(
+            target_2d,
+            confidence,
+            width=float(self.camera.width),
+            height=float(self.camera.height),
+        )
         tensor = torch.from_numpy(model_input[None, ...]).to(self.device)
         with torch.no_grad():
             prediction = self.model(tensor)[0].detach().cpu().numpy().astype(np.float32)
@@ -168,6 +236,30 @@ def resolve_pose3d_frame_files(root: Path, split: str) -> List[Path]:
     if files:
         return files
     return sorted(resolved.glob("*.pkl"))
+
+
+def detect_training_dataset_format(root: Path) -> str:
+    resolved = root.resolve()
+    if (resolved / "labels").exists():
+        return "fitness_json"
+    if resolve_pose3d_frame_files(resolved, "train"):
+        return "pose3d_v3"
+    raise FileNotFoundError(f"Could not infer a supported dataset format under {resolved}.")
+
+
+def build_pose_lifter_dataset(
+    root: Path,
+    split: str,
+    max_files: Optional[int] = None,
+    dataset_format: str = "auto",
+) -> Dataset:
+    resolved = root.resolve()
+    detected_format = detect_training_dataset_format(resolved) if dataset_format == "auto" else dataset_format
+    if detected_format == "pose3d_v3":
+        return Pose3DFrameDataset(resolved, split=split, max_files=max_files)
+    if detected_format == "fitness_json":
+        return FitnessLabelDataset(resolved, split=split, max_files=max_files)
+    raise ValueError(f"Unsupported dataset_format={detected_format}.")
 
 
 def mpjpe(prediction: Any, target: Any) -> Any:
@@ -221,9 +313,14 @@ def load_lifter_checkpoint(checkpoint_path: Path, device: Optional[str] = None) 
     }
 
 
-def pixels_to_normalized_lifter_input(points_2d: np.ndarray, confidence: np.ndarray) -> np.ndarray:
-    x = points_2d[:, 0].astype(np.float32) / 640.0
-    y = points_2d[:, 1].astype(np.float32) / 480.0
+def pixels_to_normalized_lifter_input(
+    points_2d: np.ndarray,
+    confidence: np.ndarray,
+    width: float = 640.0,
+    height: float = 480.0,
+) -> np.ndarray:
+    x = points_2d[:, 0].astype(np.float32) / max(1.0, float(width))
+    y = points_2d[:, 1].astype(np.float32) / max(1.0, float(height))
     conf = confidence.astype(np.float32)
     return np.stack((x, y, conf), axis=-1).astype(np.float32)
 
@@ -250,3 +347,170 @@ def _frame_count(path: Path) -> int:
     if data_input.ndim != 3:
         raise ValueError(f"{path} data_input must have shape (T, 17, 3).")
     return int(data_input.shape[0])
+
+
+def resolve_fitness_split(root: Path, split: str) -> str:
+    requested = split.strip().lower()
+    split_dir = root / "labels" / requested
+    if split_dir.exists():
+        return requested
+
+    aliases = {
+        "valid": "val",
+        "validation": "val",
+        "test": "val",
+    }
+    aliased = aliases.get(requested)
+    if aliased and (root / "labels" / aliased).exists():
+        return aliased
+    raise FileNotFoundError(f"Fitness split={split} was not found under {root / 'labels'}.")
+
+
+def resolve_fitness_label_pairs(root: Path, split: str) -> List[Tuple[Path, Path]]:
+    label_dir = root / "labels" / split
+    pairs: List[Tuple[Path, Path]] = []
+    for path_2d in sorted(label_dir.rglob("*.json")):
+        if path_2d.name.endswith("-3d.json"):
+            continue
+        path_3d = path_2d.with_name(f"{path_2d.stem}-3d.json")
+        if path_3d.exists():
+            pairs.append((path_2d, path_3d))
+    return pairs
+
+
+def load_fitness_samples(root: Path, split: str, label_pairs: Sequence[Tuple[Path, Path]]) -> List[Dict[str, Any]]:
+    samples: List[Dict[str, Any]] = []
+    for path_2d, path_3d in label_pairs:
+        data_2d = json.loads(path_2d.read_text(encoding="utf-8"))
+        data_3d = json.loads(path_3d.read_text(encoding="utf-8"))
+        frames_2d = list(data_2d.get("frames", []))
+        frames_3d = list(data_3d.get("frames", []))
+        if not frames_2d or not frames_3d:
+            continue
+
+        image_width, image_height = resolve_fitness_image_size(root, split, frames_2d)
+        frame_count = min(len(frames_2d), len(frames_3d))
+        for frame_index in range(frame_count):
+            frame_2d = frames_2d[frame_index]
+            frame_3d = frames_3d[frame_index]
+            target = fitness_points_to_3d_array(extract_fitness_3d_points(frame_3d))
+            for view_name in sorted(key for key in frame_2d.keys() if key.lower().startswith("view")):
+                view_payload = frame_2d.get(view_name, {})
+                if not fitness_view_is_active(view_payload):
+                    continue
+                points_2d = fitness_points_to_2d_array(view_payload.get("pts", {}))
+                confidence = points_2d[:, 2]
+                model_input = pixels_to_normalized_lifter_input(
+                    points_2d[:, :2],
+                    confidence,
+                    width=float(image_width),
+                    height=float(image_height),
+                )
+                image_path = ""
+                img_key = view_payload.get("img_key")
+                if isinstance(img_key, str) and img_key:
+                    image_path = str(root / "raw" / split / Path(*PurePosixPath(img_key).parts))
+                samples.append(
+                    {
+                        "input": model_input,
+                        "target": target.copy(),
+                        "source": str(path_2d),
+                        "frame_index": frame_index,
+                        "view": view_name,
+                        "image_path": image_path,
+                    }
+                )
+    return samples
+
+
+def extract_fitness_3d_points(frame_payload: Dict[str, Any]) -> Dict[str, Dict[str, float]]:
+    points = frame_payload.get("pts_3d") or frame_payload.get("pts")
+    if not isinstance(points, dict):
+        raise ValueError("Fitness 3D frame must contain a pts or pts_3d mapping.")
+    return points
+
+
+def fitness_points_to_2d_array(points: Dict[str, Dict[str, Any]]) -> np.ndarray:
+    rows: List[List[float]] = []
+    for joint_name in COCO_17_JOINT_NAMES:
+        joint = points.get(joint_name) or {}
+        x = safe_float(joint.get("x"), default=0.0)
+        y = safe_float(joint.get("y"), default=0.0)
+        confidence = 1.0 if joint else 0.0
+        rows.append([x, y, confidence])
+    return np.asarray(rows, dtype=np.float32)
+
+
+def fitness_points_to_3d_array(points: Dict[str, Dict[str, Any]]) -> np.ndarray:
+    rows: List[List[float]] = []
+    for joint_name in COCO_17_JOINT_NAMES:
+        joint = points.get(joint_name) or {}
+        rows.append(
+            [
+                safe_float(joint.get("x"), default=0.0),
+                safe_float(joint.get("y"), default=0.0),
+                safe_float(joint.get("z"), default=0.0),
+            ]
+        )
+    return np.asarray(rows, dtype=np.float32)
+
+
+def fitness_view_is_active(view_payload: Dict[str, Any]) -> bool:
+    active = view_payload.get("active", "Yes")
+    if isinstance(active, bool):
+        return active
+    return str(active).strip().lower() in {"yes", "y", "true", "1"}
+
+
+def resolve_fitness_image_size(root: Path, split: str, frames_2d: Sequence[Dict[str, Any]]) -> Tuple[int, int]:
+    for frame in frames_2d:
+        for view_name in sorted(key for key in frame.keys() if key.lower().startswith("view")):
+            view_payload = frame.get(view_name, {})
+            img_key = view_payload.get("img_key")
+            if not isinstance(img_key, str) or not img_key:
+                continue
+            image_path = root / "raw" / split / Path(*PurePosixPath(img_key).parts)
+            if image_path.exists():
+                return read_image_size(image_path)
+    return DEFAULT_FITNESS_IMAGE_SIZE
+
+
+def read_image_size(path: Path) -> Tuple[int, int]:
+    try:
+        with path.open("rb") as stream:
+            header = stream.read(24)
+            if header.startswith(b"\x89PNG\r\n\x1a\n") and len(header) >= 24:
+                width = int.from_bytes(header[16:20], "big")
+                height = int.from_bytes(header[20:24], "big")
+                return width, height
+            if header.startswith(b"\xff\xd8"):
+                stream.seek(2)
+                while True:
+                    marker_start = stream.read(1)
+                    if not marker_start:
+                        break
+                    if marker_start != b"\xff":
+                        continue
+                    marker = stream.read(1)
+                    while marker == b"\xff":
+                        marker = stream.read(1)
+                    if not marker:
+                        break
+                    if marker in {b"\xc0", b"\xc1", b"\xc2", b"\xc3", b"\xc5", b"\xc6", b"\xc7", b"\xc9", b"\xca", b"\xcb", b"\xcd", b"\xce", b"\xcf"}:
+                        _segment_length = int.from_bytes(stream.read(2), "big")
+                        _precision = stream.read(1)
+                        height = int.from_bytes(stream.read(2), "big")
+                        width = int.from_bytes(stream.read(2), "big")
+                        return width, height
+                    segment_length = int.from_bytes(stream.read(2), "big")
+                    stream.seek(max(0, segment_length - 2), 1)
+    except OSError:
+        pass
+    return DEFAULT_FITNESS_IMAGE_SIZE
+
+
+def safe_float(value: Any, default: float) -> float:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default

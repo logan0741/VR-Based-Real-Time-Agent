@@ -110,6 +110,7 @@ events.out.tfevents.*
 /pose_2d/
 /pose_3d_v3/
 /smplx_locked_head/
+/013.피트니스자세/
 
 # OS noise
 .DS_Store

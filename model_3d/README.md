@@ -166,6 +166,16 @@ Train a real PyTorch pose lifting model from `pose_3d_v3/data_input` to
 python train_lifter.py --data pose_3d_v3 --epochs 5 --max-files 500 --eval-max-files 100 --checkpoint artifacts\checkpoints\pose_lifter_latest.pt
 ```
 
+Train from the prepared fitness subset built under `013.피트니스자세`:
+
+```powershell
+python train_lifter.py --data ..\013.피트니스자세\prepared_train_eval_body01_compact --dataset-format fitness_json --epochs 5 --max-files 240 --eval-max-files 120 --checkpoint artifacts\checkpoints\fitness_pose_lifter_latest.pt
+```
+
+This path reads `labels\train` for training and `labels\val` for evaluation,
+and it normalizes 2D keypoints using the source image size from the extracted
+fitness frames.
+
 Full end-to-end check after training:
 
 ```powershell
