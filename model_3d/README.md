@@ -15,16 +15,30 @@ model_3d/
   diagnostics.py     # QA images, fitting checks, metrics, and graphs
   fitter.py          # Phase 1 SMPL-X optimization and Phase 2 interface
   joint_mapper.py    # SMPL-X to COCO 17 joint mapper
-  run_pipeline.py    # Standalone pipeline runner without FastAPI
+  pipeline.py        # Reusable frame-processing engine
+  pipeline_cli.py    # CLI runner, local QA checks, and checkpoint selection
+  run_pipeline.py    # Backward-compatible wrapper for pipeline_cli.py
   smplx_coordinate_fitter.py # Coordinate -> SMPL-X fitting feasibility path
-  pipeline.py        # One-frame processing pipeline
   preprocessing.py   # MoveNet keypoint validation and pixel conversion
   schemas.py         # FitResult, SquatFeedback, and COCO constants
+  train_fitness_lifter.py     # Actual fitness training entrypoint
+  workflow_fitness_to_unity.py # Train -> pipeline check -> Unity export
 ```
 
 `server.py` only handles FastAPI, ngrok, and WebSocket transport. Model
 execution is routed through `PosePipeline`. If you do not want to start the
 server, run the pipeline directly with `python -m model_3d`.
+
+## Structure
+
+- `pipeline.py` is the core engine. It processes one frame through fitting,
+  feedback, and diagnostics.
+- `pipeline_cli.py` is the local runner. It owns commands like `--check-all`,
+  dataset QA, and checkpoint selection.
+- `run_pipeline.py` is kept only so existing commands continue to work.
+- `workflow_fitness_to_unity.py` is the recommended end-to-end path for this
+  repository: train the fitness model, verify the pipeline, then export Unity
+  sequences.
 
 ## Run
 
@@ -43,6 +57,47 @@ python server.py
 ```
 
 ## Run Pipeline Without Server
+
+## Recommended Commands
+
+Use these commands as the primary local workflow.
+
+From the repository root:
+
+```powershell
+cd C:\Project\VR-Based-Real-Time-Agent
+powershell -ExecutionPolicy Bypass -File .\scripts\check_fitness_training_env.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\run_fitness_to_unity.ps1 -Epochs 800
+```
+
+Train only from the repository root:
+
+```powershell
+cd C:\Project\VR-Based-Real-Time-Agent
+powershell -ExecutionPolicy Bypass -File .\scripts\train_fitness_full.ps1 -Epochs 800 -Device cuda
+```
+
+Validate the trained pipeline explicitly with the fitness checkpoint:
+
+```powershell
+cd C:\Project\VR-Based-Real-Time-Agent
+C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe .\model_3d\run_pipeline.py --check-all --lifter-checkpoint .\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest_best.pt
+```
+
+Export Unity-ready sequences only:
+
+```powershell
+cd C:\Project\VR-Based-Real-Time-Agent
+C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe -m model_3d.export_fitness_unity --split train val --limit 0 --view view1
+```
+
+If you are already inside `model_3d`:
+
+```powershell
+cd C:\Project\VR-Based-Real-Time-Agent\model_3d
+C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe -m model_3d.train_fitness_lifter --device cuda --epochs 800 --checkpoint ..\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest.pt --best-checkpoint ..\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest_best.pt --artifacts-dir ..\model_3d\artifacts\training\fitness_full
+C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe run_pipeline.py --check-all --lifter-checkpoint ..\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest_best.pt
+```
 
 Run all available checks from the pipeline runner:
 
@@ -175,6 +230,68 @@ python train_lifter.py --data ..\013.피트니스자세\prepared_train_eval_body
 This path reads `labels\train` for training and `labels\val` for evaluation,
 and it normalizes 2D keypoints using the source image size from the extracted
 fitness frames.
+
+For the actual full fitness run, use the dedicated launcher. It auto-discovers
+the prepared subset and uses the full train/val splits by default:
+
+```powershell
+python -m model_3d.train_fitness_lifter --epochs 800 --device cuda
+```
+
+Windows PowerShell wrappers are also included:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\check_fitness_training_env.ps1
+powershell -ExecutionPolicy Bypass -File .\scripts\train_fitness_full.ps1 -Epochs 800 -Device cuda
+```
+
+These wrappers auto-detect `%LOCALAPPDATA%\Programs\Python\Python310\python.exe`
+first and fall back to `python` if Python 3.10 is not installed there.
+
+Recommended single-command flow for this repo:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File .\scripts\run_fitness_to_unity.ps1
+```
+
+This one command does three things in order:
+
+- trains the fitness lifter on the prepared subset
+- validates the trained checkpoint through `run_pipeline.py --check-all`
+- exports Unity-ready sequence JSON files
+
+Quick local check with the same launcher:
+
+```powershell
+python -m model_3d.train_fitness_lifter --epochs 1 --max-files 2 --eval-max-files 1 --batch-size 16 --device cpu --checkpoint model_3d\artifacts\checkpoints\fitness_pose_lifter_smoke.pt --artifacts-dir model_3d\artifacts\training\fitness_smoke_launcher
+```
+
+## Export Fitness Sequences For Unity
+
+Export prepared fitness label sequences into Unity-friendly JSON with 3D joints
+and original frame paths:
+
+```powershell
+python -m model_3d.export_fitness_unity --split train val --limit 2 --view view1
+```
+
+The exported files are written under:
+
+```text
+artifacts/unity_fitness_viewer/sequences/
+```
+
+Import the Unity scaffold in:
+
+```text
+unity/FitnessPoseViewer/
+```
+
+Then point `FitnessPoseSequencePlayer` at one exported JSON file such as:
+
+```text
+artifacts/unity_fitness_viewer/sequences/train/D05-1-001_view1.json
+```
 
 Full end-to-end check after training:
 
