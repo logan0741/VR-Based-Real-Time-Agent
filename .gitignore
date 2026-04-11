@@ -127,3 +127,9 @@ Desktop.ini
 [Ll]ogs/
 [Uu]ser[Ss]ettings/
 [Mm]emoryCaptures/
+
+# SMPLX & Heavy Unity Packages
+/SMPLX-Unity/
+models_smplx_v1_1.zip
+/unity/
+!/unity/FitnessPoseViewer/Assets/Scripts/AvatarController.cs
