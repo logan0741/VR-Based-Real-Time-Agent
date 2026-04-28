@@ -1,1 +1,8 @@
-movenet_lightning.tflite
+﻿Library/
+Temp/
+obj/
+Logs/
+.vs/
+*.csproj
+*.sln
+UserSettings/
