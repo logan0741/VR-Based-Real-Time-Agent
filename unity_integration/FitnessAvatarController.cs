@@ -3,7 +3,7 @@ using UnityEngine;
 /// <summary>
 /// 서버에서 받은 SMPL-X (Axis-Angle) 관절 각도를 Unity 휴머노이드 뼈대에 적용하는 컨트롤러입니다.
 /// </summary>
-public class AvatarController : MonoBehaviour
+public class FitnessAvatarController : MonoBehaviour
 {
     [Header("Bones (21 SMPL Body Joints)")]
     [Tooltip("SMPL-X 관절 순서에 맞게 Unity 뼈대(Transform)를 할당하세요.")]

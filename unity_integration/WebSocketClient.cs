@@ -36,7 +36,7 @@ public class WebSocketClient : MonoBehaviour
     public string serverUrl = "ws://127.0.0.1:8000/ws/pose";
     
     [Header("References")]
-    public AvatarController userAvatar;
+    public FitnessAvatarController userAvatar;
     public UIManager uiManager;
 
     private ClientWebSocket ws;

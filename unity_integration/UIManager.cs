@@ -1,46 +1,43 @@
 using UnityEngine;
-using UnityEngine.UI;
 
 /// <summary>
-/// 서버에서 계산된 실시간 자세 피드백과 점수를 Unity UI에 표시하는 매니저
+/// 서버에서 계산된 실시간 자세 피드백과 점수를 Unity 구형 OnGUI로 표시하는 매니저
+/// (초보자용: 별도의 UI 패키지 설치나 Canvas 설정이 필요 없습니다!)
 /// </summary>
 public class UIManager : MonoBehaviour
 {
-    [Header("UI Elements")]
-    public Text scoreText;
-    public Text feedbackLabelText;
-    
-    // 점수에 따라 색상을 변경할 이미지 (원형 프로그레스 바 등)
-    public Image scoreRingImage;
-
-    [Header("Colors")]
-    public Color goodColor = new Color(0.0f, 0.9f, 0.46f);  // #00e676
-    public Color warningColor = new Color(1.0f, 0.57f, 0.0f); // #ff9100
-    public Color badColor = new Color(1.0f, 0.24f, 0.0f);    // #ff3d00
+    private int currentScore = 0;
+    private string currentFeedback = "대기 중...";
+    private Color currentColor = Color.white;
 
     /// <summary>
     /// 웹소켓 클라이언트에서 새로운 점수가 들어올 때마다 호출됩니다.
     /// </summary>
     public void UpdateScore(int score, string label)
     {
-        if (scoreText != null)
-            scoreText.text = score.ToString();
+        currentScore = score;
+        currentFeedback = label;
 
-        if (feedbackLabelText != null)
-            feedbackLabelText.text = label;
-
-        // 점수에 따른 UI 색상 변경 로직
-        Color targetColor = badColor;
+        // 점수에 따른 텍스트 색상 변경
         if (score >= 80)
-            targetColor = goodColor;
+            currentColor = new Color(0.0f, 0.9f, 0.46f); // 초록색
         else if (score >= 50)
-            targetColor = warningColor;
+            currentColor = new Color(1.0f, 0.57f, 0.0f); // 주황색
+        else
+            currentColor = new Color(1.0f, 0.24f, 0.0f); // 빨간색
+    }
 
-        if (scoreRingImage != null)
-            scoreRingImage.color = targetColor;
-        if (scoreText != null)
-            scoreText.color = targetColor;
-        if (feedbackLabelText != null)
-            feedbackLabelText.color = targetColor;
+    /// <summary>
+    /// Unity 내장 기능으로 화면 왼쪽 위에 글씨를 바로 그려줍니다.
+    /// </summary>
+    private void OnGUI()
+    {
+        GUIStyle style = new GUIStyle();
+        style.fontSize = 50; // 글씨 크기
+        style.normal.textColor = currentColor;
+        
+        // 화면 좌표 (X: 50, Y: 50) 위치에 폭 800, 높이 100으로 글씨를 씁니다.
+        GUI.Label(new Rect(50, 50, 800, 100), $"점수: {currentScore}", style);
+        GUI.Label(new Rect(50, 120, 800, 100), $"상태: {currentFeedback}", style);
     }
 }
