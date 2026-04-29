@@ -1,146 +1,259 @@
-# VR-Based Real-Time Agent()
+# VR-Based Real-Time Agent
 
-## 프로젝트 개요
+**온디바이스 기반 실시간 AI 자세 교정 및 맞춤형 코칭 시스템**
 
-이 프로젝트는 **온디바이스 기반 실시간 AI 자세 교정 및 맞춤형 코칭 시스템**을 만드는 것을 목표로 합니다.  
-외부 카메라와 `VR 헤드셋(Meta Quest 3)`을 활용해 사용자의 운동 자세를 실시간으로 분석하고, 잘못된 자세를 즉시 교정해주는 `VR PT 에이전트`를 구현합니다.
+VR 헤드셋(Meta Quest 3) + 외부 카메라를 활용하여 사용자의 운동 자세를 실시간으로 분석하고,
+잘못된 자세를 즉시 교정해주는 VR PT 에이전트입니다.
 
-기존 홈트레이닝은 화면을 계속 봐야 하거나, 트레이너 없이 자세를 점검하기 어렵고, 클라우드 기반 서비스는 신체 영상 업로드에 따른 보안 이슈가 있습니다.  
-이 프로젝트는 **온디바이스 AI**를 사용해 개인정보 외부 전송 없이 실시간 피드백을 제공하는 것이 핵심입니다.
+---
 
-## 목표
+## 시스템 아키텍처
 
-- 실시간으로 운동 자세를 인식하고 교정 피드백 제공
-- 운동 종류를 자동 분류하고 자세 유사도를 점수화
-- 운동 중에는 빠른 규칙 기반 음성 피드백 제공
-- 세트 종료 후에는 `LLM` 기반 종합 피드백 제공
-- `VR` 환경에서 올바른 자세를 시각적으로 안내
-- 개인 운동 기록을 저장하고 이전 기록과 비교 가능하게 구성
+```mermaid
+flowchart TD
+    subgraph 입력
+        A1[전문가 영상 파일] --> B1[VideoLoader]
+        A2[사용자 웹캠 실시간] --> B2[WebcamCapture]
+    end
 
-## 핵심 기능
+    subgraph 추정
+        B1 --> C[PoseEstimator<br/>MoveNet / MediaPipe<br/>17 관절 좌표 추출]
+        B2 --> C
+    end
 
-### 1. 운동 인식
+    subgraph 정규화
+        C --> D[PoseNormalizer<br/>골반 기준 이동 / 체형 스케일 제거<br/>각도 벡터 변환]
+    end
 
-- 스쿼트, 맨몸 운동, 아령 운동 등 주요 동작 분류
-- 시계열 기반 모델(`LSTM`, `Transformer`, `ST-GCN`) 비교 후 최적 모델 선정
-- 온디바이스 환경에서 동작 가능한 경량 모델 중심으로 구현
+    subgraph 스무딩
+        D --> D2[PoseRetargeter<br/>OneEuro Filter + Velocity Clamping<br/>프레임 간 떨림 제거]
+    end
 
-### 2. 자세 분석
+    subgraph 비교
+        D2 --> E1[ExpertPoseCache<br/>정규화 시퀀스 사전 계산]
+        D2 --> E2[DTWComparator<br/>Dynamic Time Warping 정렬<br/>프레임-to-프레임 관절 거리 계산]
+        E1 <--> E2
+    end
 
-- `MoveNet`, `MediaPipe`, `MMPose` 등을 활용해 키포인트 추출
-- 관절 좌표 정규화 및 전처리 파이프라인 구축
-- `DTW(Dynamic Time Warping)` 기반으로 기준 동작과 사용자 동작 비교
-- 자세 유사도 점수와 오류 관절 추적
+    subgraph 평가
+        E2 --> F1[ScoreEngine<br/>관절별 가중치 적용<br/>실시간 / 평균 점수 산출]
+        E2 --> F2[FeedbackGenerator<br/>이탈 관절 감지<br/>피드백 메시지 생성]
+    end
 
-### 3. 실시간 피드백
+    subgraph UI["UI Layer (Renderer)"]
+        F1 --> G1[2D 웹 뷰어<br/>Quest VR 브라우저]
+        F2 --> G1
+        F1 --> G2[Unity 3D<br/>SMPL-X 아바타]
+        F2 --> G2
+    end
 
-- 운동 중: 잘못된 관절/각도에 대해 즉시 `TTS` 음성 안내
-- 세트 종료 후: `LLM`을 이용한 요약 피드백 생성
-- 지연 시간을 줄이기 위해 운동 중 피드백은 규칙 기반으로 처리
+    subgraph 관리
+        G1 --> H[SessionManager<br/>운동 선택 / 세션 시작·종료<br/>결과 저장]
+        G2 --> H
+    end
 
-### 4. VR 시각화
+    I[공통 유틸 utils/<br/>좌표 변환 · 각도 계산 · 로깅 · 설정 상수]
+```
 
-- 기준 자세와 현재 자세를 `VR` 상에서 비교
-- 관절 궤적 가이드 표시
-- 잘못된 관절 하이라이트
-- 오버레이 방식과 궤적 방식 비교
+---
 
-### 5. 운동 기록 관리
+## 디렉토리 구조
 
-- 세트별 유사도, 오류 관절, 피드백 로그 저장
-- 동일 운동 반복 시 이전 세션 대비 개선 추이 확인
+```
+VR-Based-Real-Time-Agent/
+├── model_3d/                    # 핵심 3D 포즈 파이프라인 패키지
+│   ├── server_app/              # FastAPI WebSocket 서버
+│   │   ├── server.py            # 메인 서버 (MLP 추론 + 스무딩 + 브로드캐스트)
+│   │   ├── posture_analyzer.py  # 근육 피로도 / 자세 분석
+│   │   └── clients/             # 입력 클라이언트들
+│   │       ├── webcam_client.py   # 웹캠 실시간 입력
+│   │       ├── video_client.py    # 영상 파일 입력
+│   │       └── dataset_client.py  # 데이터셋 재생 입력
+│   ├── pose_retargeting.py      # 🆕 포즈 스무딩 (OneEuro + Velocity Clamping)
+│   ├── pipeline.py              # 프레임 처리 엔진
+│   ├── pipeline_cli.py          # CLI 실행기 및 QA
+│   ├── lifter_model.py          # 2D→3D PoseLifterMLP 모델
+│   ├── train_lifter.py          # 모델 학습 스크립트
+│   ├── train_fitness_lifter.py  # 피트니스 데이터 학습 래퍼
+│   ├── fitter.py                # SMPL-X 최적화 피터
+│   ├── analyzer.py              # 스쿼트 각도 분석
+│   ├── diagnostics.py           # QA 이미지/그래프 생성
+│   ├── export_fitness_unity.py  # Unity JSON 시퀀스 내보내기
+│   ├── schemas.py               # 데이터 컨테이너 (FitResult 등)
+│   ├── camera.py                # 카메라 투영 모델
+│   ├── preprocessing.py         # 키포인트 전처리
+│   ├── joint_mapper.py          # SMPL-X → COCO 17 매핑
+│   └── config.py                # 환경 설정 헬퍼
+│
+├── viewer_2d/                   # 🆕 2D 웹 스켈레톤 뷰어 (Quest VR 대응)
+│   ├── index.html               # 메인 페이지
+│   ├── viewer.js                # WebSocket + Canvas 렌더링
+│   └── style.css                # 다크 글래스모피즘 UI
+│
+├── unity/FitnessPoseViewer/     # Unity 3D 뷰어 (Phase 2)
+│   └── Assets/Scripts/
+│       ├── AvatarController.cs        # SMPL-X 아바타 WebSocket 제어
+│       └── FitnessPoseSequencePlayer.cs  # 시퀀스 재생기
+│
+├── run_steps.py                 # 🆕 단계별 파이프라인 실행기
+├── play_squat.py                # 스쿼트 키포인트 재생 스크립트
+├── requirements.txt             # Python 의존성
+├── CHANGELOG.md                 # 🆕 변경 로그
+└── README.md                    # 이 문서
+```
 
-## 우리가 할 일
+---
 
-### 1. 데이터셋 수집
+## Quick Start
 
-- `Fit3D`, `Workout/Exercises Video`, `MM-Fit`, `AthletePose3D` 등 활용 가능한 데이터셋 조사 및 확보
-- 운동 종류별 기준 자세 데이터 정리
-- 필요 시 추가 촬영 데이터 확보
+### 1. 환경 설정
 
-### 2. 데이터 전처리 및 정규화
+```powershell
+cd C:\Project\VR-Based-Real-Time-Agent
+pip install -r requirements.txt
+```
 
-- 영상/포즈 데이터에서 키포인트 추출
-- 관절 좌표 정규화 기준 설계
-- 실시간 처리 가능한 입력 형태로 데이터 가공
+### 2. 환경 확인
 
-### 3. 운동 분류 모델 개발
+```powershell
+python run_steps.py --check
+```
 
-- `LSTM` baseline 구현
-- `Transformer` 기반 분류 모델 구현
-- `ST-GCN` 적용 가능성 검토
-- 정확도, 속도, 온디바이스 적합성 기준으로 최종 모델 선정
+### 3. 실시간 서버 + 2D 뷰어 실행
 
-### 4. 자세 평가 로직 개발
+```powershell
+python run_steps.py --server
+```
 
-- 기준 동작과 사용자 동작을 비교하는 `DTW` 파이프라인 구현
-- 유사도 점수 산출 로직 구현
-- 주요 관절별 오류 탐지 규칙 설계
+**접속 방법:**
+- PC 브라우저: `http://localhost:8000/viewer/`
+- Quest 3 VR: `http://<PC_IP주소>:8000/viewer/`
+  - PC와 같은 Wi-Fi에 연결 필요
+  - PC의 IP 주소 확인: `ipconfig`
 
-### 5. 피드백 시스템 개발
+### 4. 입력 소스 연결
 
-- 운동 중 즉시 음성 피드백용 규칙 정의
-- 운동 종류/오류 부위별 피드백 문장 DB 구성
-- 세트 종료 후 `LLM` 기반 요약 피드백 생성 흐름 구현
+```powershell
+# 웹캠 실시간 입력
+python -m model_3d.server_app.clients.webcam_client
 
-### 6. VR 애플리케이션 개발
+# 영상 파일 입력
+python -m model_3d.server_app.clients.video_client --video "스쿼트 데이터 셋.mp4"
 
-- `Unity` 기반 운동 선택 및 피드백 UI 구성
-- 기준 자세 시각화, 오버레이, 하이라이트 기능 구현
-- 실시간 포즈 분석 결과와 VR 화면 연동
+# 사전 추출 키포인트 재생
+python play_squat.py
+```
 
-### 7. 기록 및 분석 기능 개발
+---
 
-- 세트별 운동 기록 저장
-- 마크다운 기반 피드백 로그 저장
-- 이전 기록과 현재 기록 비교 시각화
+## 파이프라인 구조
 
-### 8. 성능 검증 및 최적화
+이 프로젝트에는 4개의 실행 파이프라인이 있습니다:
 
-- 운동 분류 정확도, 자세 판단 정확도 측정
-- 실시간 처리 속도(FPS, 지연 시간) 확인
-- 실제 운동 환경에서 테스트 후 개선
+### Pipeline A: 실시간 파이프라인 (메인)
+
+```
+웹캠/영상 → MediaPipe → 서버(MLP 추론 + 스무딩 + 분석) → WebSocket → 2D뷰어/Unity
+```
+
+```powershell
+python run_steps.py --server
+```
+
+### Pipeline B: 모델 학습 파이프라인
+
+```
+피트니스 데이터셋 → PoseLifterMLP 학습 → 체크포인트 저장
+```
+
+```powershell
+python run_steps.py --train
+# 또는 직접:
+python -m model_3d.train_fitness_lifter --epochs 800 --device cuda
+```
+
+### Pipeline C: Unity 내보내기 파이프라인
+
+```
+피트니스 라벨 데이터 → 3D 좌표 변환 → Unity JSON 시퀀스
+```
+
+```powershell
+python run_steps.py --export-unity
+```
+
+### Pipeline D: 오프라인 분석 파이프라인
+
+```
+영상 → 포즈 추정 → 정규화 → 리프팅 → 비교/점수/피드백 → 리포트
+```
+
+```powershell
+python run_steps.py --all --video "영상파일.mp4"
+```
+
+---
+
+## 핵심 모듈
+
+| 모듈 | 역할 |
+|------|------|
+| `PoseRetargeter` | OneEuro 필터 + 속도 제한으로 프레임 간 떨림 제거 |
+| `PoseLifterMLP` | 2D 키포인트 → 3D 관절 좌표 / SMPL-X 파라미터 회귀 |
+| `PostureAnalyzer` | 관절 각도 분석, 근육 피로도 판정 |
+| `DiagnosticsRecorder` | 프레임별 QA 이미지 및 성능 그래프 자동 생성 |
+| `AvatarController.cs` | Unity에서 SMPL-X 아바타 실시간 구동 (Phase 2) |
+
+---
+
+## 환경 변수
+
+```bash
+# 서버 설정
+FITTER_BACKEND=lifter              # lifter (기본) / optimization (SMPL-X)
+LIFTER_CHECKPOINT=model_3d/artifacts/checkpoints/fitness_pose_lifter_latest_best.pt
+
+# 스무딩 설정
+SMOOTHING_ENABLED=true             # 포즈 스무딩 활성화
+SMOOTHING_MIN_CUTOFF=1.0           # OneEuro 최소 컷오프 (낮을수록 강한 스무딩)
+SMOOTHING_BETA=0.007               # OneEuro 속도 계수
+SMOOTHING_MAX_VELOCITY=0.5         # 최대 프레임간 변위
+
+# 카메라 설정
+KEYPOINT_FORMAT=movenet_yx         # movenet_yx (기본) / xy
+CAMERA_WIDTH=640
+CAMERA_HEIGHT=480
+
+# 디버그
+DIAGNOSTICS_ENABLED=true
+DIAGNOSTICS_SAVE_EVERY_N=1
+```
+
+---
 
 ## 성능 목표
 
-- 운동 분류 정확도 `90%` 이상
-- 자세 판단 정확도 `85%` 이상
-- 온디바이스 추론 속도 `60 FPS` 이상
-- `DTW` 처리 시간 `10ms` 이내
-- 오류 감지 후 음성 출력까지 `3초` 이내
-- 세트 종료 후 `LLM` 피드백 생성 `5분` 이내
+| 항목 | 목표 |
+|------|------|
+| 운동 분류 정확도 | 90% 이상 |
+| 자세 판단 정확도 | 85% 이상 |
+| 온디바이스 추론 속도 | 60 FPS 이상 |
+| DTW 처리 시간 | 10ms 이내 |
+| 오류 감지 → 피드백 | 3초 이내 |
 
-## 역할 분배
+---
+
+## 팀 구성
 
 | 이름 | 역할 |
-|---|---|
+|------|------|
 | 김보경 | 온디바이스 환경 구축, 데이터 수집 |
 | 김건희 | 데이터 정규화 로직 설계, Unity 환경 구성 |
 | 이경호 | 데이터 가공, 피드백 모델 설계 |
 | 임규보 | 운동 분류 모델 설계, 통신 환경 구축 |
 
-## 진행 계획
+---
 
-### 3월
+## 라이선스
 
-- 기획서 작성
-- 프로젝트 요구사항 정리
-
-### 4월
-
-- 데이터셋 구축
-- 데이터 전처리 및 정규화
-
-### 5월
-
-- 운동 판단 모델 제작
-- AI 피드백 모델 제작
-
-### 6월
-
-- VR 애플리케이션 제작
-- 결과 정리 및 보고서 작성
-
-## 한 줄 정리
-
-`VR + 온디바이스 AI + 실시간 자세 교정 + 운동 기록 관리`를 결합한 개인 맞춤형 홈트레이닝 코칭 시스템을 만드는 프로젝트입니다.
+이 프로젝트는 캡스톤 디자인 과제로 개발되었습니다.

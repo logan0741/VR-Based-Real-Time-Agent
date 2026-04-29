@@ -75,10 +75,44 @@ async def main(video_path):
             if results.pose_landmarks:
                 landmarks = results.pose_landmarks.landmark
                 
+                # 원본 비디오 데이터 수집
+                w_orig = cap.get(cv2.CAP_PROP_FRAME_WIDTH)
+                h_orig = cap.get(cv2.CAP_PROP_FRAME_HEIGHT)
+                
+                # --- AI 모델(FastMLP)을 위한 스케일 정규화(Normalization) 트릭 ---
+                # 1. 사람의 핵심이 되는 양쪽 골반(Hip) 좌표를 찾아 무게중심(Center) 계산
+                left_hip = landmarks[23]
+                right_hip = landmarks[24]
+                center_x = (left_hip.x + right_hip.x) / 2.0
+                center_y = (left_hip.y + right_hip.y) / 2.0
+                
+                # 2. 어깨(Shoulder)와 골반(Hip)의 거리를 측정하여 사람의 크기 스케일 파악
+                left_shoulder = landmarks[11]
+                torso_height = abs((left_hip.y + right_hip.y)/2.0 - (left_shoulder.y + landmarks[12].y)/2.0)
+                
+                # 모델이 학습될 때 예상했던 평균 Torso 크기(픽셀)를 맞추기 위한 비율 계산
+                # (훈련 데이터 1920x1080 환경에서 사람의 가슴-골반 길이는 대략 350~450 픽셀이었음)
+                TARGET_TORSO = 400.0
+                actual_torso_pixel = torso_height * h_orig
+                scale_factor = TARGET_TORSO / max(actual_torso_pixel, 1.0)
+                
                 payload = []
                 for mp_idx in MP_TO_COCO:
                     lm = landmarks[mp_idx]
-                    payload.append([lm.x, lm.y, lm.visibility])
+                    
+                    # 3. 모델이 좋아하는 좌표계로 조작 (Translation & Scaling)
+                    # MediaPipe 비율좌표 -> 골반 중심(0,0) 이동 -> 스케일 뻥튀기 -> 모델이 훈련때 보던 가상의 중앙(960, 540)으로 전송
+                    shifted_x = (lm.x - center_x) * w_orig * scale_factor
+                    shifted_y = (lm.y - center_y) * h_orig * scale_factor
+                    
+                    # 최종 좌표: 모델이 기대하는 1920x1080 화면 정중앙 (960, 540) 부근에 위치시킴
+                    final_x = shifted_x + 960.0
+                    final_y = shifted_y + 540.0
+                    
+                    # Z축 좌표: 골반(Z=0) 기준으로 깊이값 정규화 
+                    final_z = lm.z * w_orig * scale_factor
+
+                    payload.append([final_x, final_y, final_z])
 
                 msg = {
                     "data_type": "keypoints",
