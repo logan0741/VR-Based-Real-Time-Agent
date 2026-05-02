@@ -28,38 +28,35 @@ class ScoreEngine:
         self._max_distance: float = max_distance
         self._n_frames: int = n_frames
         self._rep_scores: list[int] = []
-        self._scored_count: int = 0
 
     def update(
         self,
-        dist_matrix: np.ndarray,
-        reps: list[tuple[int, int]],
+        window_dist_matrix: np.ndarray,
+        new_rep_matrices: list[np.ndarray],
     ) -> tuple[int, list[int]]:
-        """dist_matrix와 rep 구간으로 실시간 점수와 누적 회차 점수 목록을 반환한다. dist_matrix shape=(M,K), dtype=float32."""
-        if dist_matrix.ndim != 2:
-            raise ValueError(f"dist_matrix는 2차원이어야 합니다: ndim={dist_matrix.ndim}")
-        if dist_matrix.shape[1] != len(self._weights):
+        """슬라이딩 윈도우 dist_matrix와 새 회차 dist_matrix 목록으로 실시간 점수와 누적 회차 점수 목록을 반환한다. window_dist_matrix shape=(M,K), dtype=float32."""
+        if window_dist_matrix.ndim != 2:
+            raise ValueError(f"window_dist_matrix는 2차원이어야 합니다: ndim={window_dist_matrix.ndim}")
+        if window_dist_matrix.shape[1] != len(self._weights):
             raise ValueError(
-                f"dist_matrix 열 수({dist_matrix.shape[1]})와 weights 길이({len(self._weights)})가 다릅니다."
+                f"window_dist_matrix 열 수({window_dist_matrix.shape[1]})와 weights 길이({len(self._weights)})가 다릅니다."
             )
 
-        for start, end in reps[self._scored_count:]:
-            self._rep_scores.append(self._score_rep(dist_matrix, start, end))
-        self._scored_count = len(reps)
+        for rep_dm in new_rep_matrices:
+            self._rep_scores.append(self._score_rep(rep_dm))
 
-        return self._realtime_score(dist_matrix), list(self._rep_scores)
+        return self._realtime_score(window_dist_matrix), list(self._rep_scores)
 
     def _realtime_score(self, dist_matrix: np.ndarray) -> int:
         """최근 n_frames 구간의 가중 평균 거리를 선형 변환하여 실시간 점수를 반환한다. dist_matrix shape=(M,K), dtype=float32."""
         window: np.ndarray = dist_matrix[-self._n_frames:]
         return self._to_score(float(np.mean(window @ self._weights)))
 
-    def _score_rep(self, dist_matrix: np.ndarray, start: int, end: int) -> int:
-        """rep 구간 전체 프레임의 가중 평균 거리를 선형 변환하여 1회 점수를 반환한다. dist_matrix shape=(M,K), dtype=float32."""
-        segment: np.ndarray = dist_matrix[start:end]
-        if segment.shape[0] == 0:
-            raise ValueError(f"rep 구간이 비어 있습니다: start={start}, end={end}")
-        return self._to_score(float(np.mean(segment @ self._weights)))
+    def _score_rep(self, rep_dist_matrix: np.ndarray) -> int:
+        """rep 구간 dist_matrix의 가중 평균 거리를 선형 변환하여 1회 점수를 반환한다. rep_dist_matrix shape=(M,K), dtype=float32."""
+        if rep_dist_matrix.shape[0] == 0:
+            raise ValueError("rep dist_matrix가 비어 있습니다.")
+        return self._to_score(float(np.mean(rep_dist_matrix @ self._weights)))
 
     def _to_score(self, distance: float) -> int:
         """거리를 0~100 점수로 선형 변환한다."""
