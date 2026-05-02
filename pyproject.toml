@@ -1,0 +1,12 @@
+[project]
+name = "pose"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "tensorflow==2.*",
+    "tensorflow-hub>=0.16",
+    "opencv-python>=4.10",
+    "numpy>=1.26",
+    "dtaidistance>=2.3",
+    "setuptools>=68,<81",
+]
