@@ -1,5 +1,6 @@
-"""정규화된 관절 시퀀스에서 운동 1회 구간을 감지한다."""
+"""정규화된 관절 프레임을 1개씩 입력받아 운동 1회 구간을 증분으로 감지한다."""
 
+from collections import deque
 from enum import Enum, auto
 
 import numpy as np
@@ -16,7 +17,7 @@ class _RepState(Enum):
 
 
 class RepDetector:
-    """종목별 감지 방법으로 운동 1회 구간 목록을 반환하는 클래스."""
+    """종목별 감지 방법으로 운동 1회 구간 목록을 증분으로 반환하는 클래스."""
 
     def __init__(
         self,
@@ -30,64 +31,59 @@ class RepDetector:
             raise ValueError(f"지원하지 않는 rep_detector_type: {rep_detector_type!r}")
         if normalizer_type not in SUPPORTED_NORMALIZER_TYPES:
             raise ValueError(f"지원하지 않는 normalizer_type: {normalizer_type!r}")
+
         self._type = rep_detector_type
         self._normalizer_type = normalizer_type
         self._slope_window = slope_window
         self._min_rep_frames = min_rep_frames
 
-    def detect(self, sequence: np.ndarray) -> list[tuple[int, int]]:
-        """정규화된 관절 시퀀스에서 운동 1회 구간 목록을 반환한다. shape=(M,17,3), dtype=float32."""
-        if sequence.shape[0] < self._slope_window + 1:
-            raise ValueError(
-                f"시퀀스 길이({sequence.shape[0]})가 slope_window({self._slope_window})보다 너무 짧습니다."
-            )
-        if self._type == "squat":
-            return self._detect_squat(sequence)
-        raise ValueError(f"지원하지 않는 rep_detector_type: {self._type!r}")
+        self._state: _RepState = _RepState.WAIT_VALLEY
+        self._rep_start: int = 0
+        self._reps: list[tuple[int, int]] = []
+        self._frame_idx: int = 0
+        self._prev_signal: float = 0.0
+        self._diff_buffer: deque[float] = deque(maxlen=slope_window)
+        self._prev_slope: float = 0.0
 
-    def _detect_squat(self, sequence: np.ndarray) -> list[tuple[int, int]]:
-        """스쿼트 1회 구간을 감지한다. shape=(M,17,3), dtype=float32."""
-        signal = self._extract_knee_signal(sequence)
-        slopes = self._compute_slopes(signal)
-        return self._run_state_machine(slopes)
+    def update(self, norm_frame: np.ndarray) -> list[tuple[int, int]]:
+        """정규화된 관절 프레임 1개를 입력받아 누적 rep 구간 목록을 반환한다. norm_frame shape=(17,3), dtype=float32."""
+        signal = self._extract_knee_signal(norm_frame)
+        diff = signal - self._prev_signal
+        self._prev_signal = signal
+        self._diff_buffer.append(diff)
 
-    def _extract_knee_signal(self, sequence: np.ndarray) -> np.ndarray:
-        """normalizer_type에 따라 무릎 y좌표 시퀀스를 추출한다. shape=(M,), dtype=float32."""
+        curr_slope = float(np.mean(self._diff_buffer))
+        self._step(curr_slope)
+        self._prev_slope = curr_slope
+        self._frame_idx += 1
+
+        return self._valid_reps()
+
+    def finalize(self) -> list[tuple[int, int]]:
+        """시퀀스 종료 시 WAIT_PEAK 상태의 미완료 rep을 마감하고 누적 rep 목록을 반환한다."""
+        if self._state == _RepState.WAIT_PEAK:
+            self._reps.append((self._rep_start, self._frame_idx - 1))
+            self._state = _RepState.WAIT_VALLEY
+        return self._valid_reps()
+
+    def _extract_knee_signal(self, norm_frame: np.ndarray) -> float:
+        """normalizer_type에 따라 단일 프레임에서 무릎 y좌표를 추출한다. norm_frame shape=(17,3), dtype=float32."""
         if self._normalizer_type == "side_left":
-            return sequence[:, LEFT_KNEE, 0].astype(np.float32)
+            return float(norm_frame[LEFT_KNEE, 0])
         if self._normalizer_type == "side_right":
-            return sequence[:, RIGHT_KNEE, 0].astype(np.float32)
-        return ((sequence[:, LEFT_KNEE, 0] + sequence[:, RIGHT_KNEE, 0]) / 2.0).astype(np.float32)
+            return float(norm_frame[RIGHT_KNEE, 0])
+        return float((norm_frame[LEFT_KNEE, 0] + norm_frame[RIGHT_KNEE, 0]) / 2.0)
 
-    def _compute_slopes(self, signal: np.ndarray) -> np.ndarray:
-        """n프레임 윈도우 평균 기울기를 계산한다. shape=(M,), dtype=float32."""
-        diffs = np.diff(signal, prepend=signal[0])
-        M = len(signal)
-        slopes = np.zeros(M, dtype=np.float32)
-        for i in range(M):
-            start = max(0, i - self._slope_window + 1)
-            slopes[i] = float(np.mean(diffs[start : i + 1]))
-        return slopes
+    def _step(self, curr_slope: float) -> None:
+        """기울기 부호 전환으로 valley·peak를 감지하고 내부 상태를 갱신한다."""
+        prev = self._prev_slope
+        if self._state == _RepState.WAIT_VALLEY and prev < 0 and curr_slope > 0:
+            self._state = _RepState.WAIT_PEAK
+        elif self._state == _RepState.WAIT_PEAK and prev > 0 and curr_slope < 0:
+            self._reps.append((self._rep_start, self._frame_idx))
+            self._rep_start = self._frame_idx
+            self._state = _RepState.WAIT_VALLEY
 
-    def _run_state_machine(self, slopes: np.ndarray) -> list[tuple[int, int]]:
-        """기울기 부호 전환으로 valley·peak를 감지하고 rep 구간 목록을 반환한다."""
-        reps: list[tuple[int, int]] = []
-        state = _RepState.WAIT_VALLEY
-        rep_start: int = 0
-
-        for i in range(1, len(slopes)):
-            prev = slopes[i - 1]
-            curr = slopes[i]
-
-            if state == _RepState.WAIT_VALLEY and prev < 0 and curr > 0:
-                state = _RepState.WAIT_PEAK
-
-            elif state == _RepState.WAIT_PEAK and prev > 0 and curr < 0:
-                reps.append((rep_start, i))
-                rep_start = i
-                state = _RepState.WAIT_VALLEY
-
-        if state == _RepState.WAIT_PEAK:
-            reps.append((rep_start, len(slopes) - 1))
-
-        return [(s, e) for s, e in reps if e - s >= self._min_rep_frames]
+    def _valid_reps(self) -> list[tuple[int, int]]:
+        """min_rep_frames 이상인 rep 구간만 반환한다."""
+        return [(s, e) for s, e in self._reps if e - s >= self._min_rep_frames]
