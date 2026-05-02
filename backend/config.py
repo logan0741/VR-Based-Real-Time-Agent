@@ -46,5 +46,8 @@ EXERCISES: dict[str, dict] = {
 
         # 유효 rep 최소 프레임 수 — 이 값 미만 구간은 노이즈로 버림 (target_fps × 1초 권장)
         "min_rep_frames": 24,
+
+        # DTW 계산 주기 — N프레임마다 1회 계산, 1이면 매 프레임 계산
+        "dtw_interval": 3,
     }
 }
