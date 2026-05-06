@@ -13,6 +13,7 @@ from backend.utils.keypoints import (
 )
 
 WINDOW_TITLE: str = "PT Analysis"
+PANEL_HEIGHT: int = 480
 CENTER_PANEL_WIDTH: int = 300
 FONT: int = cv2.FONT_HERSHEY_SIMPLEX
 FONT_SCALE: float = 0.6
@@ -91,19 +92,23 @@ class UIRenderer:
         """전문가 영상 재생 시작 시각을 기록한다."""
         self._start_time = time.time()
 
-    def render(self, user_frame: np.ndarray, result: dict) -> None:
-        """파이프라인 결과와 프레임을 OpenCV 윈도우에 출력한다. user_frame shape=(H,W,3), dtype=uint8."""
+    def render(self, user_frame: np.ndarray, result: dict) -> np.ndarray:
+        """파이프라인 결과와 프레임을 OpenCV 윈도우에 출력하고 렌더링된 프레임을 반환한다. user_frame shape=(H,W,3), dtype=uint8."""
         if self._start_time is None:
             raise RuntimeError("render() 호출 전 start()를 먼저 호출하세요.")
 
         expert_idx = self._current_expert_index()
-        h_user = user_frame.shape[0]
+        h, w = user_frame.shape[:2]
+        scale = PANEL_HEIGHT / h
+        user_resized = cv2.resize(user_frame, (int(w * scale), PANEL_HEIGHT))
 
-        expert_panel = self._build_expert_panel(h_user, expert_idx)
-        center_panel = self._build_center_panel(h_user, result)
-        user_panel = self._build_user_panel(user_frame, result["keypoints"])
+        expert_panel = self._build_expert_panel(PANEL_HEIGHT, expert_idx)
+        center_panel = self._build_center_panel(PANEL_HEIGHT, result)
+        user_panel = self._build_user_panel(user_resized, result["keypoints"])
 
-        cv2.imshow(WINDOW_TITLE, np.hstack([expert_panel, center_panel, user_panel]))
+        canvas = np.hstack([expert_panel, center_panel, user_panel])
+        cv2.imshow(WINDOW_TITLE, canvas)
+        return canvas
 
     def _current_expert_index(self) -> int:
         """경과 시간 기반으로 현재 전문가 영상 프레임 인덱스를 반환한다."""

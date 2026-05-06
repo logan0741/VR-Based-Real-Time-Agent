@@ -1,6 +1,7 @@
 """07 UIRenderer 테스트 — test_squat.mp4를 실시간 입력으로 시뮬레이션한다."""
 
 import time
+from pathlib import Path
 
 import cv2
 import numpy as np
@@ -16,7 +17,7 @@ from backend.ui_renderer import UIRenderer
 
 cfg = EXERCISES["squat"]
 EXPERT_VIDEO  = "assets/expert_videos/squat.mp4"
-TEST_VIDEO    = "assets/test_videos/test_squat.mp4"
+TEST_VIDEO    = "assets/test_videos/test_lgb.mp4"
 FPS_LOG_EVERY = 30  # N프레임마다 구간 FPS 출력
 
 print("=" * 55)
@@ -62,6 +63,9 @@ if not cap.isOpened():
 
 print("\n[Test] Starting. Press 'q' to quit.")
 renderer.start()
+
+output_path = f"assets/output_videos/{Path(TEST_VIDEO).stem}_output.mp4"
+writer: cv2.VideoWriter | None = None
 
 norm_seq: list[np.ndarray] = []
 raw_kps:  list[np.ndarray] = []
@@ -129,7 +133,16 @@ while True:
         "fps":        1.0 / max(elapsed, 1e-9),
     }
 
-    renderer.render(frame, result)
+    canvas = renderer.render(frame, result)
+    if writer is None:
+        h, w = canvas.shape[:2]
+        writer = cv2.VideoWriter(
+            output_path,
+            cv2.VideoWriter_fourcc(*"mp4v"),
+            cfg["target_fps"],
+            (w, h),
+        )
+    writer.write(canvas)
 
     # N프레임마다 구간 FPS 출력
     if n % FPS_LOG_EVERY == 0:
@@ -145,12 +158,17 @@ while True:
         break
 
 reps = detector.finalize()
+reps_final = reps
 new_rep_matrices: list[np.ndarray] = []
 for start, end in reps[prev_rep_count:]:
     rep_seq = np.stack(norm_seq[start:end], axis=0).astype(np.float32)
     new_rep_matrices.append(comparator.compare(rep_seq, expert_cache.sequence))
 if new_rep_matrices:
     _, rep_scores_final = engine.update(window_dist_matrix, new_rep_matrices)
+
+if writer is not None:
+    writer.release()
+    print(f"\n[Output] 저장 완료: {output_path}")
 
 cap.release()
 cv2.destroyAllWindows()
@@ -159,10 +177,12 @@ if frame_times:
     avg_fps = 1.0 / (sum(frame_times) / len(frame_times))
     min_fps = 1.0 / max(frame_times)
     max_fps = 1.0 / max(min(frame_times), 1e-9)
-    print(f"\n[Result] Avg FPS     : {avg_fps:.1f}")
-    print(f"[Result] Min FPS     : {min_fps:.1f}")
-    print(f"[Result] Max FPS     : {max_fps:.1f}")
-    print(f"[Result] Rep scores  : {rep_scores_final}")
+    rep_frame_counts = [end - start for start, end in reps_final]
+    print(f"\n[Result] Avg FPS        : {avg_fps:.1f}")
+    print(f"[Result] Min FPS        : {min_fps:.1f}")
+    print(f"[Result] Max FPS        : {max_fps:.1f}")
+    print(f"[Result] Rep scores     : {rep_scores_final}")
+    print(f"[Result] Rep frames     : {rep_frame_counts}")
 
 def _avg_ms(times: list[float]) -> str:
     if not times:
@@ -173,3 +193,34 @@ print(f"\n[Timing] predict    : {_avg_ms(t_predict)}")
 print(f"[Timing] normalize  : {_avg_ms(t_normalize)}")
 print(f"[Timing] DTW        : {_avg_ms(t_dtw)}")
 print(f"[Timing] detector   : {_avg_ms(t_detector)}")
+
+# n_frames 후보별 실시간 점수 vs 회차별 점수 비교
+N_FRAMES_CANDIDATES: list[int] = [10, 15, 20, 30, 40, 50, 60]
+norm_arr    = np.stack(norm_seq, axis=0).astype(np.float32)
+weights_arr = np.array(cfg["weights"], dtype=np.float32)
+weights_arr /= weights_arr.sum()
+
+print(f"\n[Analysis] n_frames 후보 비교 (회차별 점수 기준: {rep_scores_final})")
+print(f"  {'n_frames':>10} | {'rep별 실시간 평균':>24} | {'rep별 차이':>20} | {'평균 차이':>8}")
+print("  " + "-" * 72)
+
+for n_test in N_FRAMES_CANDIDATES:
+    if len(norm_seq) < n_test:
+        continue
+
+    frame_rt: dict[int, int] = {}
+    for i in range(n_test, len(norm_seq) + 1, cfg["dtw_interval"]):
+        window = norm_arr[i - n_test : i]
+        dm     = comparator.compare(window, expert_cache.sequence)
+        dist   = float(np.mean(dm @ weights_arr))
+        frame_rt[i - 1] = max(0, round(100 * (1.0 - dist / cfg["max_distance"])))
+
+    rep_rt_avgs: list[int] = []
+    for start, end in reps_final:
+        in_rep = [v for k, v in frame_rt.items() if start <= k <= end]
+        rep_rt_avgs.append(round(sum(in_rep) / len(in_rep)) if in_rep else 0)
+
+    diffs    = [abs(rt - pr) for rt, pr in zip(rep_rt_avgs, rep_scores_final)]
+    avg_diff = sum(diffs) / len(diffs) if diffs else 0.0
+
+    print(f"  n_frames={n_test:>2} | {str(rep_rt_avgs):>24} | {str(diffs):>20} | {avg_diff:>8.1f}")
