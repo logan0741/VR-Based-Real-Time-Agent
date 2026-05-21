@@ -24,6 +24,7 @@ dist/
 venv/
 env/
 ENV/
+node_modules/
 .conda/
 conda-meta/
 .direnv/
@@ -133,3 +134,66 @@ Desktop.ini
 models_smplx_v1_1.zip
 /unity/
 !/unity/FitnessPoseViewer/Assets/Scripts/AvatarController.cs
+
+# SMPL-X compatibility cache (auto-generated at runtime)
+model_3d/artifacts/smplx_cache/
+
+# Large binary / document files
+*.pdf
+
+# Root-level experimental HTML (not part of viewer_2d)
+/index.html
+
+# Markdown notes/analysis (keep only essential docs)
+/future_directions_strategy.md
+/notion_unity_smplx.md
+/presentation_unity_smplx.md
+/progress_summary.md
+/smplx_paper_analysis.md
+
+# ============================================================
+# FINAL-FOLDER-ONLY POLICY
+# GitHub에는 final/ + 환경설정만 올림
+# 아래 항목은 로컬에 남지만 git에는 포함하지 않음
+# ============================================================
+
+# Legacy source (final/ 로 대체됨)
+/2d_assets/
+/experiments/
+/model_3d/
+/scripts/
+/src/
+/unity_integration/
+/viewer_2d/
+
+# Legacy Python entry points / tests
+/play_squat.py
+/run_steps.py
+/test_debug.py
+/test_server.py
+/test_unity_ws.py
+/test_cs_ws.cs
+/test_unity_ws.py
+
+# Node / React build config (final/에 포함되지 않음)
+/package.json
+/package-lock.json
+/tsconfig.json
+/tsconfig.node.json
+/vite.config.ts
+
+# Sample / test data JSON
+/sample_keypoints.json
+/squat_left_1_keypoints.json
+
+# Legacy docs & analysis MDs
+/CHANGELOG.md
+/PROJECT_ANALYSIS.md
+/analysis_results.md
+/avatar_controller_guide.md
+/avatar_progress_report.md
+/model_3d_deep_analysis.md
+/environment.yml
+
+# Screenshots / debug images
+*.png
