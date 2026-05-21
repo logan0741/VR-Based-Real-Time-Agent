@@ -1,0 +1,12 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.DS_Store
+Thumbs.db
+.env
+.env.*
+
+assets/test_videos/test_lgb.mp4
+assets/output_videos/test_lgb_output.mp4

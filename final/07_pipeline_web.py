@@ -1,14 +1,14 @@
 """
-Pipeline A: Web-Only (Unity 없이 실행)
+07_pipeline_web.py — Pipeline A: Web-Only (Unity 없이 실행)
 
 구성: FastAPI 서버 + 2D 웹 뷰어 (Quest 3 브라우저 대응)
 백엔드: SMPL-X OptimizationFitter
 입력: 웹캠 또는 영상 파일 (별도 터미널에서 클라이언트 실행)
 
 실행:
-    python final/pipeline_web_only.py
-    python final/pipeline_web_only.py --port 8080
-    python final/pipeline_web_only.py --cloudflare
+    python final/07_pipeline_web.py
+    python final/07_pipeline_web.py --port 8080
+    python final/07_pipeline_web.py --cloudflare
 """
 
 from __future__ import annotations
@@ -61,7 +61,7 @@ def main() -> int:
 
     return subprocess.call([
         PYTHON, "-m", "uvicorn",
-        "final.backend.server:app",
+        "final.s02_backend.server:app",
         "--host", "0.0.0.0",
         "--port", str(args.port),
     ], cwd=str(PROJECT_ROOT))
@@ -83,7 +83,7 @@ def run_with_cloudflare(port: int) -> int:
 
     server = subprocess.Popen([
         PYTHON, "-m", "uvicorn",
-        "final.backend.server:app",
+        "final.s02_backend.server:app",
         "--host", "0.0.0.0", "--port", str(port),
     ], cwd=str(PROJECT_ROOT))
 

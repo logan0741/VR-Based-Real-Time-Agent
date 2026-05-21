@@ -9,8 +9,8 @@ Unity 연결:
     wss://<cloudflare-url>/ws/pose  (외부/HTTPS)
 
 실행:
-    python final/pipeline_full.py
-    python final/pipeline_full.py --cloudflare   # Unity 외부 접속 시
+    python final/08_pipeline_full.py
+    python final/08_pipeline_full.py --cloudflare   # Unity 외부 접속 시
 """
 
 from __future__ import annotations
@@ -82,7 +82,7 @@ def main() -> int:
 
     return subprocess.call([
         PYTHON, "-m", "uvicorn",
-        "final.backend.server:app",
+        "final.s02_backend.server:app",
         "--host", "0.0.0.0",
         "--port", str(args.port),
     ], cwd=str(PROJECT_ROOT))
@@ -104,7 +104,7 @@ def run_with_cloudflare(port: int) -> int:
 
     server = subprocess.Popen([
         PYTHON, "-m", "uvicorn",
-        "final.backend.server:app",
+        "final.s02_backend.server:app",
         "--host", "0.0.0.0", "--port", str(port),
     ], cwd=str(PROJECT_ROOT))
 
