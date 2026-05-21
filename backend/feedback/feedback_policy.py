@@ -1,38 +1,20 @@
-_SYSTEM_PARTS: frozenset[str] = frozenset({"pending", "ok"})
-
-
 class FeedbackPolicy:
-    def __init__(self, update_interval: int = 48) -> None:
-        """update_interval 프레임마다 severity 평균 기반으로 피드백 메시지를 교체한다."""
-        if update_interval <= 0:
-            raise ValueError(f"update_interval must be positive: {update_interval}")
-        self._update_interval = update_interval
-        self._severity_buffer: dict[str, list[float]] = {}
-        self._last_candidate_per_part: dict[str, dict[str, object]] = {}
+    def __init__(self, hold_frames: int) -> None:
+        """hold_frames 동안 rep 완료 피드백 메시지를 유지한다."""
+        if hold_frames <= 0:
+            raise ValueError(f"hold_frames must be positive: {hold_frames}")
+        self._hold_frames = hold_frames
         self._active_message: str = "측정 중입니다."
+        self._expire_at: int = -1
 
-    def update(self, frame_idx: int, candidate: dict[str, object] | None) -> str:
-        """frame_idx가 update_interval 배수일 때 severity 평균이 가장 높은 부위의 메시지로 교체한다."""
-        if candidate is not None:
-            body_part = str(candidate["body_part"])
-            if body_part not in _SYSTEM_PARTS:
-                self._severity_buffer.setdefault(body_part, []).append(
-                    float(candidate["severity"])
-                )
-                self._last_candidate_per_part[body_part] = candidate
+    def on_rep_complete(self, frame_idx: int, candidate: dict[str, object]) -> None:
+        """rep 완료 시 피드백 메시지를 갱신하고 hold_frames 후 만료를 설정한다."""
+        self._active_message = str(candidate["message"])
+        self._expire_at = frame_idx + self._hold_frames
 
-        if frame_idx % self._update_interval != 0:
-            return self._active_message
-
-        if self._severity_buffer:
-            best_part = max(
-                self._severity_buffer,
-                key=lambda p: sum(self._severity_buffer[p]) / len(self._severity_buffer[p]),
-            )
-            self._active_message = str(self._last_candidate_per_part[best_part]["message"])
-        elif candidate is not None:
-            self._active_message = str(candidate["message"])
-
-        self._severity_buffer.clear()
-        self._last_candidate_per_part.clear()
+    def update(self, frame_idx: int) -> str:
+        """현재 프레임 기준 활성 메시지를 반환하고 만료 시 초기화한다."""
+        if self._expire_at != -1 and frame_idx >= self._expire_at:
+            self._active_message = "측정 중입니다."
+            self._expire_at = -1
         return self._active_message
