@@ -220,3 +220,8 @@ HANDOFF.md
 *.err.log
 전처리/
 전처리 2/
+
+# Expert videos: 바이너리는 무시, 폴더 구조만 유지
+final/assets/expert_videos/*.mp4
+final/assets/expert_videos/*.npy
+!final/assets/expert_videos/.gitkeep

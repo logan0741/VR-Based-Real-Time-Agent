@@ -12,7 +12,7 @@ from .utils.keypoints import (
     LEFT_ANKLE, RIGHT_ANKLE,
 )
 
-_ASSETS = Path(__file__).resolve().parents[2] / "전처리 2" / "assets" / "expert_videos"
+_ASSETS = Path(__file__).resolve().parents[2] / "final" / "assets" / "expert_videos"
 
 EXERCISES: dict[str, dict] = {
     "squat": {
