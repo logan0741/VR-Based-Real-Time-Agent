@@ -792,7 +792,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 if __name__ == "__main__":
     uvicorn.run(
-        "model_3d.server_app.server:app",
+        "final.s02_backend.server:app",
         host="0.0.0.0",
         port=8000,
         reload=False,

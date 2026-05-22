@@ -311,6 +311,7 @@ class PoseRetargeter:
             "body_pose": self.smooth_body_pose(body_pose, t),
             "global_orient": self.smooth_global_orient(global_orient, t),
         }
+        self._frame_count += 1
         if joints_3d is not None:
             result["joints_3d"] = self.smooth_joints_3d(joints_3d, t)
         return result
