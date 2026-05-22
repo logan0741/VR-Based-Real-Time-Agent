@@ -6,9 +6,9 @@ from enum import Enum, auto
 
 import numpy as np
 
-from .utils.keypoints import LEFT_KNEE, RIGHT_KNEE
+from .utils.keypoints import LEFT_KNEE, RIGHT_KNEE, LEFT_WRIST, RIGHT_WRIST, LEFT_SHOULDER, RIGHT_SHOULDER, NOSE
 
-SUPPORTED_DETECTOR_TYPES: frozenset[str] = frozenset({"squat"})
+SUPPORTED_DETECTOR_TYPES: frozenset[str] = frozenset({"squat", "hammer_curl", "pullup", "lateral_raise"})
 SUPPORTED_NORMALIZER_TYPES: frozenset[str] = frozenset({"front", "side_left", "side_right"})
 
 
@@ -48,7 +48,7 @@ class RepDetector:
 
     def update(self, norm_frame: np.ndarray) -> list[tuple[int, int]]:
         """정규화된 관절 프레임 1개를 입력받아 누적 rep 구간 목록을 반환한다. norm_frame shape=(17,3), dtype=float32."""
-        signal = self._extract_knee_signal(norm_frame)
+        signal = self._extract_signal(norm_frame)
         diff = signal - self._prev_signal
         self._prev_signal = signal
         self._diff_buffer.append(diff)
@@ -67,13 +67,26 @@ class RepDetector:
             self._state = _RepState.WAIT_VALLEY
         return self._valid_reps()
 
-    def _extract_knee_signal(self, norm_frame: np.ndarray) -> float:
-        """normalizer_type에 따라 단일 프레임에서 무릎 y좌표를 추출한다. norm_frame shape=(17,3), dtype=float32."""
-        if self._normalizer_type == "side_left":
-            return float(norm_frame[LEFT_KNEE, 0])
-        if self._normalizer_type == "side_right":
-            return float(norm_frame[RIGHT_KNEE, 0])
-        return float((norm_frame[LEFT_KNEE, 0] + norm_frame[RIGHT_KNEE, 0]) / 2.0)
+    def _extract_signal(self, norm_frame: np.ndarray) -> float:
+        """종목·방향에 따라 단일 프레임에서 1D 신호를 추출한다. norm_frame shape=(17,3), dtype=float32."""
+        if self._type == "squat":
+            if self._normalizer_type == "side_left":
+                return float(norm_frame[LEFT_KNEE, 0])
+            if self._normalizer_type == "side_right":
+                return float(norm_frame[RIGHT_KNEE, 0])
+            return float((norm_frame[LEFT_KNEE, 0] + norm_frame[RIGHT_KNEE, 0]) / 2.0)
+
+        if self._type == "pullup":
+            avg_wrist_y = (norm_frame[LEFT_WRIST, 0] + norm_frame[RIGHT_WRIST, 0]) / 2.0
+            return float(norm_frame[NOSE, 0] - avg_wrist_y)
+
+        if self._type == "hammer_curl":
+            if self._normalizer_type == "side_left":
+                return float(norm_frame[LEFT_WRIST, 0] - norm_frame[LEFT_SHOULDER, 0])
+            return float(norm_frame[RIGHT_WRIST, 0] - norm_frame[RIGHT_SHOULDER, 0])
+
+        # lateral_raise 및 미구현 종목: 신호 0 반환 (rep 미감지)
+        return 0.0
 
     def _step(self, curr_slope: float) -> None:
         """기울기 부호 전환으로 valley·peak를 감지하고 내부 상태를 갱신한다."""

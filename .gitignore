@@ -168,12 +168,10 @@ model_3d/artifacts/smplx_cache/
 
 # Legacy Python entry points / tests
 /play_squat.py
-/run_steps.py
 /test_debug.py
 /test_server.py
 /test_unity_ws.py
 /test_cs_ws.cs
-/test_unity_ws.py
 
 # Node / React build config (final/에 포함되지 않음)
 /package.json
@@ -197,3 +195,28 @@ model_3d/artifacts/smplx_cache/
 
 # Screenshots / debug images
 *.png
+
+# ============================================================
+# 중복/구 구조 폴더 (s01~s06 구조로 대체됨)
+# ============================================================
+
+# Legacy duplicate dirs replaced by s01-s06 structure
+final/backend/
+final/client/
+final/frontend/
+final/unity/
+
+# Old pipeline entry points (replaced by run_steps.py)
+final/pipeline_full.py
+final/pipeline_web_only.py
+final/pipeline_test.py
+final/07_pipeline_web.py
+final/08_pipeline_full.py
+
+# Misc local-only files
+v2/
+HANDOFF.md
+*.out.log
+*.err.log
+전처리/
+전처리 2/

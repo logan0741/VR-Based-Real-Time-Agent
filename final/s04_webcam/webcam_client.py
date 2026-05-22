@@ -32,7 +32,7 @@ async def main():
     print(f"Connecting to {SERVER_URL}...")
 
     mp_pose = mp.solutions.pose
-    pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5)
+    pose = mp_pose.Pose(min_detection_confidence=0.5, min_tracking_confidence=0.5, model_complexity=0)
     cap = cv2.VideoCapture(0)  # 웹캠 0번 켜기
 
     if not cap.isOpened():
@@ -42,6 +42,13 @@ async def main():
     print("웹캠이 켜졌습니다. Unity와 실시간 연동을 시작합니다. (종료: 웹캠 화면에서 'q' 또는 터미널에서 Ctrl+C)")
 
     async with websockets.connect(SERVER_URL) as ws:
+        # session_start: 서버가 exercise별 preprocessing 세션을 초기화하도록 알림
+        await ws.send(json.dumps({
+            "data_type": "session_start",
+            "user_id": "webcam_user",
+            "exercise_type": "squat",
+        }))
+
         frame_idx = 0
         while cap.isOpened():
             ret, frame = cap.read()
@@ -55,13 +62,11 @@ async def main():
             if results.pose_landmarks:
                 landmarks = results.pose_landmarks.landmark
 
-                # Payload 생성: 17 joints x [x, y, confidence]
-                # *중요*: Lifter가 학습될 때의 좌표계에 맞추어 y, x, z를 적절히 배치
+                # Payload: 서버 KEYPOINT_FORMAT=movenet_yx → [y, x, conf] 순서
                 payload = []
                 for mp_idx in MP_TO_COCO:
                     lm = landmarks[mp_idx]
-                    # x, y 좌표와 신뢰도(visibility)
-                    payload.append([lm.x, lm.y, lm.visibility])
+                    payload.append([lm.y, lm.x, lm.visibility])
 
                 # JSON 전송
                 msg = {
@@ -71,13 +76,6 @@ async def main():
                 }
 
                 await ws.send(json.dumps(msg))
-
-                # (Optional) 서버 응답 받기
-                try:
-                    resp = await asyncio.wait_for(ws.recv(), timeout=0.05)
-                    # print("Server ACK")
-                except asyncio.TimeoutError:
-                    pass
 
                 # 골격 그리기 (MediaPipe 기본 제공 유틸리티 대신 직접 표시)
                 mp.solutions.drawing_utils.draw_landmarks(
@@ -89,7 +87,6 @@ async def main():
                 break
 
             frame_idx += 1
-            await asyncio.sleep(0.01) # 루프 과부하 방지
 
     cap.release()
     cv2.destroyAllWindows()

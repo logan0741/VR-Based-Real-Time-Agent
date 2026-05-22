@@ -5,52 +5,87 @@ from pathlib import Path
 
 from .utils.keypoints import (
     LEFT_SHOULDER, RIGHT_SHOULDER,
+    LEFT_ELBOW, RIGHT_ELBOW,
+    LEFT_WRIST, RIGHT_WRIST,
     LEFT_HIP, RIGHT_HIP,
     LEFT_KNEE, RIGHT_KNEE,
     LEFT_ANKLE, RIGHT_ANKLE,
 )
 
+_ASSETS = Path(__file__).resolve().parents[2] / "전처리 2" / "assets" / "expert_videos"
+
 EXERCISES: dict[str, dict] = {
     "squat": {
-        # 전문가 영상 파일 경로
-        "video_path": str(Path(__file__).resolve().parents[2] / "전처리" / "assets" / "expert_videos" / "squat_full.mp4"),
-
-        # 정규화 기준 방향: "front"(정면) / "side_left"(좌측면) / "side_right"(우측면)
-        "normalizer_type": "side_left",
-
-        # DTW 비교에 사용할 관절 인덱스 목록 (스쿼트는 상체 끝 관절 제외)
+        "video_path": str(_ASSETS / "squat_full.mp4"),
+        "normalizer_type": "front",     # 정면 촬영 기준 정규화
         "keypoints_used": [
             LEFT_SHOULDER, RIGHT_SHOULDER,
             LEFT_HIP, RIGHT_HIP,
             LEFT_KNEE, RIGHT_KNEE,
             LEFT_ANKLE, RIGHT_ANKLE,
         ],
-
-        # 관절별 DTW 거리 가중치 (keypoints_used 순서와 1:1 대응, 동일 가중치는 1.0)
         "weights": [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0],
-
-        # 전문가 영상 샘플링 및 사용자 처리 목표 fps
         "target_fps": 24,
-
-        # 실시간 점수 산출에 사용할 최근 프레임 수 (target_fps × 3초)
         "n_frames": 30,
-
-        # 점수 선형 변환 기준 최대 거리 — 정규화된 몸통 길이 단위, 이 값 이상이면 0점
         "max_distance": 1.0,
-
-        # 운동 1회 감지 방법 식별자 (RepDetector에서 종목별 로직 선택에 사용)
         "rep_detector_type": "squat",
-
-        # 정규화 기준값(원점·스케일) 평활화에 사용할 프레임 수 (5~10 권장)
         "norm_buffer_size": 7,
-
-        # 1회 감지용 기울기 계산 윈도우 프레임 수 — 이 구간의 평균 기울기로 상승/하강 판정
         "rep_slope_window": 15,
-
-        # 유효 rep 최소 프레임 수 — 이 값 미만 구간은 노이즈로 버림 (target_fps × 1초 권장)
         "min_rep_frames": 24,
-
-        # DTW 계산 주기 — N프레임마다 1회 계산, 1이면 매 프레임 계산
         "dtw_interval": 3,
-    }
+        "view": "front",                # 정면 촬영 → 기하학적 스코어링 사용
+        "geometric_scorer": "squat_front",
+        "implemented": True,
+    },
+    "hammer_curl": {
+        # 백엔드 DTW 로직 미구현 — implemented=False 확인 후 stub 피드백 반환
+        "video_path": str(_ASSETS / "hammer_curl.mp4"),
+        "normalizer_type": "side_left",
+        "keypoints_used": [LEFT_SHOULDER, LEFT_ELBOW, LEFT_WRIST],
+        "weights": [1.0, 1.0, 1.0],
+        "target_fps": 30,
+        "n_frames": 45,
+        "max_distance": 1.0,
+        "rep_detector_type": "hammer_curl",
+        "norm_buffer_size": 7,
+        "rep_slope_window": 12,
+        "min_rep_frames": 22,
+        "dtw_interval": 3,
+        "view": "side",
+        "implemented": False,
+    },
+    "pullup": {
+        # 백엔드 DTW 로직 미구현 — implemented=False 확인 후 stub 피드백 반환
+        "video_path": str(_ASSETS / "pull_up.mp4"),
+        "normalizer_type": "front",
+        "keypoints_used": [LEFT_SHOULDER, RIGHT_SHOULDER, LEFT_ELBOW, RIGHT_ELBOW],
+        "weights": [1.0, 1.0, 1.0, 1.0],
+        "target_fps": 30,
+        "n_frames": 90,
+        "max_distance": 1.0,
+        "rep_detector_type": "pullup",
+        "norm_buffer_size": 7,
+        "rep_slope_window": 20,
+        "min_rep_frames": 45,
+        "dtw_interval": 3,
+        "view": "front",
+        "implemented": False,
+    },
+    "lateral_raise": {
+        # 백엔드 DTW 로직 미구현 — implemented=False 확인 후 stub 피드백 반환
+        "video_path": str(_ASSETS / "lateral_raise.mp4"),
+        "normalizer_type": "front",
+        "keypoints_used": [LEFT_SHOULDER, RIGHT_SHOULDER, LEFT_ELBOW, RIGHT_ELBOW],
+        "weights": [1.0, 1.0, 1.0, 1.0],
+        "target_fps": 30,
+        "n_frames": 45,
+        "max_distance": 1.0,
+        "rep_detector_type": "lateral_raise",
+        "norm_buffer_size": 7,
+        "rep_slope_window": 12,
+        "min_rep_frames": 22,
+        "dtw_interval": 3,
+        "view": "front",
+        "implemented": False,
+    },
 }

@@ -122,25 +122,52 @@ class OneEuroFilter:
 # ---------------------------------------------------------------------------
 
 class OneEuroFilterBank:
-    """Apply independent OneEuro filters to each channel of a flat array."""
+    """Vectorized OneEuro filter for N channels — all channels updated in one NumPy pass."""
 
-    def __init__(self, num_channels: int, **kwargs) -> None:
-        self.filters = [OneEuroFilter(**kwargs) for _ in range(num_channels)]
+    def __init__(self, num_channels: int, min_cutoff: float = 1.0, beta: float = 0.007, d_cutoff: float = 1.0, **_kwargs) -> None:
+        self.min_cutoff = min_cutoff
+        self.beta = beta
+        self.d_cutoff = d_cutoff
+        self._x_hat = np.zeros(num_channels, dtype=np.float64)
+        self._dx_hat = np.zeros(num_channels, dtype=np.float64)
+        self._initialized = False
+        self._last_time: Optional[float] = None
+        self._freq: float = 30.0
 
     def reset(self) -> None:
-        for f in self.filters:
-            f.reset()
+        self._initialized = False
+        self._last_time = None
+        self._dx_hat[:] = 0.0
 
     def __call__(self, values: np.ndarray, t: Optional[float] = None) -> np.ndarray:
-        flat = values.ravel().astype(float)
-        assert len(flat) == len(self.filters), (
-            f"Expected {len(self.filters)} channels, got {len(flat)}"
-        )
         now = t if t is not None else time.perf_counter()
-        return np.array(
-            [f(float(v), now) for f, v in zip(self.filters, flat)],
-            dtype=np.float32,
-        ).reshape(values.shape)
+        if self._last_time is not None and now > self._last_time:
+            self._freq = 1.0 / (now - self._last_time)
+        self._last_time = now
+        te = 1.0 / max(self._freq, 1e-6)
+
+        x = values.ravel().astype(np.float64)
+
+        if not self._initialized:
+            self._x_hat[:] = x
+            self._initialized = True
+            return values.astype(np.float32)
+
+        # Derivative low-pass
+        r_d = 2.0 * math.pi * self.d_cutoff * te
+        d_alpha = r_d / (r_d + 1.0)
+        dx = (x - self._x_hat) * self._freq
+        self._dx_hat += d_alpha * (dx - self._dx_hat)
+
+        # Adaptive cutoff → signal alpha
+        cutoff = self.min_cutoff + self.beta * np.abs(self._dx_hat)
+        r = 2.0 * math.pi * cutoff * te
+        alpha = r / (r + 1.0)
+
+        # Update filtered value
+        self._x_hat += alpha * (x - self._x_hat)
+
+        return self._x_hat.astype(np.float32).reshape(values.shape)
 
 
 # ---------------------------------------------------------------------------

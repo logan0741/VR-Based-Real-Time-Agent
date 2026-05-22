@@ -55,6 +55,19 @@ let lastFrameTime = 0;
 let fpsBuffer = [];
 const mirrorCheckbox = document.getElementById("mirror-mode");
 
+// Gradient cache: recreated only when canvas dimensions change
+const _gradCache = new Map();
+function getCachedBackground(ctx, cacheKey) {
+    const w = ctx.canvas.width, h = ctx.canvas.height;
+    const cached = _gradCache.get(cacheKey);
+    if (cached && cached.w === w && cached.h === h) return cached.grad;
+    const grad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.7);
+    grad.addColorStop(0, "#0d0d18");
+    grad.addColorStop(1, "#08080e");
+    _gradCache.set(cacheKey, { w, h, grad });
+    return grad;
+}
+
 // Expert pose data (loaded from server)
 let expertFrames = [];       // Array of {frame, keypoints}
 let expertFrameIndex = 0;    // Current playback index
@@ -65,7 +78,14 @@ let expertLoaded = false;
 // ================================================================
 
 function connect() {
-    const url = document.getElementById("server-url").value.trim();
+    let url = document.getElementById("server-url").value.trim();
+
+    // HTTPS 페이지에서는 반드시 wss:// 사용, 포트 번호 제거
+    if (location.protocol === "https:") {
+        url = url.replace(/^ws:\/\//, "wss://").replace(/:8000\//, "/").replace(/:8000$/, "");
+    }
+    document.getElementById("server-url").value = url;
+
     if (ws && ws.readyState <= 1) {
         ws.close();
     }
@@ -152,16 +172,7 @@ function handleFrame(data) {
         document.getElementById("user-overlay").classList.add("hidden");
     }
 
-    // Draw expert skeleton (synchronized with user frames)
-    if (expertLoaded && expertFrames.length > 0) {
-        const expertKpts = expertFrames[expertFrameIndex].keypoints;
-        if (expertKpts && expertKpts.length === 17) {
-            drawSkeleton("expert-canvas", expertKpts, false);
-            document.getElementById("expert-overlay").classList.add("hidden");
-        }
-        // Advance expert frame, loop back to start
-        expertFrameIndex = (expertFrameIndex + 1) % expertFrames.length;
-    }
+    // Expert skeleton is driven by its own independent loop (see startExpertLoop)
 
     // Update feedback
     updateFeedback(data.feedback);
@@ -185,11 +196,8 @@ function drawSkeleton(canvasId, keypoints, isUser) {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Background gradient
-    const grad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.7);
-    grad.addColorStop(0, "#0d0d18");
-    grad.addColorStop(1, "#08080e");
-    ctx.fillStyle = grad;
+    // Background gradient (cached — recreated only on resize)
+    ctx.fillStyle = getCachedBackground(ctx, isUser ? "user" : "expert");
     ctx.fillRect(0, 0, w, h);
 
     // Normalize keypoints to canvas space
@@ -244,10 +252,17 @@ function normalizeToCanvas(keypoints, canvasW, canvasH, mirror) {
     //
     // Heuristic: if all values in [0,1] range AND nose (col0) is near the
     // top (smallest among body joints), it's MoveNet [y,x,conf] format.
-    const col0 = keypoints.map(kp => kp[0]);
-    const col1 = keypoints.map(kp => kp[1]);
-    const max0 = Math.max(...col0), min0 = Math.min(...col0);
-    const max1 = Math.max(...col1), min1 = Math.min(...col1);
+    let max0 = -Infinity, min0 = Infinity, max1 = -Infinity, min1 = Infinity;
+    const col0 = new Array(keypoints.length);
+    const col1 = new Array(keypoints.length);
+    for (let _i = 0; _i < keypoints.length; _i++) {
+        const v0 = keypoints[_i][0], v1 = keypoints[_i][1];
+        col0[_i] = v0; col1[_i] = v1;
+        if (v0 > max0) max0 = v0;
+        if (v0 < min0) min0 = v0;
+        if (v1 > max1) max1 = v1;
+        if (v1 < min1) min1 = v1;
+    }
     const allNormalized = max0 <= 1.5 && max1 <= 1.5 && min0 >= -0.5 && min1 >= -0.5;
     const range0 = max0 - min0;
     const range1 = max1 - min1;
@@ -315,34 +330,41 @@ function normalizeToCanvas(keypoints, canvasW, canvasH, mirror) {
 function updateFeedback(feedback) {
     if (!feedback) return;
 
-    const label = feedback.label || "";
-    const labelEl = document.getElementById("feedback-label");
-    labelEl.textContent = label;
-    labelEl.className = "feedback-label";
+    // Score: use server-computed DTW score directly
+    const score = typeof feedback.score === "number" ? feedback.score : 0;
+    updateScore(score);
 
-    // Simple score based on fatigue
-    const fatigue = feedback.muscle_fatigue;
-    if (fatigue) {
-        updateFatigueDots(fatigue);
-
-        // Calculate rough score
-        const fatigueValues = Object.values(fatigue);
-        const highCount = fatigueValues.filter(v => v === "high").length;
-        const medCount = fatigueValues.filter(v => v === "med").length;
-        const score = Math.max(0, 100 - highCount * 20 - medCount * 8);
-        updateScore(score);
-
-        // Feedback classification
-        if (highCount > 0) {
-            labelEl.classList.add("bad");
-            labelEl.textContent = "⚠️ 자세 교정 필요";
-        } else if (medCount > 2) {
-            labelEl.classList.add("warning");
-            labelEl.textContent = "주의: 부하 증가 중";
-        } else {
-            labelEl.classList.add("good");
-            labelEl.textContent = "✅ 좋은 자세";
+    // Rep count with pop animation
+    const repEl = document.getElementById("rep-count");
+    if (repEl) {
+        const prev = parseInt(repEl.textContent, 10) || 0;
+        const next = feedback.rep_count ?? 0;
+        repEl.textContent = next;
+        if (next > prev) {
+            repEl.style.transform = "scale(1.4)";
+            setTimeout(() => { repEl.style.transform = "scale(1)"; }, 200);
         }
+    }
+
+    // Feedback message + severity styling
+    const labelEl = document.getElementById("feedback-label");
+    const msg = feedback.message || feedback.label || "";
+    const severity = feedback.severity || "";
+    labelEl.textContent = msg;
+    labelEl.className = "feedback-label";
+    if (severity === "error") labelEl.classList.add("bad");
+    else if (severity === "warning") labelEl.classList.add("warning");
+    else if (score >= 70) labelEl.classList.add("good");
+
+    // Body part secondary detail
+    const detailEl = document.getElementById("knee-angle");
+    if (detailEl) {
+        detailEl.textContent = feedback.body_part ? `부위: ${feedback.body_part}` : "";
+    }
+
+    // Muscle fatigue dots
+    if (feedback.muscle_fatigue) {
+        updateFatigueDots(feedback.muscle_fatigue);
     }
 }
 
@@ -381,6 +403,21 @@ function updateFatigueDots(fatigue) {
 // Expert Pose Loader
 // ================================================================
 
+function startExpertLoop() {
+    const FPS = 24;
+    setInterval(() => {
+        if (!expertLoaded || expertFrames.length === 0) return;
+        // 시각 기반 인덱스 — viewer/app 모두 같은 프레임을 동시에 표시
+        expertFrameIndex = Math.floor(Date.now() / (1000 / FPS)) % expertFrames.length;
+        const frame = expertFrames[expertFrameIndex];
+        const kpts = frame.keypoints ?? frame;
+        if (kpts && kpts.length === 17) {
+            drawSkeleton("expert-canvas", kpts, false);
+            document.getElementById("expert-overlay").classList.add("hidden");
+        }
+    }, 1000 / FPS);
+}
+
 async function loadExpertPoses() {
     const baseUrl = location.origin || "http://127.0.0.1:8000";
     try {
@@ -391,13 +428,6 @@ async function loadExpertPoses() {
             expertFrameIndex = 0;
             expertLoaded = true;
             console.log(`[Viewer] Expert poses loaded: ${data.filename} (${data.total_frames} frames)`);
-
-            // Draw the first expert frame immediately
-            const firstKpts = expertFrames[0].keypoints;
-            if (firstKpts && firstKpts.length === 17) {
-                drawSkeleton("expert-canvas", firstKpts, false);
-                document.getElementById("expert-overlay").classList.add("hidden");
-            }
         } else {
             console.warn("[Viewer] No expert poses available:", data.message);
         }
@@ -507,8 +537,10 @@ async function detectLoop() {
         try {
             const poses = await poseDetector.estimatePoses(video);
             if (poses && poses.length > 0) {
-                // MoveNet outputs [y, x, score] normalized 0-1 — matches server KEYPOINT_FORMAT=movenet_yx
-                const payload = poses[0].keypoints.map(kp => [kp.y, kp.x, kp.score ?? 0.9]);
+                // TF.js returns pixel coords; normalize to [0,1] matching KEYPOINT_FORMAT=movenet_yx
+                const vw = video.videoWidth || 640;
+                const vh = video.videoHeight || 480;
+                const payload = poses[0].keypoints.map(kp => [kp.y / vh, kp.x / vw, kp.score ?? 0.9]);
                 ws.send(JSON.stringify({
                     data_type: "keypoints",
                     frame_id: `cam_${frameCount}`,
@@ -529,15 +561,38 @@ async function detectLoop() {
 document.getElementById("camera-btn").addEventListener("click", startCamera);
 
 // ================================================================
+// High-DPI canvas support
+function initDPR() {
+    const dpr = Math.min(window.devicePixelRatio || 1, 3);
+    if (dpr <= 1) return;
+    ["expert-canvas", "user-canvas"].forEach(id => {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        const rect = canvas.getBoundingClientRect();
+        const w = Math.round(rect.width) || 480;
+        const h = Math.round(rect.height) || 640;
+        if (w < 10 || h < 10) return; // layout not ready yet
+        canvas.width = w * dpr;
+        canvas.height = h * dpr;
+        // CSS size is controlled by stylesheet — no inline style needed
+    });
+}
+
+// ================================================================
 // Auto-connect and load expert data on page load
 window.addEventListener("load", () => {
-    // Detect if running on Quest: auto-adjust server URL to use same host
+    // Auto-adjust WebSocket URL based on protocol and host
     if (location.hostname !== "127.0.0.1" && location.hostname !== "localhost") {
-        const wsUrl = `ws://${location.hostname}:8000/ws/pose`;
+        const wsProto = location.protocol === "https:" ? "wss" : "ws";
+        const wsPort = location.protocol === "https:" ? "" : ":8000";
+        const wsUrl = `${wsProto}://${location.hostname}${wsPort}/ws/pose`;
         document.getElementById("server-url").value = wsUrl;
     }
-    // Load expert reference poses
+    // Scale canvases for high-DPI screens (one frame after layout)
+    requestAnimationFrame(initDPR);
+    // Load expert reference poses and start independent loop
     loadExpertPoses();
+    startExpertLoop();
     // Connect WebSocket
     setTimeout(connect, 500);
 });
