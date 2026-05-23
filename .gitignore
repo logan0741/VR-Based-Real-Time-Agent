@@ -220,6 +220,11 @@ HANDOFF.md
 *.err.log
 전처리/
 전처리 2/
+server_err.txt
+server_out.txt
+
+# Backup dirs
+final/_backup/
 
 # Expert videos: 바이너리는 무시, 폴더 구조만 유지
 final/assets/expert_videos/*.mp4

@@ -17,7 +17,7 @@ _ASSETS = Path(__file__).resolve().parents[2] / "final" / "assets" / "expert_vid
 EXERCISES: dict[str, dict] = {
     "squat": {
         "video_path": str(_ASSETS / "squat_full.mp4"),
-        "normalizer_type": "front",     # 정면 촬영 기준 정규화
+        "normalizer_type": "side_left",
         "keypoints_used": [
             LEFT_SHOULDER, RIGHT_SHOULDER,
             LEFT_HIP, RIGHT_HIP,
@@ -33,8 +33,7 @@ EXERCISES: dict[str, dict] = {
         "rep_slope_window": 15,
         "min_rep_frames": 24,
         "dtw_interval": 3,
-        "view": "front",                # 정면 촬영 → 기하학적 스코어링 사용
-        "geometric_scorer": "squat_front",
+        "view": "side",
         "implemented": True,
     },
     "hammer_curl": {

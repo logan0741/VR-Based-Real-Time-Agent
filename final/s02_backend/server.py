@@ -39,7 +39,6 @@ except ImportError:
     _DTW_AVAILABLE = False
     print("[Pipeline] dtaidistance 미설치 — DTW 점수 비활성화. pip install dtaidistance==2.3.12")
 
-from ..s01_preprocessing.score_engine import GeometricScorer
 
 
 class PreprocessingSession:
@@ -110,19 +109,9 @@ class PreprocessingSession:
         self._known_reps = len(all_reps)
 
         # ── 점수 계산 ──
-        geo_fn: str = self._cfg.get("geometric_scorer", "")
         score, rep_scores = 50, []
-        _geo_key: str = ""
 
-        if geo_fn == "squat_front":
-            # 정면 촬영: DTW 대신 기하학적 스코어링 (1회 계산, 재사용)
-            try:
-                score, _geo_key = GeometricScorer.squat_front(kpts_np)
-                for _ in new_reps:
-                    rep_scores.append(score)
-            except Exception:
-                pass
-        elif self._last_dist_matrix is not None and self._score_engine is not None:
+        if self._last_dist_matrix is not None and self._score_engine is not None:
             try:
                 score, rep_scores = self._score_engine.update(self._last_dist_matrix, new_rep_matrices)
             except Exception:
@@ -137,10 +126,6 @@ class PreprocessingSession:
         if new_reps:
             self._feedback_policy.on_rep_complete(self._frame_idx, feedback_result)
         message = self._feedback_policy.update(self._frame_idx)
-
-        # 정면 촬영: 이미 계산한 _geo_key 재사용 (2차 호출 제거)
-        if geo_fn == "squat_front" and message in {"측정 중입니다.", "자세를 화면 중앙에 맞춰주세요.", ""}:
-            message = GeometricScorer.geo_feedback_message(_geo_key) if _geo_key else message
 
         self._frame_idx += 1
 

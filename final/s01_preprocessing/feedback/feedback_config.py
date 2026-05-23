@@ -109,53 +109,6 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             },
         },
     },
-    ("squat", "front"): {
-        # 정면 촬영용 — classify 규칙은 FeedbackEngine이 아닌 GeometricScorer에서 처리하므로
-        # threshold를 높게 설정해 DTW 기반 피드백이 발동되지 않도록 한다.
-        "confidence_joints": (
-            LEFT_SHOULDER, RIGHT_SHOULDER,
-            LEFT_HIP, RIGHT_HIP,
-            LEFT_KNEE, RIGHT_KNEE,
-        ),
-        "body_parts": {
-            "hip": {
-                "joints": (LEFT_HIP, RIGHT_HIP),
-                "dtw_slice": (2, 4),
-                "threshold": 99.0,  # DTW 피드백 사실상 비활성화
-                "classify": {
-                    "type": "axis_compare",
-                    "axis": 0,
-                    "axis_tolerance": 0.05,
-                    "pos": "too_low",
-                    "neg": "too_high",
-                },
-            },
-            "knee": {
-                "joints": (LEFT_KNEE, RIGHT_KNEE),
-                "dtw_slice": (4, 6),
-                "threshold": 99.0,
-                "classify": {
-                    "type": "axis_compare",
-                    "axis": 1,
-                    "axis_tolerance": 0.03,
-                    "pos": "too_forward",
-                    "neg": "too_backward",
-                },
-            },
-            "torso": {
-                "joints": (LEFT_SHOULDER, RIGHT_SHOULDER),
-                "dtw_slice": (0, 2),
-                "threshold": 99.0,
-                "classify": {
-                    "type": "axis_compare",
-                    "axis": 1,
-                    "axis_tolerance": 0.03,
-                    "pos": "too_forward",
-                    "neg": "too_upright",
-                },
-            },
-        },
-    },
     ("hammer_curl", "side"): {
         "confidence_joints": (LEFT_SHOULDER, LEFT_ELBOW),
         "body_parts": {

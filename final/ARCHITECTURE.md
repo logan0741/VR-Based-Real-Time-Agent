@@ -76,16 +76,16 @@ flowchart TD
 
     subgraph PREPRO["PreprocessingSession  (연결별 독립 인스턴스)"]
         PN["PoseNormalizer\nfront / side_left"]
-        RD["RepDetector\nslope 기반 반복 감지"]
-        DW["DTWComparator\nvs ExpertPoseCache"]
-        SC["ScoreEngine\n0~100점"]
-        FE["FeedbackEngine\nbody_part · severity"]
+        RD["RepDetector\nknee-y slope 반복 감지"]
+        DW["DTWComparator\nvs ExpertPoseCache\ndtw_interval=3"]
+        SC["ScoreEngine\nDTW dist_matrix 가중 평균 → 0~100"]
+        FE["FeedbackEngine\njoint_distances → body_part · severity"]
         FP["FeedbackPolicy\nhold_frames 쿨다운"]
         PN --> RD
         PN --> DW
+        DW -->|"dist_matrix (M,K)"| SC
+        DW -->|"joint_distances (K,)"| FE
         RD -->|"new_reps"| SC
-        DW -->|"dist_matrix"| SC
-        DW -->|"joint_distances"| FE
         FE --> FP
     end
 
@@ -112,19 +112,18 @@ flowchart LR
     subgraph BOOT["서버 시작 시 1회 로드  (공유 리소스)"]
         direction TB
         EPC["ExpertPoseCache\n전문가 영상 읽기\nsquat_full.mp4\n→ keypoints (N,17,3)"]
-        DTWIN["DTWComparator\n종목별 keypoints_used 선택"]
+        DTWIN["DTWComparator\nkeypoints_used 선택"]
         FBE["FeedbackEngine\nbody_parts · threshold 로드"]
     end
 
     subgraph CONN["연결별  PreprocessingSession"]
         direction TB
-        PN2["PoseNormalizer\n어깨-골반 기준 정규화"]
+        PN2["PoseNormalizer\n어깨-골반 기준 정규화\nfront / side_left"]
         NBUF["norm_buffer\n누적 시퀀스"]
-        RD2["RepDetector\n힙Y 슬로프 감지\nmin_rep_frames=24"]
-        DM["dist_matrix\n3프레임마다 갱신"]
-        GEO["GeometricScorer\nsquat_front\n무릎 · 발목 정렬 검사"]
-        SC2["ScoreEngine\n가중 평균 0~100"]
-        FP2["FeedbackPolicy\nfps×3 쿨다운"]
+        RD2["RepDetector\nknee-y slope 감지\nmin_rep_frames=24"]
+        DM["DTWComparator.compare()\n슬라이딩 윈도우 n_frames=30\ndtw_interval=3 프레임마다 갱신"]
+        SC2["ScoreEngine.update()\nDTW dist_matrix 가중 평균 → 0~100\n슬라이딩 실시간 점수 + rep 별 점수"]
+        FP2["FeedbackPolicy\nhold_frames=fps×3 쿨다운\nrep 완료 시 메시지 고정"]
     end
 
     OUT2(["rep_count · score\nmessage · body_part · severity"])
@@ -137,12 +136,20 @@ flowchart LR
     NBUF --> DM
     PN2 --> RD2
     RD2 -->|"new_reps"| SC2
-    DM -->|"dist_matrix"| SC2
-    DM -->|"joint_distances"| FBE
-    GEO -->|"squat 정면 모드"| SC2
-    SC2 --> FP2
+    DM -->|"dist_matrix (M,K)"| SC2
+    DM -->|"joint_distances (K,)"| FBE
+    SC2 -->|"score · rep_scores"| FP2
     FP2 --> OUT2
 ```
+
+**스코어 방식 종목별**
+
+| 종목 | 뷰 | 점수 계산 | 피드백 |
+|------|----|-----------|--------|
+| `squat` | front | `ScoreEngine` — DTW dist_matrix 가중 평균 | DTW `joint_distances` → FeedbackEngine |
+| `hammer_curl` | side_left | `ScoreEngine` — DTW dist_matrix 가중 평균 | DTW `joint_distances` → FeedbackEngine |
+| `pullup` | front | `ScoreEngine` — DTW dist_matrix 가중 평균 | DTW `joint_distances` → FeedbackEngine |
+| `lateral_raise` | front | `ScoreEngine` — DTW dist_matrix 가중 평균 | DTW `joint_distances` → FeedbackEngine |
 
 ---
 
@@ -229,6 +236,7 @@ erDiagram
   "feedback": {
     "score":          85,
     "label":          "자세가 안정적입니다.",
+    "message":        "자세가 안정적입니다.",
     "body_part":      "knee",
     "severity":       0.3,
     "rep_count":      5,
@@ -248,10 +256,10 @@ erDiagram
 
 | 종목 | 뷰 | 스코어 방식 | 전문가 영상 | 상태 |
 |------|----|------------|------------|------|
-| `squat` | front (정면) | `GeometricScorer.squat_front` | squat_full.mp4 | ✅ 구현됨 |
-| `hammer_curl` | side_left | DTW | hammer_curl.mp4 | ⏳ stub |
-| `pullup` | front | DTW | pull_up.mp4 | ⏳ stub |
-| `lateral_raise` | front | DTW | lateral_raise.mp4 | ⏳ stub |
+| `squat` | front (정면) | DTW `ScoreEngine` | squat_full.mp4 | ✅ 구현됨 |
+| `hammer_curl` | side_left | DTW ScoreEngine | hammer_curl.mp4 | ⏳ stub |
+| `pullup` | front | DTW ScoreEngine | pull_up.mp4 | ⏳ stub |
+| `lateral_raise` | front | DTW ScoreEngine | lateral_raise.mp4 | ⏳ stub |
 
 ---
 
@@ -261,17 +269,17 @@ erDiagram
 final/
 ├── s01_preprocessing/
 │   ├── config.py              EXERCISES 딕셔너리 (종목별 설정)
-│   ├── pose_estimator.py      MediaPipe 포즈 추정
+│   ├── pose_estimator.py      MoveNet Lightning 포즈 추정 (TensorFlow Hub)
 │   ├── pose_normalizer.py     관절 정규화 (front / side_left)
-│   ├── rep_detector.py        slope 기반 반복횟수 감지
-│   ├── expert_cache.py        전문가 영상 → keypoints 추출·캐싱
-│   ├── dtw_comparator.py      사용자 vs 전문가 DTW 거리 행렬
-│   ├── score_engine.py        DTW 거리 → 0~100점, GeometricScorer
+│   ├── rep_detector.py        knee-y slope 기반 반복횟수 감지
+│   ├── expert_cache.py        전문가 영상 → keypoints 추출·캐싱 (.npy)
+│   ├── dtw_comparator.py      사용자 vs 전문가 DTW 거리 행렬 (M,K)
+│   ├── score_engine.py        DTW 거리 → 0~100점 (ScoreEngine) + GeometricScorer
 │   └── feedback/
-│       ├── feedback_engine.py   DTW 거리 → 자세 피드백 메시지
+│       ├── feedback_engine.py   joint_distances → body_part · state · severity · message
 │       ├── feedback_policy.py   hold_frames 쿨다운 출력 정책
-│       ├── feedback_templates.py 종목별 피드백 문구
-│       └── feedback_config.py   body_parts · threshold 설정
+│       ├── feedback_templates.py 종목별 부위·상태별 한국어 피드백 문구
+│       └── feedback_config.py   body_parts · dtw_slice · classify rule 설정
 │
 ├── s02_backend/
 │   ├── server.py              FastAPI app, WS · REST 엔드포인트
@@ -288,7 +296,7 @@ final/
 │
 ├── s05_frontend/              (Quest 3 브라우저 직접 실행 가능)
 │   ├── index.html             2D 뷰어 레이아웃
-│   ├── viewer.js              WS 연결 · Canvas 렌더링 · TF.js MoveNet · 전문가 스켈레톤 루프
+│   ├── viewer.js              WS 연결 · Canvas 렌더링 · 전문가 스켈레톤 루프
 │   └── style.css
 │
 ├── s06_unity_vr/
@@ -305,6 +313,27 @@ final/
 ├── 07_pipeline_web.py         웹 전용 파이프라인 실행 진입점
 ├── 08_pipeline_full.py        전체 파이프라인 실행 진입점
 └── 01~04_test_*.py            단계별 단위 테스트
+```
+
+**React 대시보드 (`src/`)**
+
+```
+src/
+├── App.tsx                    메인 화면 흐름 (화면 전환 · WS 수신 · 세션 관리)
+├── main.tsx
+├── hooks/
+│   ├── useWebSocket.ts        /ws/pose 연결 · latestFrame 상태 관리
+│   ├── useTimer.ts            운동 시간 타이머
+│   └── useExpertPose.ts       /api/expert-keypoints 로드
+└── components/
+    ├── ExerciseSelector.tsx   종목 선택 (squat · lunge · pushup)
+    ├── Hud.tsx                운동 중 상단 정보 바
+    ├── RenderSlot.tsx         전문가 스켈레톤 루프 재생
+    ├── SkeletonCanvas.tsx     실시간 사용자 스켈레톤 Canvas
+    ├── ScoreRing.tsx          0~100 점수 링 애니메이션
+    ├── FeedbackChip.tsx       피드백 메시지 칩
+    ├── SetControl.tsx         세트 수 조절 (1~10)
+    └── ResultPanel.tsx        세션 종료 결과 요약
 ```
 
 ---
