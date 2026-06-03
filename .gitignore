@@ -222,6 +222,7 @@ HANDOFF.md
 전처리 2/
 server_err.txt
 server_out.txt
+cloudflared_*.txt
 
 # Backup dirs
 final/_backup/
@@ -230,3 +231,14 @@ final/_backup/
 final/assets/expert_videos/*.mp4
 final/assets/expert_videos/*.npy
 !final/assets/expert_videos/.gitkeep
+
+# VR app test branch includes the React app source and built /app bundle.
+!/src/
+!/src/**
+!/package.json
+!/package-lock.json
+!/tsconfig.json
+!/tsconfig.node.json
+!/vite.config.ts
+!/dist/
+!/dist/**

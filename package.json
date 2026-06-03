@@ -1,0 +1,35 @@
+{
+  "name": "psvr-design",
+  "private": true,
+  "version": "0.0.1",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.1"
+  },
+  "description": "실시간 AI 자세 교정 및 맞춤형 코칭 시스템.   웹캠으로 운동 자세를 촬영하면 MediaPipe / TF.js MoveNet으로 2D 관절을 추출하고, MLP 모델이 3D 포즈를 복원한 뒤 DTW 비교와 기하학적 분석으로 점수·피드백을 실시간 제공합니다.",
+  "main": "index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/logan0741/VR-Based-Real-Time-Agent.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/logan0741/VR-Based-Real-Time-Agent/issues"
+  },
+  "homepage": "https://github.com/logan0741/VR-Based-Real-Time-Agent#readme"
+}

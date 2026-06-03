@@ -456,7 +456,7 @@ let poseDetector = null;
 let cameraRunning = false;
 let lastSendMs = 0;
 let isDetecting = false;
-const SEND_INTERVAL_MS = 33;   // 30fps → server
+const SEND_INTERVAL_MS = 66;   // 15fps to server; local skeleton still draws immediately.
 const DETECT_INTERVAL_MS = 33; // 30fps display (browser-local)
 
 async function startCamera() {
@@ -541,9 +541,12 @@ async function detectLoop() {
                 const vw = video.videoWidth || 640;
                 const vh = video.videoHeight || 480;
                 const payload = poses[0].keypoints.map(kp => [kp.y / vh, kp.x / vw, kp.score ?? 0.9]);
+                drawSkeleton("user-canvas", payload, true);
+                document.getElementById("user-overlay").classList.add("hidden");
                 ws.send(JSON.stringify({
                     data_type: "keypoints",
                     frame_id: `cam_${frameCount}`,
+                    client_timestamp_ms: Date.now(),
                     payload
                 }));
                 lastSendMs = now;

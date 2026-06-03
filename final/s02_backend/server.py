@@ -22,6 +22,7 @@ from fastapi.staticfiles import StaticFiles
 from starlette.middleware.base import BaseHTTPMiddleware
 import uvicorn
 
+from .config import env_bool
 from .pose_retargeting import PoseRetargeter
 from ..s03_database.database import DatabaseSettings, ExerciseSessionRepository, now_utc
 from .posture_analyzer import PostureAnalyzer
@@ -51,24 +52,40 @@ class PreprocessingSession:
         expert_cache: ExpertPoseCache,
         feedback_engine: FeedbackEngine,
     ) -> None:
-        self._cfg = cfg
+        self._cfg = dict(cfg)
+        if os.environ.get("DTW_INTERVAL_OVERRIDE"):
+            self._cfg["dtw_interval"] = max(1, int(os.environ["DTW_INTERVAL_OVERRIDE"]))
+        if os.environ.get("DTW_N_FRAMES_OVERRIDE"):
+            self._cfg["n_frames"] = max(2, int(os.environ["DTW_N_FRAMES_OVERRIDE"]))
         self._comparator = comparator
         self._expert_cache = expert_cache
         self._feedback_engine = feedback_engine
+        self._expert_stride = max(1, int(os.environ.get("DTW_EXPERT_STRIDE", "1")))
+        self._dtw_expert_sequence = expert_cache.sequence[::self._expert_stride]
 
-        self._normalizer = PoseNormalizer(cfg["normalizer_type"], cfg["norm_buffer_size"])
+        self._normalizer = PoseNormalizer(self._cfg["normalizer_type"], self._cfg["norm_buffer_size"])
         self._rep_detector = RepDetector(
-            cfg["rep_detector_type"], cfg["normalizer_type"],
-            cfg["rep_slope_window"], cfg["min_rep_frames"],
+            self._cfg["rep_detector_type"], self._cfg["normalizer_type"],
+            self._cfg["rep_slope_window"], self._cfg["min_rep_frames"],
         )
         self._score_engine: Optional["ScoreEngine"] = (
-            ScoreEngine(cfg["weights"], cfg["max_distance"], cfg["n_frames"])
+            ScoreEngine(self._cfg["weights"], self._cfg["max_distance"], self._cfg["n_frames"])
             if _DTW_AVAILABLE else None
         )
-        self._feedback_policy = FeedbackPolicy(hold_frames=cfg["target_fps"] * 3)
+        self._feedback_policy = FeedbackPolicy(hold_frames=self._cfg["target_fps"] * 3)
 
         self._norm_buffer: List[Any] = []
         self._last_dist_matrix: Optional[Any] = None
+        self._last_result: Dict[str, Any] = {
+            "score": 50,
+            "rep_count": 0,
+            "rep_scores": [],
+            "message": "measuring",
+            "body_part": "",
+            "severity": 0.0,
+        }
+        self._run_realtime_dtw = env_bool("PREPROCESSING_REALTIME_DTW", True)
+        self._feedback_interval_frames = max(1, int(os.environ.get("FEEDBACK_INTERVAL_FRAMES", "1")))
         self._known_reps: int = 0
         self._frame_idx: int = 0
 
@@ -93,16 +110,23 @@ class PreprocessingSession:
                 if end <= len(self._norm_buffer):
                     try:
                         rep_seq = _np.stack(self._norm_buffer[start:end])
-                        rep_dm = self._comparator.compare(rep_seq, self._expert_cache.sequence)
+                        rep_dm = self._comparator.compare(rep_seq, self._dtw_expert_sequence)
                         new_rep_matrices.append(rep_dm)
                     except Exception:
                         pass
 
             # DTW 계산 (dtw_interval마다)
-            if self._frame_idx % self._cfg["dtw_interval"] == 0 and len(self._norm_buffer) >= 2:
+            if new_rep_matrices and not self._run_realtime_dtw:
+                self._last_dist_matrix = new_rep_matrices[-1]
+
+            if (
+                self._run_realtime_dtw
+                and self._frame_idx % self._cfg["dtw_interval"] == 0
+                and len(self._norm_buffer) >= 2
+            ):
                 try:
                     window = _np.stack(self._norm_buffer[-self._cfg["n_frames"]:])
-                    self._last_dist_matrix = self._comparator.compare(window, self._expert_cache.sequence)
+                    self._last_dist_matrix = self._comparator.compare(window, self._dtw_expert_sequence)
                 except Exception:
                     pass
 
@@ -118,6 +142,17 @@ class PreprocessingSession:
                 pass
 
         # ── 피드백 ──
+        if (
+            not new_reps
+            and self._frame_idx % self._feedback_interval_frames != 0
+            and self._last_result is not None
+        ):
+            result = dict(self._last_result)
+            result["rep_count"] = len(all_reps)
+            result["rep_scores"] = rep_scores
+            self._frame_idx += 1
+            return result
+
         expert_seq = self._expert_cache.sequence
         expert_norm_kp = expert_seq[self._frame_idx % len(expert_seq)]
         joint_distances = self._last_dist_matrix[-1] if self._last_dist_matrix is not None else None
@@ -129,7 +164,7 @@ class PreprocessingSession:
 
         self._frame_idx += 1
 
-        return {
+        result = {
             "score": score,
             "rep_count": len(all_reps),
             "rep_scores": rep_scores,
@@ -137,12 +172,22 @@ class PreprocessingSession:
             "body_part": str(feedback_result.get("body_part", "")),
             "severity": float(feedback_result.get("severity", 0.0)),
         }
+        self._last_result = result
+        return result
 
     def reset(self) -> None:
         """세션 재시작 시 상태를 초기화한다."""
         self._normalizer.reset()
         self._norm_buffer.clear()
         self._last_dist_matrix = None
+        self._last_result = {
+            "score": 50,
+            "rep_count": 0,
+            "rep_scores": [],
+            "message": "measuring",
+            "body_part": "",
+            "severity": 0.0,
+        }
         self._known_reps = 0
         self._frame_idx = 0
 
@@ -694,6 +739,13 @@ async def get_expert_poses():
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.session_control_version: int = 0
+        self.session_control: Dict[str, Any] = {
+            "user_id": "anonymous",
+            "exercise_type": "squat",
+            "sets": 1,
+            "reps_per_set": 8,
+        }
 
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
@@ -715,6 +767,19 @@ class ConnectionManager:
             if isinstance(r, Exception):
                 self.disconnect(c)
 
+    def start_session_control(self, payload: Dict[str, Any]) -> Dict[str, Any]:
+        self.session_control_version += 1
+        self.session_control = {
+            "user_id": payload.get("user_id", "anonymous"),
+            "exercise_type": payload.get("exercise_type", "squat"),
+            "sets": int(payload.get("sets", 1) or 1),
+            "reps_per_set": int(payload.get("reps_per_set", 8) or 8),
+        }
+        return {
+            "version": self.session_control_version,
+            **self.session_control,
+        }
+
 
 manager = ConnectionManager()
 
@@ -724,8 +789,51 @@ async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
     pipeline: FastPosePipeline = websocket.app.state.pose_pipeline
     session_tracker = ExerciseSessionTracker(websocket.app.state.exercise_repository)
-    preprocessing_session: Optional[PreprocessingSession] = pipeline.make_preprocessing_session("squat")
+    preprocessing_session: Optional[PreprocessingSession] = (
+        pipeline.make_preprocessing_session("squat")
+        if env_bool("PREPROCESSING_ENABLED", True)
+        else None
+    )
     loop = asyncio.get_running_loop()
+    latest_keypoints_msg: Optional[Dict[str, Any]] = None
+    processor_task: Optional[asyncio.Task] = None
+    local_session_control_version = -1
+
+    def sync_session_control() -> None:
+        nonlocal preprocessing_session, local_session_control_version
+        if local_session_control_version == manager.session_control_version:
+            return
+        control = manager.session_control
+        exercise_type = control.get("exercise_type", "squat")
+        pipeline.reset_smoothing()
+        session_tracker.start(
+            user_id=control.get("user_id", "anonymous"),
+            exercise_type=exercise_type,
+        )
+        preprocessing_session = (
+            pipeline.make_preprocessing_session(exercise_type)
+            if env_bool("PREPROCESSING_ENABLED", True)
+            else None
+        )
+        local_session_control_version = manager.session_control_version
+
+    async def process_latest_keypoints() -> None:
+        nonlocal latest_keypoints_msg
+        while latest_keypoints_msg is not None:
+            current_msg = latest_keypoints_msg
+            latest_keypoints_msg = None
+            sync_session_control()
+            response = await loop.run_in_executor(
+                None,
+                pipeline.process_keypoints,
+                current_msg.get("payload"),
+                current_msg.get("frame_id", "unknown"),
+                session_tracker,
+                preprocessing_session,
+            )
+            response.setdefault("debug", {})
+            response["debug"]["dropped_to_latest"] = True
+            await manager.broadcast_json(response)
 
     try:
         while True:
@@ -735,6 +843,22 @@ async def websocket_endpoint(websocket: WebSocket):
             frame_id = msg.get("frame_id", "unknown")
 
             if data_type == "keypoints":
+                payload = msg.get("payload")
+                if payload:
+                    await manager.broadcast_json({
+                        "status": "ok",
+                        "data_type": "pose",
+                        "frame_id": frame_id,
+                        "keypoints_2d": payload,
+                        "debug": {
+                            "relay_only": True,
+                            "client_timestamp_ms": msg.get("client_timestamp_ms"),
+                        },
+                    })
+                latest_keypoints_msg = msg
+                if processor_task is None or processor_task.done():
+                    processor_task = asyncio.create_task(process_latest_keypoints())
+                continue
                 response = await loop.run_in_executor(
                     None,
                     pipeline.process_keypoints,
@@ -748,12 +872,18 @@ async def websocket_endpoint(websocket: WebSocket):
                 continue
             elif data_type == "session_start":
                 exercise_type = msg.get("exercise_type", "squat")
-                preprocessing_session = pipeline.make_preprocessing_session(exercise_type)
+                control = manager.start_session_control(msg)
+                preprocessing_session = (
+                    pipeline.make_preprocessing_session(exercise_type)
+                    if env_bool("PREPROCESSING_ENABLED", True)
+                    else None
+                )
                 response = pipeline.start_session(
                     session_tracker,
                     user_id=msg.get("user_id", "anonymous"),
                     exercise_type=exercise_type,
                 )
+                response["control"] = control
             elif data_type == "session_end":
                 response = pipeline.finish_session(session_tracker)
             elif data_type == "reset":
