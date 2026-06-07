@@ -44,6 +44,11 @@ def parse_args() -> argparse.Namespace:
         default=1,
         help="Number of times to loop the input video (ignored for webcam).",
     )
+    parser.add_argument(
+        "--preview",
+        action="store_true",
+        help="Preview all videos in assets/converted_videos and exit.",
+    )
     return parser.parse_args()
 
 
@@ -83,8 +88,44 @@ def validate_video_fps(cap: cv2.VideoCapture, video_arg: str | None, target_fps:
         )
 
 
+def preview_converted_videos() -> int:
+    """converted_videos 폴더의 영상을 순서대로 재생한다."""
+    folder = Path("assets/converted_videos")
+    videos = sorted(folder.glob("*.mp4"))
+    if not videos:
+        print("[Preview] assets/converted_videos 에 영상이 없습니다.")
+        return 1
+
+    for path in videos:
+        cap = cv2.VideoCapture(str(path))
+        fps = cap.get(cv2.CAP_PROP_FPS)
+        delay = max(1, int(1000 / fps))
+        print(f"[Preview] {path.name}  (q: 다음, ESC: 종료)")
+
+        key = -1
+        while True:
+            ret, frame = cap.read()
+            if not ret:
+                break
+            cv2.imshow(path.name, frame)
+            key = cv2.waitKey(delay) & 0xFF
+            if key in (ord("q"), 27):
+                break
+
+        cap.release()
+        cv2.destroyAllWindows()
+        if key == 27:
+            break
+
+    return 0
+
+
 def main() -> int:
     args = parse_args()
+
+    if args.preview:
+        return preview_converted_videos()
+
     cfg = EXERCISES[args.exercise]
     expert_video = cfg["video_path"]
     output_path = build_output_path(args.video, args.output)
@@ -148,15 +189,13 @@ def main() -> int:
             print("[Feedback] module not found; disabled")
         else:
             feedback_engine = FeedbackEngine(args.exercise, cfg["view"])
-            feedback_policy = FeedbackPolicy(hold_frames=cfg["target_fps"] * 2)
+            feedback_policy = FeedbackPolicy(update_interval=cfg["target_fps"] * 2)
     normalizer = PoseNormalizer(cfg["normalizer_type"], cfg["norm_buffer_size"])
 
     cap = open_capture(args.video)
-    validate_video_fps(cap, args.video, cfg["target_fps"])
+    # validate_video_fps(cap, args.video, cfg["target_fps"])
     writer: cv2.VideoWriter | None = None
     norm_seq: list[np.ndarray] = []
-    raw_seq: list[np.ndarray] = []
-    pending_rep_matrices: list[np.ndarray] = []
     rep_scores_final: list[int] = []
     prev_rep_count = 0
     score: int | None = None
@@ -182,39 +221,38 @@ def main() -> int:
             kp = estimator.predict(frame)
             norm_kp = normalizer.normalize(kp)
             norm_seq.append(norm_kp)
-            raw_seq.append(kp)
             n = len(norm_seq)
 
             reps = detector.update(norm_kp)
 
-            if len(reps) > prev_rep_count:
-                for start, end in reps[prev_rep_count:]:
-                    rep_seq = np.stack(norm_seq[start:end], axis=0).astype(np.float32)
-                    rep_dist_matrix, rep_expert_idx = comparator.compare(rep_seq, expert_cache.sequence)
-                    pending_rep_matrices.append(rep_dist_matrix)
-                    if feedback_enabled:
-                        assert feedback_engine is not None
-                        assert feedback_policy is not None
-                        avg_distances = np.mean(rep_dist_matrix, axis=0)
-                        worst_frame = int(np.argmax(np.max(rep_dist_matrix, axis=1)))
-                        candidate = feedback_engine.analyze(
-                            user_raw_keypoints=raw_seq[start + worst_frame],
-                            user_norm_keypoints=rep_seq[worst_frame],
-                            expert_norm_keypoints=expert_cache.sequence[int(rep_expert_idx[worst_frame])],
-                            joint_distances=avg_distances,
-                        )
-                        feedback_policy.on_rep_complete(n, candidate)
-                prev_rep_count = len(reps)
+            feedback_candidate: dict[str, object] | None = None
 
             if n >= cfg["n_frames"] and n % cfg["dtw_interval"] == 0:
                 window_seq = np.stack(norm_seq[-cfg["n_frames"]:], axis=0).astype(np.float32)
-                window_dist_matrix, _ = comparator.compare(window_seq, expert_cache.sequence)
-                score, rep_scores_final = engine.update(window_dist_matrix, pending_rep_matrices)
-                pending_rep_matrices.clear()
+                window_dist_matrix, best_expert_idx = comparator.compare(window_seq, expert_cache.sequence)
+
+                new_rep_matrices: list[np.ndarray] = []
+                for start, end in reps[prev_rep_count:]:
+                    rep_seq = np.stack(norm_seq[start:end], axis=0).astype(np.float32)
+                    rep_dist_matrix, _ = comparator.compare(rep_seq, expert_cache.sequence)
+                    new_rep_matrices.append(rep_dist_matrix)
+                prev_rep_count = len(reps)
+
+                score, rep_scores_final = engine.update(window_dist_matrix, new_rep_matrices)
+
+                if feedback_enabled:
+                    assert feedback_engine is not None
+                    expert_kp = expert_cache.sequence[int(best_expert_idx[-1])]
+                    feedback_candidate = feedback_engine.analyze(
+                        user_raw_keypoints=kp,
+                        user_norm_keypoints=norm_kp,
+                        expert_norm_keypoints=expert_kp,
+                        joint_distances=window_dist_matrix[-1],
+                    )
 
             if feedback_enabled:
                 assert feedback_policy is not None
-                feedback_message = feedback_policy.update(n)
+                feedback_message = feedback_policy.update(n, feedback_candidate)
 
             result = {
                 "keypoints": kp,
@@ -239,12 +277,12 @@ def main() -> int:
                 break
 
         reps_final = detector.finalize()
+        new_rep_matrices = []
         for start, end in reps_final[prev_rep_count:]:
             rep_seq = np.stack(norm_seq[start:end], axis=0).astype(np.float32)
-            rep_dist_matrix, _ = comparator.compare(rep_seq, expert_cache.sequence)
-            pending_rep_matrices.append(rep_dist_matrix)
-        if window_dist_matrix is not None and pending_rep_matrices:
-            _, rep_scores_final = engine.update(window_dist_matrix, pending_rep_matrices)
+            new_rep_matrices.append(comparator.compare(rep_seq, expert_cache.sequence))
+        if window_dist_matrix is not None and new_rep_matrices:
+            _, rep_scores_final = engine.update(window_dist_matrix, new_rep_matrices)
     finally:
         cap.release()
         if writer is not None:
