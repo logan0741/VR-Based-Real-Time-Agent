@@ -41,6 +41,25 @@ except ImportError:
     print("[Pipeline] dtaidistance 미설치 — DTW 점수 비활성화. pip install dtaidistance==2.3.12")
 
 
+EXERCISE_ALIASES = {
+    "pull_up": "pullup",
+}
+
+
+def normalize_exercise_type(exercise_type: Any) -> str:
+    raw = str(exercise_type or "squat")
+    return EXERCISE_ALIASES.get(raw, raw)
+
+
+def exercise_file_candidates(exercise_type: str) -> List[str]:
+    canonical = normalize_exercise_type(exercise_type)
+    names = [str(exercise_type or "squat"), canonical]
+    if canonical == "pullup":
+        names.append("pull_up")
+    seen = set()
+    return [name for name in names if not (name in seen or seen.add(name))]
+
+
 
 class PreprocessingSession:
     """연결별 전처리 파이프라인 상태 (PoseNormalizer, RepDetector, ScoreEngine, FeedbackPolicy)."""
@@ -57,6 +76,8 @@ class PreprocessingSession:
             self._cfg["dtw_interval"] = max(1, int(os.environ["DTW_INTERVAL_OVERRIDE"]))
         if os.environ.get("DTW_N_FRAMES_OVERRIDE"):
             self._cfg["n_frames"] = max(2, int(os.environ["DTW_N_FRAMES_OVERRIDE"]))
+        if os.environ.get("SCORE_MAX_DISTANCE_OVERRIDE"):
+            self._cfg["max_distance"] = max(0.001, float(os.environ["SCORE_MAX_DISTANCE_OVERRIDE"]))
         self._comparator = comparator
         self._expert_cache = expert_cache
         self._feedback_engine = feedback_engine
@@ -294,6 +315,7 @@ class FastPosePipeline:
 
         backend_mode = os.environ.get("FITTER_BACKEND", "lifter").lower()
         self._backend = backend_mode
+        self._realtime_2d_only = env_bool("REALTIME_2D_ONLY", True)
 
         if backend_mode == "optimization":
             from model_3d.fitter import OptimizationPoseFitter
@@ -345,7 +367,7 @@ class FastPosePipeline:
 
     def make_preprocessing_session(self, exercise_type: str) -> Optional[PreprocessingSession]:
         """exercise_type에 맞는 PreprocessingSession을 생성한다. 미구현 종목은 None 반환."""
-        shared = self._preprocessing_shared.get(exercise_type)
+        shared = self._preprocessing_shared.get(normalize_exercise_type(exercise_type))
         if shared is None:
             return None
         return PreprocessingSession(
@@ -444,6 +466,15 @@ class FastPosePipeline:
         kpts_np = _np.array(payload, dtype=_np.float32)
         if kpts_np.shape[-1] > 3:
             kpts_np = kpts_np[..., :3]
+        if self._realtime_2d_only:
+            return self._process_2d_only(
+                kpts_np,
+                payload,
+                frame_id,
+                session_tracker,
+                start_t,
+                preprocessing_session,
+            )
         kpts_gpu = torch.from_numpy(kpts_np).unsqueeze(0).to(self.device)
 
         raw_out = self.model(kpts_gpu).squeeze(0)
@@ -517,6 +548,68 @@ class FastPosePipeline:
             },
         }
 
+    def _process_2d_only(
+        self,
+        kpts_np: Any,
+        payload: List[List[float]],
+        frame_id: str,
+        session_tracker: ExerciseSessionTracker,
+        start_t: float,
+        preprocessing_session: Optional[PreprocessingSession] = None,
+    ) -> Dict[str, Any]:
+        fatigue_state = self.analyzer.analyze(kpts_np)
+        high_fatigue = [k for k, v in fatigue_state.items() if v == "high"]
+        mid_fatigue = [k for k, v in fatigue_state.items() if v in {"mid", "med"}]
+        if high_fatigue:
+            fatigue_summary = f"주의: {', '.join(high_fatigue)}"
+        elif mid_fatigue:
+            fatigue_summary = f"보통: {', '.join(mid_fatigue)}"
+        else:
+            fatigue_summary = "양호"
+
+        if preprocessing_session is not None:
+            prep = preprocessing_session.process(kpts_np)
+            pose_score = prep["score"]
+            feedback_block = {
+                "score": pose_score,
+                "label": prep["message"],
+                "message": prep["message"],
+                "body_part": prep["body_part"],
+                "severity": prep["severity"],
+                "rep_count": prep["rep_count"],
+                "rep_scores": prep["rep_scores"],
+                "muscle_fatigue": fatigue_state,
+            }
+        else:
+            pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
+            feedback_block = {
+                "score": pose_score,
+                "label": fatigue_summary,
+                "message": fatigue_summary,
+                "rep_count": 0,
+                "rep_scores": [],
+                "muscle_fatigue": fatigue_state,
+            }
+
+        session_tracker.record_frame(pose_score, feedback_block["label"])
+        session_id = session_tracker.ensure_active()["session_id"]
+        dur_ms = (time.perf_counter() - start_t) * 1000
+
+        return {
+            "status": "ok",
+            "data_type": "feedback",
+            "frame_id": frame_id,
+            "session_id": session_id,
+            "keypoints_2d": payload,
+            "feedback": feedback_block,
+            "debug": {
+                "backend": "2d_only",
+                "inference_ms": round(dur_ms, 2),
+                "smoothing_enabled": False,
+                "smoothing_frame": 0,
+            },
+        }
+
     def reset_smoothing(self) -> None:
         self.retargeter.reset()
 
@@ -526,6 +619,7 @@ class FastPosePipeline:
         user_id: str = "anonymous",
         exercise_type: str = "squat",
     ) -> Dict[str, Any]:
+        exercise_type = normalize_exercise_type(exercise_type)
         self.reset_smoothing()
         session = session_tracker.start(user_id=user_id, exercise_type=exercise_type)
         return {
@@ -579,9 +673,20 @@ app = FastAPI(lifespan=lifespan, title="VR Pose Estimation Server")
 class NoCacheMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         response = await call_next(request)
-        if request.url.path.startswith("/viewer/"):
+        if request.url.path.startswith("/viewer/") or request.url.path.startswith("/app/"):
             response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
             response.headers["Pragma"] = "no-cache"
+        if request.url.path.startswith("/viewer/"):
+            response.headers["Content-Security-Policy"] = (
+                "default-src 'self'; "
+                "script-src 'self' https://cdn.jsdelivr.net 'unsafe-eval' 'wasm-unsafe-eval'; "
+                "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+                "font-src 'self' https://fonts.gstatic.com; "
+                "img-src 'self' data: blob:; "
+                "media-src 'self' blob:; "
+                "connect-src 'self' ws: wss: https://cdn.jsdelivr.net https://tfhub.dev https://storage.googleapis.com https://www.kaggle.com https://kaggle.com; "
+                "worker-src 'self' blob:;"
+            )
         return response
 
 
@@ -615,9 +720,12 @@ async def serve_viewer_js():
 
 
 @app.get("/")
-async def root():
-    if _viewer_dir.exists() and (_viewer_dir / "index.html").exists():
-        return FileResponse(str(_viewer_dir / "index.html"))
+async def root(request: Request):
+    host = request.headers.get("host", "").split(":", 1)[0].lower()
+    if host.startswith("viewer."):
+        return RedirectResponse(url="/viewer/", status_code=302)
+    if host.startswith("app.") or host.startswith("pt."):
+        return RedirectResponse(url="/app/", status_code=302)
     return {
         "service": "VR Pose Estimation Server",
         "websocket": "/ws/pose",
@@ -652,7 +760,7 @@ async def end_session():
 
 
 @app.get("/api/expert-smplx")
-async def get_expert_smplx():
+async def get_expert_smplx(exercise: str = "squat"):
     """Pre-lift expert 2D keypoints to SMPL-X params via PoseLifterNet.
     Result is cached after first call. Used by Unity ExpertAvatarController.
     """
@@ -660,19 +768,35 @@ async def get_expert_smplx():
         cached = app.state.expert_smplx_cache
         return {"status": "ok", "total_frames": len(cached), "frames": cached}
 
-    project_root = Path(__file__).resolve().parents[2]
-    candidates = [project_root / "squat_left_1_keypoints.json"]
-    candidates.extend(sorted(project_root.glob("*_keypoints.json")))
+    pipeline: FastPosePipeline = app.state.pose_pipeline
+    if pipeline.model is None:
+        return {"status": "error", "message": "Lifter model not available (optimization backend active)."}
 
-    for path in candidates:
-        if not path.exists():
-            continue
+    # 1순위: 서버 시작 시 로드된 ExpertPoseCache.raw_sequence 사용 (정확한 MLP 입력 형식)
+    shared = pipeline._preprocessing_shared.get(normalize_exercise_type(exercise))
+    if shared is not None:
+        try:
+            import numpy as _np
+            raw_seq = shared["expert_cache"].raw_sequence  # (N, 17, 3), float32
+            frames = []
+            with torch.no_grad():
+                for kp in raw_seq:
+                    kpts = torch.tensor(kp, dtype=torch.float32, device=pipeline.device).unsqueeze(0)
+                    out = pipeline.model(kpts).squeeze(0).cpu().numpy()
+                    frames.append({
+                        "global_orient": out[:3].tolist(),
+                        "body_pose": out[3:66].tolist(),
+                    })
+            app.state.expert_smplx_cache = frames
+            return {"status": "ok", "total_frames": len(frames), "frames": frames, "source": "npy_raw_sequence"}
+        except Exception as exc:
+            print(f"[expert-smplx] raw_sequence 처리 실패: {exc}")
+
+    # 2순위: JSON 파일 탐색 (fallback)
+    project_root = Path(__file__).resolve().parents[2]
+    for path in sorted(project_root.glob("*_keypoints.json")):
         try:
             raw = json.loads(path.read_text(encoding="utf-8"))
-            pipeline: FastPosePipeline = app.state.pose_pipeline
-            if pipeline.model is None:
-                return {"status": "error", "message": "Lifter model not available (optimization backend active)."}
-
             frames = []
             for frame_data in raw:
                 kp_list = frame_data.get("keypoints") if isinstance(frame_data, dict) else frame_data
@@ -686,13 +810,12 @@ async def get_expert_smplx():
                     "global_orient": out[:3].tolist(),
                     "body_pose": out[3:66].tolist(),
                 })
-
             app.state.expert_smplx_cache = frames
             return {"status": "ok", "total_frames": len(frames), "frames": frames, "source": path.name}
         except Exception as exc:
             return {"status": "error", "message": str(exc)}
 
-    return {"status": "error", "message": "No expert keypoints JSON found in project root."}
+    return {"status": "error", "message": "No expert keypoints source available."}
 
 
 @app.get("/api/expert-keypoints")
@@ -715,30 +838,70 @@ async def get_expert_keypoints():
 
 
 @app.get("/api/expert")
-async def get_expert_poses():
+async def get_expert_poses(exercise: str = "squat"):
+    """Return expert 2D keypoints for the given exercise.
+    exercise: squat | hammer_curl | lateral_raise | pull_up
+    """
     project_root = Path(__file__).resolve().parents[2]
-    candidates = [project_root / "squat_left_1_keypoints.json"]
-    candidates.extend(sorted(project_root.glob("*_keypoints.json")))
+    # Primary: {exercise}_expert_keypoints.json
+    candidates = [
+        *(project_root / f"{name}_expert_keypoints.json" for name in exercise_file_candidates(exercise)),
+        project_root / "squat_expert_keypoints.json",  # fallback
+    ]
 
     for path in candidates:
         if path.exists():
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
+                # data may be a list of frames OR {frames: [...]}
+                if isinstance(data, list):
+                    frames = data
+                else:
+                    frames = data.get("frames", data)
                 return {
                     "status": "ok",
+                    "exercise": exercise,
                     "filename": path.name,
-                    "total_frames": len(data),
-                    "frames": data,
+                    "total_frames": len(frames),
+                    "frames": frames,
                 }
             except Exception as exc:
                 return {"status": "error", "message": str(exc)}
 
-    return {"status": "error", "message": "No expert keypoints file found."}
+    return {"status": "error", "message": f"No expert keypoints found for exercise: {exercise}"}
+
+
+@app.get("/api/expert-pose3d")
+async def get_expert_pose3d():
+    """Return pre-computed MotionBERT-Lite 3D joint coordinates (COCO-17, meters scale).
+    Run run_motionbert.py once to generate squat_expert_keypoints_3d_mb.json.
+    Coordinate note: pt=(x,y,z) where y points DOWN — negate y for Three.js Y-up.
+    """
+    if getattr(app.state, "expert_pose3d_cache", None) is not None:
+        cached = app.state.expert_pose3d_cache
+        return {"status": "ok", "total_frames": len(cached), "frames": cached, "source": "motionbert-lite"}
+
+    project_root = Path(__file__).resolve().parents[2]
+    mb_path = project_root / "squat_expert_keypoints_3d_mb.json"
+    if not mb_path.exists():
+        return {"status": "error", "message": "squat_expert_keypoints_3d_mb.json not found — run run_motionbert.py first"}
+
+    with open(str(mb_path), "r") as f:
+        data = json.load(f)
+
+    frames = data["frames"]
+    app.state.expert_pose3d_cache = frames
+    return {"status": "ok", "total_frames": len(frames), "frames": frames, "source": "motionbert-lite"}
 
 
 class ConnectionManager:
     def __init__(self):
         self.active_connections: List[WebSocket] = []
+        self.client_info: Dict[int, Dict[str, Any]] = {}
+        self.latest_pose_message: Optional[Dict[str, Any]] = None
+        self.total_keypoint_messages: int = 0
+        self.total_broadcast_messages: int = 0
+        self.last_keypoint_at: Optional[float] = None
         self.session_control_version: int = 0
         self.session_control: Dict[str, Any] = {
             "user_id": "anonymous",
@@ -750,15 +913,41 @@ class ConnectionManager:
     async def connect(self, websocket: WebSocket):
         await websocket.accept()
         self.active_connections.append(websocket)
+        client_id = id(websocket)
+        self.client_info[client_id] = {
+            "client_id": client_id,
+            "connected_at": time.time(),
+            "client": str(websocket.client) if websocket.client else "",
+            "host": websocket.headers.get("host", ""),
+            "origin": websocket.headers.get("origin", ""),
+            "user_agent": websocket.headers.get("user-agent", ""),
+            "last_message_type": "",
+            "last_frame_id": "",
+            "last_message_at": None,
+            "keypoint_messages": 0,
+            "config_messages": 0,
+        }
+        await websocket.send_text(json.dumps({
+            "status": "ok",
+            "data_type": "session_config",
+            "control": {
+                "version": self.session_control_version,
+                **self.session_control,
+            },
+        }))
+        if self.latest_pose_message is not None:
+            await websocket.send_text(json.dumps(self.latest_pose_message))
 
     def disconnect(self, websocket: WebSocket):
         if websocket in self.active_connections:
             self.active_connections.remove(websocket)
+        self.client_info.pop(id(websocket), None)
 
     async def broadcast_json(self, message: Dict[str, Any]):
         if not self.active_connections:
             return
         payload = json.dumps(message)
+        self.total_broadcast_messages += 1
         results = await asyncio.gather(
             *[c.send_text(payload) for c in list(self.active_connections)],
             return_exceptions=True,
@@ -767,11 +956,57 @@ class ConnectionManager:
             if isinstance(r, Exception):
                 self.disconnect(c)
 
+    def record_incoming(self, websocket: WebSocket, data_type: str, frame_id: str) -> None:
+        now = time.time()
+        info = self.client_info.get(id(websocket))
+        if info is not None:
+            info["last_message_type"] = data_type
+            info["last_frame_id"] = frame_id
+            info["last_message_at"] = now
+            if data_type == "keypoints":
+                info["keypoint_messages"] += 1
+            elif data_type == "session_config":
+                info["config_messages"] += 1
+        if data_type == "keypoints":
+            self.total_keypoint_messages += 1
+            self.last_keypoint_at = now
+
+    def snapshot(self) -> Dict[str, Any]:
+        now = time.time()
+        clients = []
+        for info in self.client_info.values():
+            item = dict(info)
+            item["connected_age_sec"] = round(now - item["connected_at"], 2)
+            item["last_message_age_sec"] = (
+                round(now - item["last_message_at"], 2)
+                if item["last_message_at"] is not None else None
+            )
+            clients.append(item)
+        return {
+            "active_connections": len(self.active_connections),
+            "total_keypoint_messages": self.total_keypoint_messages,
+            "total_broadcast_messages": self.total_broadcast_messages,
+            "last_keypoint_age_sec": (
+                round(now - self.last_keypoint_at, 2)
+                if self.last_keypoint_at is not None else None
+            ),
+            "latest_pose_frame_id": (
+                self.latest_pose_message.get("frame_id")
+                if self.latest_pose_message else None
+            ),
+            "session_control": {
+                "version": self.session_control_version,
+                **self.session_control,
+            },
+            "clients": sorted(clients, key=lambda c: c["connected_at"]),
+        }
+
     def start_session_control(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         self.session_control_version += 1
+        exercise_type = normalize_exercise_type(payload.get("exercise_type", "squat"))
         self.session_control = {
             "user_id": payload.get("user_id", "anonymous"),
-            "exercise_type": payload.get("exercise_type", "squat"),
+            "exercise_type": exercise_type,
             "sets": int(payload.get("sets", 1) or 1),
             "reps_per_set": int(payload.get("reps_per_set", 8) or 8),
         }
@@ -782,6 +1017,11 @@ class ConnectionManager:
 
 
 manager = ConnectionManager()
+
+
+@app.get("/api/debug/ws")
+async def debug_ws():
+    return {"status": "ok", **manager.snapshot()}
 
 
 @app.websocket("/ws/pose")
@@ -841,11 +1081,12 @@ async def websocket_endpoint(websocket: WebSocket):
             msg = json.loads(raw_msg)
             data_type = msg.get("data_type")
             frame_id = msg.get("frame_id", "unknown")
+            manager.record_incoming(websocket, str(data_type), str(frame_id))
 
             if data_type == "keypoints":
                 payload = msg.get("payload")
                 if payload:
-                    await manager.broadcast_json({
+                    pose_message = {
                         "status": "ok",
                         "data_type": "pose",
                         "frame_id": frame_id,
@@ -854,7 +1095,9 @@ async def websocket_endpoint(websocket: WebSocket):
                             "relay_only": True,
                             "client_timestamp_ms": msg.get("client_timestamp_ms"),
                         },
-                    })
+                    }
+                    manager.latest_pose_message = pose_message
+                    await manager.broadcast_json(pose_message)
                 latest_keypoints_msg = msg
                 if processor_task is None or processor_task.done():
                     processor_task = asyncio.create_task(process_latest_keypoints())
@@ -874,16 +1117,23 @@ async def websocket_endpoint(websocket: WebSocket):
                 exercise_type = msg.get("exercise_type", "squat")
                 control = manager.start_session_control(msg)
                 preprocessing_session = (
-                    pipeline.make_preprocessing_session(exercise_type)
+                    pipeline.make_preprocessing_session(control["exercise_type"])
                     if env_bool("PREPROCESSING_ENABLED", True)
                     else None
                 )
                 response = pipeline.start_session(
                     session_tracker,
                     user_id=msg.get("user_id", "anonymous"),
-                    exercise_type=exercise_type,
+                    exercise_type=control["exercise_type"],
                 )
                 response["control"] = control
+            elif data_type == "session_config":
+                control = manager.start_session_control(msg)
+                response = {
+                    "status": "ok",
+                    "data_type": "session_config",
+                    "control": control,
+                }
             elif data_type == "session_end":
                 response = pipeline.finish_session(session_tracker)
             elif data_type == "reset":

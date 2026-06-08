@@ -3,19 +3,19 @@ import { Exercise, FeedbackItem, SessionResult } from './types';
 import ExerciseSelector from './components/ExerciseSelector';
 import FeedbackChip from './components/FeedbackChip';
 import Hud from './components/Hud';
-import RenderSlot from './components/RenderSlot';
-import SkeletonCanvas from './components/SkeletonCanvas';
 import ResultPanel from './components/ResultPanel';
 import SetControl from './components/SetControl';
 import ScreenContainer from './components/ScreenContainer';
+import SkeletonCanvas2D from './components/SkeletonCanvas2D';
 import { useTimer } from './hooks/useTimer';
 import { useWebSocket } from './hooks/useWebSocket';
-import { useExpertPose } from './hooks/useExpertPose';
+import { useExpertPose2D } from './hooks/useExpertPose2D';
 
 const exerciseOptions: Exercise[] = [
-  { id: 'squat', icon: 'SQ', label: '스쿼트' },
-  { id: 'lunge', icon: 'LG', label: '런지' },
-  { id: 'pushup', icon: 'PU', label: '푸시업' },
+  { id: 'squat',         icon: 'SQ', label: '스쿼트' },
+  { id: 'hammer_curl',   icon: 'HC', label: '해머 컬' },
+  { id: 'lateral_raise', icon: 'LR', label: '레터럴 레이즈' },
+  { id: 'pull_up',       icon: 'PU', label: '풀업' },
 ];
 
 const REPS_PER_SET = 8;
@@ -38,10 +38,23 @@ function App() {
   const [reps, setReps] = useState(0);
 
   const { elapsed, formattedTime, start, stop, reset } = useTimer();
-  const { latestFrame: liveFrame, startSession, endSession } = useWebSocket();
-  const expertKeypoints = useExpertPose();
+  const {
+    latestFrame: liveFrame,
+    status: wsStatus,
+    poseCount,
+    lastPoseAt,
+    selectExercise,
+    startSession,
+    endSession,
+  } = useWebSocket();
+  const expertFramesRef = useExpertPose2D(selectedExercise.id);
 
-  // 세션 중 누적 데이터
+  // Sync exercise selection to viewer via localStorage
+  useEffect(() => {
+    localStorage.setItem('expertExercise', selectedExercise.id);
+    selectExercise({ exerciseType: selectedExercise.id, sets, repsPerSet: REPS_PER_SET });
+  }, [selectedExercise.id, selectExercise, sets]);
+
   const scoresRef = useRef<number[]>([]);
   const feedbackLogRef = useRef<FeedbackItem[]>([]);
   const seenMessagesRef = useRef<Set<string>>(new Set());
@@ -68,7 +81,7 @@ function App() {
   }, [liveFrame]);
 
   const changeSets = (delta: number) => {
-    setSets((current) => Math.max(1, Math.min(10, current + delta)));
+    setSets((c) => Math.max(1, Math.min(10, c + delta)));
   };
 
   const handleStartWorkout = () => {
@@ -78,11 +91,7 @@ function App() {
     setScore(0);
     setReps(0);
     setFeedback({ status: 'ok', message: '측정 중입니다.' });
-    startSession({
-      exerciseType: selectedExercise.id,
-      sets,
-      repsPerSet: REPS_PER_SET,
-    });
+    startSession({ exerciseType: selectedExercise.id, sets, repsPerSet: REPS_PER_SET });
     reset();
     start();
     setScreen(1);
@@ -139,6 +148,7 @@ function App() {
 
   return (
     <div className="app-shell">
+      {/* Screen 0: Exercise selection */}
       <ScreenContainer active={screen === 0} id="s0">
         <div className="s0-glow" />
         <div className="s0-grid" />
@@ -167,18 +177,28 @@ function App() {
         </div>
       </ScreenContainer>
 
+      {/* Screen 1: Workout */}
       <ScreenContainer active={screen === 1} id="s1">
-        <Hud time={formattedTime} currentSet={currentSet} totalSets={sets} reps={reps} score={score} />
+        <Hud
+          time={formattedTime}
+          currentSet={currentSet}
+          totalSets={sets}
+          reps={reps}
+          score={score}
+          wsStatus={wsStatus}
+          poseCount={poseCount}
+          lastPoseAgeMs={lastPoseAt ? Date.now() - lastPoseAt : null}
+        />
 
         <div className="panels">
           <div className="panel">
             <div className="panel-label">
               <span className="p-dot purple" />
-              강사 모델
+              강사 모델 — {selectedExercise.label}
             </div>
-            <RenderSlot id="slot-instructor" label="3D render">
-              <SkeletonCanvas keypoints={expertKeypoints} color="#a78bfa" />
-            </RenderSlot>
+            <div className="render-slot">
+              <SkeletonCanvas2D framesRef={expertFramesRef} fps={15} color="#a78bfa" />
+            </div>
             <div style={{ height: '40px' }} />
           </div>
 
@@ -187,9 +207,9 @@ function App() {
               <span className="p-dot mint" />
               내 자세
             </div>
-            <RenderSlot id="slot-user" label="3D render">
-              <SkeletonCanvas keypoints={liveFrame?.keypoints_2d ?? null} color="#34d399" mirror />
-            </RenderSlot>
+            <div className="render-slot">
+              <SkeletonCanvas2D keypoints={liveFrame?.keypoints_2d ?? null} />
+            </div>
             <FeedbackChip status={feedback.status} message={feedback.message} />
           </div>
         </div>
@@ -202,6 +222,7 @@ function App() {
         </button>
       </ScreenContainer>
 
+      {/* Screen 2: Results */}
       <ScreenContainer active={screen === 2} id="s2">
         <div className="s2-glow" />
         {sessionResult && (

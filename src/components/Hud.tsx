@@ -6,9 +6,25 @@ type HudProps = {
   totalSets: number;
   reps: number;
   score: number;
+  wsStatus?: string;
+  poseCount?: number;
+  lastPoseAgeMs?: number | null;
 };
 
-export default function Hud({ time, currentSet, totalSets, reps, score }: HudProps) {
+export default function Hud({
+  time,
+  currentSet,
+  totalSets,
+  reps,
+  score,
+  wsStatus = 'connecting',
+  poseCount = 0,
+  lastPoseAgeMs = null,
+}: HudProps) {
+  const poseState = poseCount > 0
+    ? `${Math.round((lastPoseAgeMs ?? 0) / 100) / 10}s`
+    : 'waiting';
+
   return (
     <div className="hud">
       <div className="hud-left">
@@ -25,6 +41,16 @@ export default function Hud({ time, currentSet, totalSets, reps, score }: HudPro
         <div className="stat">
           <label>Reps</label>
           <div className="val accent">{reps}</div>
+        </div>
+        <div className="hud-sep" />
+        <div className="stat compact">
+          <label>WS</label>
+          <div className={`val mini ${wsStatus === 'open' ? 'ok' : 'warn'}`}>{wsStatus}</div>
+        </div>
+        <div className="hud-sep" />
+        <div className="stat compact">
+          <label>Pose</label>
+          <div className={`val mini ${poseCount > 0 ? 'ok' : 'warn'}`}>{poseState}</div>
         </div>
       </div>
       <div className="score-ring-wrap">

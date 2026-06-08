@@ -72,6 +72,7 @@ function getCachedBackground(ctx, cacheKey) {
 let expertFrames = [];       // Array of {frame, keypoints}
 let expertFrameIndex = 0;    // Current playback index
 let expertLoaded = false;
+let currentExpertExercise = "";
 
 // ================================================================
 // WebSocket Connection
@@ -100,6 +101,7 @@ function connect() {
     ws.onopen = () => {
         isConnected = true;
         updateConnectionUI(true);
+        if (cameraRunning) updateCameraDebug();
         console.log("[Viewer] Connected to", url);
     };
 
@@ -115,6 +117,7 @@ function connect() {
     ws.onclose = () => {
         isConnected = false;
         updateConnectionUI(false);
+        if (cameraRunning) updateCameraDebug(`waiting: ws ${wsStateLabel()}`);
         console.log("[Viewer] Disconnected");
         // Auto-reconnect after 3 seconds
         setTimeout(() => {
@@ -148,6 +151,14 @@ function updateConnectionUI(connected) {
 function handleFrame(data) {
     if (data.status !== "ok") return;
 
+    if (data.control?.exercise_type) {
+        const exercise = data.control.exercise_type;
+        localStorage.setItem("expertExercise", exercise);
+        if (exercise !== currentExpertExercise) {
+            loadExpertPoses(exercise);
+        }
+    }
+
     frameCount++;
     const now = performance.now();
 
@@ -175,7 +186,9 @@ function handleFrame(data) {
     // Expert skeleton is driven by its own independent loop (see startExpertLoop)
 
     // Update feedback
-    updateFeedback(data.feedback);
+    if (data.data_type !== "pose") {
+        updateFeedback(data.feedback);
+    }
 
     // Update frame info
     document.getElementById("frame-counter").textContent = `Frame: ${data.frame_id || frameCount}`;
@@ -418,10 +431,14 @@ function startExpertLoop() {
     }, 1000 / FPS);
 }
 
-async function loadExpertPoses() {
+async function loadExpertPoses(exerciseName) {
     const baseUrl = location.origin || "http://127.0.0.1:8000";
+    const exercise = exerciseName || localStorage.getItem("expertExercise") || "squat";
+    currentExpertExercise = exercise;
+    expertLoaded = false;
+    expertFrames = [];
     try {
-        const resp = await fetch(`${baseUrl}/api/expert`);
+        const resp = await fetch(`${baseUrl}/api/expert?exercise=${encodeURIComponent(exercise)}`);
         const data = await resp.json();
         if (data.status === "ok" && data.frames && data.frames.length > 0) {
             expertFrames = data.frames;
@@ -456,8 +473,72 @@ let poseDetector = null;
 let cameraRunning = false;
 let lastSendMs = 0;
 let isDetecting = false;
+let detectLoopActive = false;
+let localCameraFrame = 0;
+let detectStartedAt = 0;
 const SEND_INTERVAL_MS = 66;   // 15fps to server; local skeleton still draws immediately.
 const DETECT_INTERVAL_MS = 33; // 30fps display (browser-local)
+const DETECT_TIMEOUT_MS = 1200;
+const cameraDebug = {
+    detected: 0,
+    sent: 0,
+    noPose: 0,
+    skipped: 0,
+    lastSendAt: 0,
+    lastDetectAt: 0,
+    lastError: "",
+};
+
+function wsStateLabel() {
+    if (!ws) return "none";
+    if (ws.readyState === WebSocket.CONNECTING) return "connecting";
+    if (ws.readyState === WebSocket.OPEN) return "open";
+    if (ws.readyState === WebSocket.CLOSING) return "closing";
+    return "closed";
+}
+
+function updateCameraDebug(reason = "") {
+    const statusEl = document.getElementById("camera-status");
+    if (!statusEl) return;
+    const age = cameraDebug.lastSendAt ? Math.round((Date.now() - cameraDebug.lastSendAt) / 1000) : "-";
+    const detectAge = cameraDebug.lastDetectAt ? Math.round((Date.now() - cameraDebug.lastDetectAt) / 1000) : "-";
+    statusEl.textContent = reason || cameraDebug.lastError || `detect ${cameraDebug.detected} / send ${cameraDebug.sent} / ws ${wsStateLabel()} / last ${age}s / d ${detectAge}s`;
+    statusEl.style.color = cameraRunning && isConnected ? "#00e676" : "#ff9100";
+}
+
+function withTimeout(promise, timeoutMs) {
+    return Promise.race([
+        promise,
+        new Promise((_, reject) => {
+            setTimeout(() => reject(new Error(`pose detection timeout ${timeoutMs}ms`)), timeoutMs);
+        }),
+    ]);
+}
+
+function getCameraStream(constraints) {
+    if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+        return navigator.mediaDevices.getUserMedia(constraints);
+    }
+
+    const legacyGetUserMedia =
+        navigator.getUserMedia ||
+        navigator.webkitGetUserMedia ||
+        navigator.mozGetUserMedia ||
+        navigator.msGetUserMedia;
+
+    if (legacyGetUserMedia) {
+        return new Promise((resolve, reject) => {
+            legacyGetUserMedia.call(navigator, constraints, resolve, reject);
+        });
+    }
+
+    const isLocalhost = ["localhost", "127.0.0.1", "::1"].includes(location.hostname);
+    const needsHttps = location.protocol !== "https:" && !isLocalhost;
+    const reason = needsHttps
+        ? `Camera requires HTTPS on this address. Open the viewer with an HTTPS URL, not ${location.origin}.`
+        : "Camera API is unavailable in this browser.";
+    throw new Error(reason);
+}
 
 async function startCamera() {
     const btn = document.getElementById("camera-btn");
@@ -483,7 +564,7 @@ async function startCamera() {
 
         // Get webcam stream
         const video = document.getElementById("webcam-video");
-        const stream = await navigator.mediaDevices.getUserMedia({
+        const stream = await getCameraStream({
             video: { width: 640, height: 480, facingMode: "user" }
         });
         video.srcObject = stream;
@@ -499,10 +580,25 @@ async function startCamera() {
         statusEl.textContent = "카메라 ON";
         statusEl.style.color = "#00e676";
 
+        cameraDebug.detected = 0;
+        cameraDebug.sent = 0;
+        cameraDebug.noPose = 0;
+        cameraDebug.skipped = 0;
+        cameraDebug.lastSendAt = 0;
+        cameraDebug.lastDetectAt = 0;
+        cameraDebug.lastError = "";
+        localCameraFrame = 0;
+        isDetecting = false;
+        detectStartedAt = 0;
+        updateCameraDebug("camera on, connecting");
+
         // Auto-connect WebSocket if not already connected
         if (!isConnected) connect();
 
-        detectLoop();
+        if (!detectLoopActive) {
+            detectLoopActive = true;
+            requestAnimationFrame(detectLoop);
+        }
     } catch (err) {
         console.error("[Camera]", err);
         statusEl.textContent = "오류: " + err.message;
@@ -514,6 +610,9 @@ async function startCamera() {
 
 function stopCamera() {
     cameraRunning = false;
+    detectLoopActive = false;
+    isDetecting = false;
+    detectStartedAt = 0;
     const video = document.getElementById("webcam-video");
     if (video && video.srcObject) {
         video.srcObject.getTracks().forEach(t => t.stop());
@@ -527,34 +626,68 @@ function stopCamera() {
 }
 
 async function detectLoop() {
-    if (!cameraRunning || !poseDetector) return;
+    if (!cameraRunning || !poseDetector) {
+        detectLoopActive = false;
+        return;
+    }
 
     const now = performance.now();
     const video = document.getElementById("webcam-video");
 
-    if (!isDetecting && now - lastSendMs >= SEND_INTERVAL_MS && isConnected && ws && ws.readyState === WebSocket.OPEN && video.readyState >= 2) {
+    if (isDetecting && detectStartedAt && now - detectStartedAt > DETECT_TIMEOUT_MS * 1.5) {
+        isDetecting = false;
+        detectStartedAt = 0;
+        cameraDebug.lastError = "watchdog reset";
+        updateCameraDebug("watchdog reset");
+    }
+
+    const canSend = isConnected && ws && ws.readyState === WebSocket.OPEN && video.readyState >= 2;
+    if (!canSend && cameraRunning) {
+        cameraDebug.skipped++;
+        if (cameraDebug.skipped % 30 === 0) {
+            updateCameraDebug(`waiting: ws ${wsStateLabel()} / video ${video.readyState}`);
+        }
+    }
+
+    if (!isDetecting && now - lastSendMs >= SEND_INTERVAL_MS && canSend) {
         isDetecting = true;
+        detectStartedAt = now;
         try {
-            const poses = await poseDetector.estimatePoses(video);
+            const poses = await withTimeout(poseDetector.estimatePoses(video), DETECT_TIMEOUT_MS);
+            cameraDebug.lastDetectAt = Date.now();
             if (poses && poses.length > 0) {
+                cameraDebug.detected++;
                 // TF.js returns pixel coords; normalize to [0,1] matching KEYPOINT_FORMAT=movenet_yx
                 const vw = video.videoWidth || 640;
                 const vh = video.videoHeight || 480;
                 const payload = poses[0].keypoints.map(kp => [kp.y / vh, kp.x / vw, kp.score ?? 0.9]);
                 drawSkeleton("user-canvas", payload, true);
                 document.getElementById("user-overlay").classList.add("hidden");
+                localCameraFrame++;
                 ws.send(JSON.stringify({
                     data_type: "keypoints",
-                    frame_id: `cam_${frameCount}`,
+                    frame_id: `cam_${localCameraFrame}`,
                     client_timestamp_ms: Date.now(),
                     payload
                 }));
+                cameraDebug.sent++;
+                cameraDebug.lastSendAt = Date.now();
+                cameraDebug.lastError = "";
                 lastSendMs = now;
+                if (cameraDebug.sent % 10 === 0) updateCameraDebug();
+            } else {
+                cameraDebug.noPose++;
+                if (cameraDebug.noPose % 15 === 0) {
+                    updateCameraDebug(`no pose ${cameraDebug.noPose} / ws ${wsStateLabel()}`);
+                }
             }
         } catch (e) {
             console.warn("[Detect]", e);
+            cameraDebug.lastError = e.message || String(e);
+            updateCameraDebug(`detect error: ${cameraDebug.lastError}`);
         } finally {
             isDetecting = false;
+            detectStartedAt = 0;
         }
     }
 
