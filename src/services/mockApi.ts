@@ -22,6 +22,16 @@ export async function fetchSessionResult(exercise: Exercise, sets: number): Prom
       { status: 'warn', message: '무릎이 안쪽으로 모이지 않게 발끝 방향을 유지하세요.' },
       { status: 'ok', message: '세트가 진행될수록 하강 속도가 안정되고 있습니다.' },
     ],
+    finalFeedback: [
+      {
+        title: '전체 평가',
+        message: '평균 점수는 78점입니다. 후반 반복에서 무릎 정렬이 흔들렸지만 전체 리듬은 안정적입니다.',
+      },
+      {
+        title: '다음 세트 기준',
+        message: '속도를 조금 낮추고 내려가는 구간에서 무릎과 발끝 방향을 먼저 맞추세요.',
+      },
+    ],
   };
 }
 

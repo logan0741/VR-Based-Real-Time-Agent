@@ -1,20 +1,39 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
-// Raw 2D keypoints: frames[i] = 17 joints × [x, y, z]
 export function useExpertPose2D(exercise: string) {
   const framesRef = useRef<number[][][]>([]);
+  const [version, setVersion] = useState(0);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
+    let cancelled = false;
+
     framesRef.current = [];
+    setLoading(true);
+    setVersion((current) => current + 1);
+
     fetch(`/api/expert?exercise=${exercise}`)
-      .then((r) => r.json())
+      .then((response) => response.json())
       .then((data) => {
+        if (cancelled) return;
         if (data.status === 'ok' && Array.isArray(data.frames) && data.frames.length > 0) {
           framesRef.current = data.frames as number[][][];
         }
       })
-      .catch(() => {});
+      .catch(() => {
+        if (!cancelled) framesRef.current = [];
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+          setVersion((current) => current + 1);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
   }, [exercise]);
 
-  return framesRef;
+  return { framesRef, version, loading };
 }

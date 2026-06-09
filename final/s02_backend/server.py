@@ -38,7 +38,7 @@ try:
     _DTW_AVAILABLE = True
 except ImportError:
     _DTW_AVAILABLE = False
-    print("[Pipeline] dtaidistance 미설치 — DTW 점수 비활성화. pip install dtaidistance==2.3.12")
+    print("[Pipeline] dtaidistance 亦껋꼶梨룩땻類잆럦???DTW ??????????繹먮봿?? pip install dtaidistance==2.3.12")
 
 
 EXERCISE_ALIASES = {
@@ -60,9 +60,33 @@ def exercise_file_candidates(exercise_type: str) -> List[str]:
     return [name for name in names if not (name in seen or seen.add(name))]
 
 
+MUSCLE_LABELS = {
+    "chest": "\uac00\uc2b4",
+    "abs": "\ubcf5\uadfc",
+    "lower_back": "\ud558\ubd80 \ud5c8\ub9ac",
+    "left_quad": "\uc88c \ub300\ud1f4",
+    "right_quad": "\uc6b0 \ub300\ud1f4",
+    "left_hamstring": "\uc88c \ud584\uc2a4\ud2b8\ub9c1",
+    "right_hamstring": "\uc6b0 \ud584\uc2a4\ud2b8\ub9c1",
+    "left_glute": "\uc88c \ub454\uadfc",
+    "right_glute": "\uc6b0 \ub454\uadfc",
+}
+
+
+def format_fatigue_summary(prefix: str, muscles: List[str]) -> str:
+    labels = [MUSCLE_LABELS.get(muscle, muscle) for muscle in muscles]
+    return f"{prefix}: {', '.join(labels)}"
+
+
+def is_pending_feedback(feedback: Dict[str, Any]) -> bool:
+    message = str(feedback.get("message", ""))
+    body_part = str(feedback.get("body_part", ""))
+    return body_part in {"", "pending"} or message in {"", "measuring", "\uce21\uc815 \uc911\uc785\ub2c8\ub2e4."}
+
+
 
 class PreprocessingSession:
-    """연결별 전처리 파이프라인 상태 (PoseNormalizer, RepDetector, ScoreEngine, FeedbackPolicy)."""
+    """??⑤슡?숂솻??熬곣뫗??????逾?熬곣뫁逾????⑤객臾?(PoseNormalizer, RepDetector, ScoreEngine, FeedbackPolicy)."""
 
     def __init__(
         self,
@@ -111,17 +135,17 @@ class PreprocessingSession:
         self._frame_idx: int = 0
 
     def process(self, kpts_np: Any) -> Dict[str, Any]:
-        """1프레임 관절 데이터로 점수·횟수·피드백을 계산하고 반환한다."""
+        """1?熬곣뫁?????㉱????⑥щ턄??⑤벡夷?????얍ㅇ???낅빢鸚??怨뺢덧?꾩룄?????ｌ뫒亦???겶??꾩룇瑗???類ｋ펲."""
         import numpy as _np
 
         try:
             norm_kp = self._normalizer.normalize(kpts_np)
         except ValueError:
-            return {"score": 50, "rep_count": 0, "rep_scores": [], "message": "자세를 화면 중앙에 맞춰주세요.", "body_part": "", "severity": 0.0}
+            return {"score": 50, "rep_count": 0, "rep_scores": [], "message": "????????븐뻼??繞벿살탳???嶺뚮씮??議쏀떊?源껋돪??", "body_part": "", "severity": 0.0}
 
         self._norm_buffer.append(norm_kp)
 
-        # Rep 감지
+        # Rep ?띠룆흮?
         all_reps = self._rep_detector.update(norm_kp)
         new_reps = all_reps[self._known_reps:]
         new_rep_matrices: List[Any] = []
@@ -136,7 +160,7 @@ class PreprocessingSession:
                     except Exception:
                         pass
 
-            # DTW 계산 (dtw_interval마다)
+            # DTW ??ｌ뫒亦?(dtw_interval嶺뚮씭???
             if new_rep_matrices and not self._run_realtime_dtw:
                 self._last_dist_matrix = new_rep_matrices[-1]
 
@@ -153,7 +177,7 @@ class PreprocessingSession:
 
         self._known_reps = len(all_reps)
 
-        # ── 점수 계산 ──
+        # ???? ???????ｌ뫒亦?????
         score, rep_scores = 50, []
 
         if self._last_dist_matrix is not None and self._score_engine is not None:
@@ -162,7 +186,7 @@ class PreprocessingSession:
             except Exception:
                 pass
 
-        # ── 피드백 ──
+        # ???? ??怨뺢덧??????
         if (
             not new_reps
             and self._frame_idx % self._feedback_interval_frames != 0
@@ -181,7 +205,11 @@ class PreprocessingSession:
 
         if new_reps:
             self._feedback_policy.on_rep_complete(self._frame_idx, feedback_result)
-        message = self._feedback_policy.update(self._frame_idx)
+
+        policy_message = self._feedback_policy.update(self._frame_idx)
+        live_message = str(feedback_result.get("message", policy_message))
+        body_part = str(feedback_result.get("body_part", ""))
+        message = live_message if body_part not in {"", "pending"} else policy_message
 
         self._frame_idx += 1
 
@@ -190,14 +218,14 @@ class PreprocessingSession:
             "rep_count": len(all_reps),
             "rep_scores": rep_scores,
             "message": message,
-            "body_part": str(feedback_result.get("body_part", "")),
+            "body_part": body_part,
             "severity": float(feedback_result.get("severity", 0.0)),
         }
         self._last_result = result
         return result
 
     def reset(self) -> None:
-        """세션 재시작 시 상태를 초기화한다."""
+        """?筌뤾쑬???????????⑤객臾???貫?껆뵳??됀???"""
         self._normalizer.reset()
         self._norm_buffer.clear()
         self._last_dist_matrix = None
@@ -340,7 +368,7 @@ class FastPosePipeline:
             else:
                 print("[Lifter] No checkpoint found. Running with initialized weights.")
 
-        # 전처리 공유 리소스 (implemented=True 종목만 서버 시작 시 1회 로드)
+        # ?熬곣뫗?????ㅻ쾴?? ?洹먮봾爰??(implemented=True ??リ턁??듭춹???類ㅼ뮅 ??戮곗굚 ??1???β돦裕녻キ?
         self._preprocessing_shared: Dict[str, Any] = {}
         for exercise, cfg in EXERCISES.items():
             if not cfg.get("implemented", False):
@@ -361,12 +389,12 @@ class FastPosePipeline:
                     "comparator": comparator,
                     "feedback_engine": feedback_engine,
                 }
-                print(f"[Pipeline] 전처리 파이프라인 로드 완료: {exercise}")
+                print(f"[Pipeline] ?熬곣뫗??????逾?熬곣뫁逾???β돦裕녻キ??熬곣뫁?? {exercise}")
             except Exception as exc:
-                print(f"[Pipeline] 전처리 파이프라인 로드 실패 ({exercise}): {exc}")
+                print(f"[Pipeline] ?熬곣뫗??????逾?熬곣뫁逾???β돦裕녻キ????덉넮 ({exercise}): {exc}")
 
     def make_preprocessing_session(self, exercise_type: str) -> Optional[PreprocessingSession]:
-        """exercise_type에 맞는 PreprocessingSession을 생성한다. 미구현 종목은 None 반환."""
+        """exercise_type??嶺뚮씮???PreprocessingSession????諛댁뎽??類ｋ펲. 亦껋꼶??????リ턁??? None ?꾩룇瑗??"""
         shared = self._preprocessing_shared.get(normalize_exercise_type(exercise_type))
         if shared is None:
             return None
@@ -418,11 +446,11 @@ class FastPosePipeline:
         high_fatigue = [k for k, v in fatigue_state.items() if v == "high"]
         mid_fatigue = [k for k, v in fatigue_state.items() if v in {"mid", "med"}]
         if high_fatigue:
-            fatigue_summary = f"주의: {', '.join(high_fatigue)}"
+            fatigue_summary = format_fatigue_summary("\uc8fc\uc758", high_fatigue)
         elif mid_fatigue:
-            fatigue_summary = f"보통: {', '.join(mid_fatigue)}"
+            fatigue_summary = format_fatigue_summary("\ubcf4\ud1b5", mid_fatigue)
         else:
-            fatigue_summary = "양호"
+            fatigue_summary = "\uc591\ud638"
 
         pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
         session_tracker.record_frame(pose_score, fatigue_summary)
@@ -495,13 +523,13 @@ class FastPosePipeline:
         high_fatigue = [k for k, v in fatigue_state.items() if v == "high"]
         mid_fatigue = [k for k, v in fatigue_state.items() if v in {"mid", "med"}]
         if high_fatigue:
-            fatigue_summary = f"주의: {', '.join(high_fatigue)}"
+            fatigue_summary = format_fatigue_summary("\uc8fc\uc758", high_fatigue)
         elif mid_fatigue:
-            fatigue_summary = f"보통: {', '.join(mid_fatigue)}"
+            fatigue_summary = format_fatigue_summary("\ubcf4\ud1b5", mid_fatigue)
         else:
-            fatigue_summary = "양호"
+            fatigue_summary = "\uc591\ud638"
 
-        # 실제 DTW 파이프라인 (스쿼트) 또는 stub
+        # ???깆젷 DTW ???逾?熬곣뫁逾??(???깆굯?? ???裕?stub
         if preprocessing_session is not None:
             prep = preprocessing_session.process(kpts_np)
             pose_score = prep["score"]
@@ -515,6 +543,15 @@ class FastPosePipeline:
                 "rep_scores": prep["rep_scores"],
                 "muscle_fatigue": fatigue_state,
             }
+            if is_pending_feedback(feedback_block):
+                pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
+                feedback_block.update({
+                    "score": pose_score,
+                    "label": fatigue_summary,
+                    "message": fatigue_summary,
+                    "body_part": "ok",
+                    "severity": 0.0,
+                })
         else:
             pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
             feedback_block = {
@@ -561,11 +598,11 @@ class FastPosePipeline:
         high_fatigue = [k for k, v in fatigue_state.items() if v == "high"]
         mid_fatigue = [k for k, v in fatigue_state.items() if v in {"mid", "med"}]
         if high_fatigue:
-            fatigue_summary = f"주의: {', '.join(high_fatigue)}"
+            fatigue_summary = format_fatigue_summary("\uc8fc\uc758", high_fatigue)
         elif mid_fatigue:
-            fatigue_summary = f"보통: {', '.join(mid_fatigue)}"
+            fatigue_summary = format_fatigue_summary("\ubcf4\ud1b5", mid_fatigue)
         else:
-            fatigue_summary = "양호"
+            fatigue_summary = "\uc591\ud638"
 
         if preprocessing_session is not None:
             prep = preprocessing_session.process(kpts_np)
@@ -580,6 +617,15 @@ class FastPosePipeline:
                 "rep_scores": prep["rep_scores"],
                 "muscle_fatigue": fatigue_state,
             }
+            if is_pending_feedback(feedback_block):
+                pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
+                feedback_block.update({
+                    "score": pose_score,
+                    "label": fatigue_summary,
+                    "message": fatigue_summary,
+                    "body_part": "ok",
+                    "severity": 0.0,
+                })
         else:
             pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
             feedback_block = {
@@ -772,7 +818,7 @@ async def get_expert_smplx(exercise: str = "squat"):
     if pipeline.model is None:
         return {"status": "error", "message": "Lifter model not available (optimization backend active)."}
 
-    # 1순위: 서버 시작 시 로드된 ExpertPoseCache.raw_sequence 사용 (정확한 MLP 입력 형식)
+    # 1??戮곕쭊: ??類ㅼ뮅 ??戮곗굚 ???β돦裕녻キ??ExpertPoseCache.raw_sequence ????(?筌먐쇰꼪??MLP ???놁졑 ?筌먦끇六?
     shared = pipeline._preprocessing_shared.get(normalize_exercise_type(exercise))
     if shared is not None:
         try:
@@ -790,9 +836,9 @@ async def get_expert_smplx(exercise: str = "squat"):
             app.state.expert_smplx_cache = frames
             return {"status": "ok", "total_frames": len(frames), "frames": frames, "source": "npy_raw_sequence"}
         except Exception as exc:
-            print(f"[expert-smplx] raw_sequence 처리 실패: {exc}")
+            print(f"[expert-smplx] raw_sequence 嶺뚳퐣瑗?????덉넮: {exc}")
 
-    # 2순위: JSON 파일 탐색 (fallback)
+    # 2??戮곕쭊: JSON ???逾??????(fallback)
     project_root = Path(__file__).resolve().parents[2]
     for path in sorted(project_root.glob("*_keypoints.json")):
         try:
@@ -820,9 +866,9 @@ async def get_expert_smplx(exercise: str = "squat"):
 
 @app.get("/api/expert-keypoints")
 async def get_expert_keypoints():
-    """서버 시작 시 캐시된 전문가 원본 2D keypoints 시퀀스를 반환한다.
-    React 앱 RenderSlot에서 강사 스켈레톤 루프 재생에 사용.
-    shape: (N, 17, 3) — [y, x, confidence], normalized 0-1.
+    """??類ㅼ뮅 ??戮곗굚 ??嶺?흮????熬곣뱭?泥? ???沅?2D keypoints ???궰???? ?꾩룇瑗???類ｋ펲.
+    React ??RenderSlot??????띠룆踰→쾮????노젵???낃퐨 ?猷먮쳜????繹??????
+    shape: (N, 17, 3) ??[y, x, confidence], normalized 0-1.
     """
     pipeline: FastPosePipeline = app.state.pose_pipeline
     shared = pipeline._preprocessing_shared.get("squat")
@@ -875,7 +921,7 @@ async def get_expert_poses(exercise: str = "squat"):
 async def get_expert_pose3d():
     """Return pre-computed MotionBERT-Lite 3D joint coordinates (COCO-17, meters scale).
     Run run_motionbert.py once to generate squat_expert_keypoints_3d_mb.json.
-    Coordinate note: pt=(x,y,z) where y points DOWN — negate y for Three.js Y-up.
+    Coordinate note: pt=(x,y,z) where y points DOWN ??negate y for Three.js Y-up.
     """
     if getattr(app.state, "expert_pose3d_cache", None) is not None:
         cached = app.state.expert_pose3d_cache
@@ -884,7 +930,7 @@ async def get_expert_pose3d():
     project_root = Path(__file__).resolve().parents[2]
     mb_path = project_root / "squat_expert_keypoints_3d_mb.json"
     if not mb_path.exists():
-        return {"status": "error", "message": "squat_expert_keypoints_3d_mb.json not found — run run_motionbert.py first"}
+        return {"status": "error", "message": "squat_expert_keypoints_3d_mb.json not found ??run run_motionbert.py first"}
 
     with open(str(mb_path), "r") as f:
         data = json.load(f)
@@ -908,6 +954,7 @@ class ConnectionManager:
             "exercise_type": "squat",
             "sets": 1,
             "reps_per_set": 8,
+            "expert_started_at_ms": int(time.time() * 1000),
         }
 
     async def connect(self, websocket: WebSocket):
@@ -930,10 +977,7 @@ class ConnectionManager:
         await websocket.send_text(json.dumps({
             "status": "ok",
             "data_type": "session_config",
-            "control": {
-                "version": self.session_control_version,
-                **self.session_control,
-            },
+            "control": self.current_session_control(),
         }))
         if self.latest_pose_message is not None:
             await websocket.send_text(json.dumps(self.latest_pose_message))
@@ -995,10 +1039,17 @@ class ConnectionManager:
                 if self.latest_pose_message else None
             ),
             "session_control": {
-                "version": self.session_control_version,
-                **self.session_control,
+                **self.current_session_control(),
             },
             "clients": sorted(clients, key=lambda c: c["connected_at"]),
+        }
+
+    def current_session_control(self) -> Dict[str, Any]:
+        started_at = int(self.session_control.get("expert_started_at_ms") or int(time.time() * 1000))
+        return {
+            "version": self.session_control_version,
+            **self.session_control,
+            "expert_phase_ms": max(0, int(time.time() * 1000) - started_at),
         }
 
     def start_session_control(self, payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -1009,11 +1060,9 @@ class ConnectionManager:
             "exercise_type": exercise_type,
             "sets": int(payload.get("sets", 1) or 1),
             "reps_per_set": int(payload.get("reps_per_set", 8) or 8),
+            "expert_started_at_ms": int(time.time() * 1000),
         }
-        return {
-            "version": self.session_control_version,
-            **self.session_control,
-        }
+        return self.current_session_control()
 
 
 manager = ConnectionManager()
@@ -1022,6 +1071,14 @@ manager = ConnectionManager()
 @app.get("/api/debug/ws")
 async def debug_ws():
     return {"status": "ok", **manager.snapshot()}
+
+
+@app.get("/api/session-control")
+async def get_session_control():
+    return {
+        "status": "ok",
+        "control": manager.current_session_control(),
+    }
 
 
 @app.websocket("/ws/pose")
@@ -1110,7 +1167,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     session_tracker,
                     preprocessing_session,
                 )
-                # React 앱(뷰어)도 포즈 수신이 필요하므로 broadcast 유지
+                # React ?????ｅ젆?????藥???琉용뼁???熬곣뫗??????broadcast ???
                 await manager.broadcast_json(response)
                 continue
             elif data_type == "session_start":

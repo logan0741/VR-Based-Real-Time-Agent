@@ -11,7 +11,20 @@ export type PoseFrame = {
     rep_count: number;
     rep_scores: number[];
     body_part?: string;
+    state?: string;
+    severity?: number;
+    muscle_fatigue?: Record<string, string>;
   };
+};
+
+export type SessionControl = {
+  version: number;
+  user_id?: string;
+  exercise_type: string;
+  sets: number;
+  reps_per_set: number;
+  expert_started_at_ms?: number;
+  expert_phase_ms?: number;
 };
 
 type WebSocketStatus = 'connecting' | 'open' | 'closed' | 'error';
@@ -30,6 +43,7 @@ export function useWebSocket() {
   const [status, setStatus] = useState<WebSocketStatus>('connecting');
   const [poseCount, setPoseCount] = useState(0);
   const [lastPoseAt, setLastPoseAt] = useState<number | null>(null);
+  const [sessionControl, setSessionControl] = useState<SessionControl | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const retryRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastFrameRef = useRef<PoseFrame | null>(null);
@@ -46,6 +60,10 @@ export function useWebSocket() {
       ws.onmessage = (event) => {
         try {
           const data: PoseFrame = JSON.parse(event.data as string);
+          const control = (data as PoseFrame & { control?: SessionControl }).control;
+          if (control?.exercise_type) {
+            setSessionControl(control);
+          }
           if (data.status === 'ok' && data.keypoints_2d) {
             const prev = lastFrameRef.current;
             const merged =
@@ -131,5 +149,5 @@ export function useWebSocket() {
 
   const endSession = useCallback(() => sendJson({ data_type: 'session_end' }), [sendJson]);
 
-  return { latestFrame, status, poseCount, lastPoseAt, selectExercise, startSession, endSession };
+  return { latestFrame, status, poseCount, lastPoseAt, sessionControl, selectExercise, startSession, endSession };
 }

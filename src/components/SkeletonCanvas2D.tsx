@@ -136,20 +136,47 @@ function drawFrame(
   ctx.globalAlpha = 1.0;
 }
 
+function clearFrame(canvas: HTMLCanvasElement) {
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+  const w = canvas.width, h = canvas.height;
+
+  ctx.clearRect(0, 0, w, h);
+  const grad = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w * 0.7);
+  grad.addColorStop(0, '#0d0d18');
+  grad.addColorStop(1, '#08080e');
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, w, h);
+}
+
 const LOGICAL_W = 320;
 const LOGICAL_H = 480;
 
 type Props = {
   framesRef?: React.MutableRefObject<number[][][]>;
+  framesVersion?: number;
+  playbackVersion?: number;
+  playbackPhaseMs?: number;
+  loading?: boolean;
   keypoints?: number[][] | null;
   fps?: number;
   mirror?: boolean;
   color?: string; // kept for API compat, unused
 };
 
-export default function SkeletonCanvas2D({ framesRef, keypoints, fps = 15, mirror = false }: Props) {
+export default function SkeletonCanvas2D({
+  framesRef,
+  framesVersion = 0,
+  playbackVersion = 0,
+  playbackPhaseMs = 0,
+  loading = false,
+  keypoints,
+  fps = 15,
+  mirror = false,
+}: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const expertStartLocalMsRef = useRef(performance.now());
 
   // DPR scaling on mount
   useEffect(() => {
@@ -165,19 +192,30 @@ export default function SkeletonCanvas2D({ framesRef, keypoints, fps = 15, mirro
     if (timerRef.current) clearInterval(timerRef.current);
     if (!framesRef) return;
 
+    expertStartLocalMsRef.current = performance.now() - Math.max(0, playbackPhaseMs);
+
+    const initialCanvas = canvasRef.current;
+    if (initialCanvas && (loading || framesRef.current.length === 0)) {
+      clearFrame(initialCanvas);
+    }
+
     timerRef.current = setInterval(() => {
       const canvas = canvasRef.current;
       const frames = framesRef.current;
-      if (!canvas || frames.length === 0) return;
-      // Time-based index: always shows the correct frame, no stutter
-      const idx = Math.floor(Date.now() / (1000 / fps)) % frames.length;
+      if (!canvas) return;
+      if (loading || frames.length === 0) {
+        clearFrame(canvas);
+        return;
+      }
+      const elapsedMs = Math.max(0, performance.now() - expertStartLocalMsRef.current);
+      const idx = Math.floor(elapsedMs / (1000 / fps)) % frames.length;
       drawFrame(canvas, frames[idx], mirror);
     }, Math.round(1000 / fps));
 
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [framesRef, fps, mirror]);
+  }, [framesRef, framesVersion, playbackVersion, playbackPhaseMs, loading, fps, mirror]);
 
   // Live pose — redraw on every keypoints update
   useEffect(() => {

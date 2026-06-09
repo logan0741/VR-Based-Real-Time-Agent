@@ -37,8 +37,18 @@ export default function ResultPanel({ result, onRetry, onHome }: ResultPanelProp
         </div>
       </div>
 
+      <div className="feedback-box final-report">
+        <div className="fb-title">최종 자세 분석</div>
+        {result.finalFeedback.map((section) => (
+          <div className="final-section" key={section.title}>
+            <strong>{section.title}</strong>
+            <span>{section.message}</span>
+          </div>
+        ))}
+      </div>
+
       <div className="feedback-box">
-        <div className="fb-title">AI 피드백</div>
+        <div className="fb-title">운동 중 주요 피드백</div>
         {result.feedback.map((item, index) => (
           <div className="fb-item" key={`${item.status}-${index}`}>
             <span className="fb-ico">{item.status === 'ok' ? 'OK' : '!'}</span>
@@ -52,7 +62,7 @@ export default function ResultPanel({ result, onRetry, onHome }: ResultPanelProp
           다시 시작
         </button>
         <button className="btn-home" type="button" onClick={onHome}>
-          홈으로
+          처음으로
         </button>
       </div>
     </div>

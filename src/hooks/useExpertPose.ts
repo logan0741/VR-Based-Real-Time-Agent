@@ -1,31 +1,25 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
-const EXPERT_FPS = 24;
+export type ExpertSmplxFrame = {
+  global_orient: number[];
+  body_pose: number[];
+};
 
-export function useExpertPose() {
-  const [currentFrame, setCurrentFrame] = useState<number[][] | null>(null);
-  const framesRef = useRef<number[][][]>([]);
+// Returns a ref (not state) so callers read it inside useFrame without triggering re-renders.
+export function useExpertPose(exercise: string = 'squat') {
+  const framesRef = useRef<ExpertSmplxFrame[]>([]);
+  const fpsRef = useRef<number>(24);
 
   useEffect(() => {
-    fetch('/api/expert-keypoints')
+    fetch(`/api/expert-smplx?exercise=${exercise}`)
       .then((r) => r.json())
       .then((data) => {
         if (data.status === 'ok' && Array.isArray(data.frames)) {
-          framesRef.current = data.frames as number[][][];
+          framesRef.current = data.frames as ExpertSmplxFrame[];
         }
       })
       .catch(() => {});
-  }, []);
+  }, [exercise]);
 
-  useEffect(() => {
-    const id = setInterval(() => {
-      if (framesRef.current.length === 0) return;
-      // 시각 기반 인덱스 — viewer/app 모두 같은 프레임을 동시에 표시
-      const idx = Math.floor(Date.now() / (1000 / EXPERT_FPS)) % framesRef.current.length;
-      setCurrentFrame(framesRef.current[idx]);
-    }, 1000 / EXPERT_FPS);
-    return () => clearInterval(id);
-  }, []);
-
-  return currentFrame;
+  return { framesRef, fpsRef };
 }

@@ -487,6 +487,33 @@ button {
 }
 .btn-compare:hover { background: rgba(99, 102, 241, 0.25); }
 
+.final-report {
+  gap: 12px;
+}
+
+.final-section {
+  display: grid;
+  gap: 4px;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.final-section:last-child {
+  border-bottom: 0;
+}
+
+.final-section strong {
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
+.final-section span {
+  color: rgba(255,255,255,0.78);
+  font-size: 0.78rem;
+  line-height: 1.45;
+}
+
 .fb-dot {
   width: 5px;
   height: 5px;

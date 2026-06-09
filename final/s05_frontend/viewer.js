@@ -1,5 +1,5 @@
 /**
- * VR Pose Viewer — Real-time 2D Skeleton Rendering Engine
+ * VR Pose Viewer - Real-time 2D Skeleton Rendering Engine
  *
  * Connects to the FastAPI WebSocket server, receives COCO-17 keypoints,
  * and renders skeleton overlays on HTML Canvas. Designed to run in
@@ -73,6 +73,9 @@ let expertFrames = [];       // Array of {frame, keypoints}
 let expertFrameIndex = 0;    // Current playback index
 let expertLoaded = false;
 let currentExpertExercise = "";
+let currentExpertControlVersion = -1;
+let expertStartLocalMs = performance.now();
+const EXPERT_FPS = 24;
 
 // ================================================================
 // WebSocket Connection
@@ -81,7 +84,7 @@ let currentExpertExercise = "";
 function connect() {
     let url = document.getElementById("server-url").value.trim();
 
-    // HTTPS 페이지에서는 반드시 wss:// 사용, 포트 번호 제거
+    // HTTPS pages must use wss:// and the public tunnel has no explicit port.
     if (location.protocol === "https:") {
         url = url.replace(/^ws:\/\//, "wss://").replace(/:8000\//, "/").replace(/:8000$/, "");
     }
@@ -152,10 +155,9 @@ function handleFrame(data) {
     if (data.status !== "ok") return;
 
     if (data.control?.exercise_type) {
-        const exercise = data.control.exercise_type;
-        localStorage.setItem("expertExercise", exercise);
-        if (exercise !== currentExpertExercise) {
-            loadExpertPoses(exercise);
+        syncExpertExercise(data.control);
+        if (data.data_type === "session_config" && !data.keypoints_2d) {
+            return;
         }
     }
 
@@ -209,7 +211,7 @@ function drawSkeleton(canvasId, keypoints, isUser) {
 
     ctx.clearRect(0, 0, w, h);
 
-    // Background gradient (cached — recreated only on resize)
+    // Background gradient (cached, recreated only on resize)
     ctx.fillStyle = getCachedBackground(ctx, isUser ? "user" : "expert");
     ctx.fillRect(0, 0, w, h);
 
@@ -260,8 +262,8 @@ function drawSkeleton(canvasId, keypoints, isUser) {
 
 function normalizeToCanvas(keypoints, canvasW, canvasH, mirror) {
     // Auto-detect coordinate format:
-    // MoveNet: [y, x, confidence] — values in 0~1, nose y ≈ 0.15~0.3
-    // Pixel:   [x, y, z] — values can be large (640x480 or 1920x1080)
+    // MoveNet: [y, x, confidence], values in 0~1, nose y around 0.15~0.3
+    // Pixel:   [x, y, z], values can be large (640x480 or 1920x1080)
     //
     // Heuristic: if all values in [0,1] range AND nose (col0) is near the
     // top (smallest among body joints), it's MoveNet [y,x,conf] format.
@@ -289,7 +291,7 @@ function normalizeToCanvas(keypoints, canvasW, canvasH, mirror) {
     // Extract x, y based on detected format
     const points2D = keypoints.map(kp => {
         if (isMoveNetYX) {
-            return { rawX: kp[1], rawY: kp[0] };  // swap: [y,x] → x,y
+            return { rawX: kp[1], rawY: kp[0] };  // swap: [y,x] to x,y
         } else {
             return { rawX: kp[0], rawY: kp[1] };   // already [x,y]
         }
@@ -340,6 +342,23 @@ function normalizeToCanvas(keypoints, canvasW, canvasH, mirror) {
 // Feedback & Fatigue UI
 // ================================================================
 
+const BODY_PART_LABELS = {
+    pending: "",
+    ok: "",
+    knee: "\ubb34\ub98e",
+    hip: "\uace8\ubc18",
+    torso: "\uc0c1\uccb4",
+    ankle: "\ubc1c\ubaa9",
+    balance: "\uade0\ud615",
+    elbow: "\ud314\uafc8\uce58",
+    shoulder: "\uc5b4\uae68",
+    wrist: "\uc190\ubaa9",
+};
+
+function bodyPartLabel(bodyPart) {
+    return BODY_PART_LABELS[bodyPart] ?? bodyPart ?? "";
+}
+
 function updateFeedback(feedback) {
     if (!feedback) return;
 
@@ -372,7 +391,8 @@ function updateFeedback(feedback) {
     // Body part secondary detail
     const detailEl = document.getElementById("knee-angle");
     if (detailEl) {
-        detailEl.textContent = feedback.body_part ? `부위: ${feedback.body_part}` : "";
+        const part = bodyPartLabel(feedback.body_part);
+        detailEl.textContent = part ? `\ubd80\uc704: ${part}` : "";
     }
 
     // Muscle fatigue dots
@@ -387,7 +407,7 @@ function updateScore(score) {
 
     scoreEl.textContent = score;
 
-    // Ring progress (circumference = 2 * π * 52 ≈ 327)
+    // Ring progress, circumference is about 327.
     const circumference = 327;
     const offset = circumference * (1 - score / 100);
     ringFill.style.strokeDashoffset = offset;
@@ -417,18 +437,44 @@ function updateFatigueDots(fatigue) {
 // ================================================================
 
 function startExpertLoop() {
-    const FPS = 24;
     setInterval(() => {
         if (!expertLoaded || expertFrames.length === 0) return;
-        // 시각 기반 인덱스 — viewer/app 모두 같은 프레임을 동시에 표시
-        expertFrameIndex = Math.floor(Date.now() / (1000 / FPS)) % expertFrames.length;
+        const elapsedMs = Math.max(0, performance.now() - expertStartLocalMs);
+        expertFrameIndex = Math.floor(elapsedMs / (1000 / EXPERT_FPS)) % expertFrames.length;
         const frame = expertFrames[expertFrameIndex];
         const kpts = frame.keypoints ?? frame;
         if (kpts && kpts.length === 17) {
             drawSkeleton("expert-canvas", kpts, false);
             document.getElementById("expert-overlay").classList.add("hidden");
         }
-    }, 1000 / FPS);
+    }, 1000 / EXPERT_FPS);
+}
+
+function syncExpertExercise(control) {
+    if (!control?.exercise_type) return;
+    const version = Number.isFinite(Number(control.version)) ? Number(control.version) : currentExpertControlVersion;
+    const phaseMs = Number.isFinite(Number(control.expert_phase_ms)) ? Number(control.expert_phase_ms) : 0;
+    const exercise = control.exercise_type;
+
+    localStorage.setItem("expertExercise", exercise);
+    expertStartLocalMs = performance.now() - Math.max(0, phaseMs);
+    if (exercise !== currentExpertExercise || version !== currentExpertControlVersion) {
+        currentExpertControlVersion = version;
+        loadExpertPoses(exercise);
+    }
+}
+
+async function pollExpertExercise() {
+    const baseUrl = location.origin || "http://127.0.0.1:8000";
+    try {
+        const resp = await fetch(`${baseUrl}/api/session-control`, { cache: "no-store" });
+        const data = await resp.json();
+        if (data.status === "ok" && data.control) {
+            syncExpertExercise(data.control);
+        }
+    } catch (e) {
+        // WebSocket remains the primary path; polling is a missed-message fallback.
+    }
 }
 
 async function loadExpertPoses(exerciseName) {
@@ -550,7 +596,7 @@ async function startCamera() {
     }
 
     try {
-        statusEl.textContent = "모델 로딩...";
+        statusEl.textContent = "\ubaa8\ub378 \ub85c\ub529...";
         btn.disabled = true;
 
         // Load MoveNet LIGHTNING (fast, ~20ms) only once
@@ -575,9 +621,9 @@ async function startCamera() {
         await video.play();
 
         cameraRunning = true;
-        btn.textContent = "📷 웹캠 중지";
+        btn.textContent = "\uc6f9\ucea0 \uc911\uc9c0";
         btn.disabled = false;
-        statusEl.textContent = "카메라 ON";
+        statusEl.textContent = "\uce74\uba54\ub77c ON";
         statusEl.style.color = "#00e676";
 
         cameraDebug.detected = 0;
@@ -601,9 +647,9 @@ async function startCamera() {
         }
     } catch (err) {
         console.error("[Camera]", err);
-        statusEl.textContent = "오류: " + err.message;
+        statusEl.textContent = "\uc624\ub958: " + err.message;
         statusEl.style.color = "#ff3d00";
-        btn.textContent = "📷 웹캠 시작";
+        btn.textContent = "\uc6f9\ucea0 \uc2dc\uc791";
         btn.disabled = false;
     }
 }
@@ -620,8 +666,8 @@ function stopCamera() {
     }
     const btn = document.getElementById("camera-btn");
     const statusEl = document.getElementById("camera-status");
-    btn.textContent = "📷 웹캠 시작";
-    statusEl.textContent = "카메라 꺼짐";
+    btn.textContent = "\uc6f9\ucea0 \uc2dc\uc791";
+    statusEl.textContent = "\uce74\uba54\ub77c \uaebc\uc9d0";
     statusEl.style.color = "#888";
 }
 
@@ -710,7 +756,7 @@ function initDPR() {
         if (w < 10 || h < 10) return; // layout not ready yet
         canvas.width = w * dpr;
         canvas.height = h * dpr;
-        // CSS size is controlled by stylesheet — no inline style needed
+        // CSS size is controlled by stylesheet, no inline style needed.
     });
 }
 
@@ -729,6 +775,7 @@ window.addEventListener("load", () => {
     // Load expert reference poses and start independent loop
     loadExpertPoses();
     startExpertLoop();
+    setInterval(pollExpertExercise, 1000);
     // Connect WebSocket
     setTimeout(connect, 500);
 });

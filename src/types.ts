@@ -9,6 +9,11 @@ export type FeedbackItem = {
   message: string;
 };
 
+export type FinalFeedbackSection = {
+  title: string;
+  message: string;
+};
+
 export type SessionResult = {
   exercise: string;
   sets: number;
@@ -18,4 +23,5 @@ export type SessionResult = {
   durationMinutes: number;
   accuracy: number;
   feedback: FeedbackItem[];
+  finalFeedback: FinalFeedbackSection[];
 };

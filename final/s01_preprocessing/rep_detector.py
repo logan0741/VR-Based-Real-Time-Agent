@@ -85,7 +85,11 @@ class RepDetector:
                 return float(norm_frame[LEFT_WRIST, 0] - norm_frame[LEFT_SHOULDER, 0])
             return float(norm_frame[RIGHT_WRIST, 0] - norm_frame[RIGHT_SHOULDER, 0])
 
-        # lateral_raise 및 미구현 종목: 신호 0 반환 (rep 미감지)
+        if self._type == "lateral_raise":
+            left = norm_frame[LEFT_WRIST, 0] - norm_frame[LEFT_SHOULDER, 0]
+            right = norm_frame[RIGHT_WRIST, 0] - norm_frame[RIGHT_SHOULDER, 0]
+            return float((left + right) / 2.0)
+
         return 0.0
 
     def _step(self, curr_slope: float) -> None:

@@ -186,4 +186,40 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             },
         },
     },
+    ("lateral_raise", "front"): {
+        "confidence_joints": (
+            LEFT_SHOULDER, RIGHT_SHOULDER,
+            LEFT_ELBOW, RIGHT_ELBOW,
+        ),
+        "body_parts": {
+            "shoulder": {
+                "joints": (LEFT_SHOULDER, RIGHT_SHOULDER),
+                "dtw_slice": (0, 2),
+                "threshold": 0.10,
+                "classify": {
+                    "type": "gap_compare",
+                    "axis": 0,
+                    "axis_tolerance": 0.02,
+                    "gap_threshold": 0.06,
+                    "gap_state": "misaligned",
+                    "pos": "too_low",
+                    "neg": "too_high",
+                },
+            },
+            "elbow": {
+                "joints": (LEFT_ELBOW, RIGHT_ELBOW),
+                "dtw_slice": (2, 4),
+                "threshold": 0.12,
+                "classify": {
+                    "type": "gap_compare",
+                    "axis": 0,
+                    "axis_tolerance": 0.02,
+                    "gap_threshold": 0.08,
+                    "gap_state": "misaligned",
+                    "pos": "too_low",
+                    "neg": "too_high",
+                },
+            },
+        },
+    },
 }

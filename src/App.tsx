@@ -11,14 +11,141 @@ import { useTimer } from './hooks/useTimer';
 import { useWebSocket } from './hooks/useWebSocket';
 import { useExpertPose2D } from './hooks/useExpertPose2D';
 
+const TEXT = {
+  squat: '\uc2a4\ucffc\ud2b8',
+  hammerCurl: '\ud574\uba38 \uceec',
+  lateralRaise: '\ub808\ud130\ub7f4 \ub808\uc774\uc988',
+  pullup: '\ud480\uc5c5',
+  measuring: '\uce21\uc815 \uc911\uc785\ub2c8\ub2e4.',
+  start: '\uc6b4\ub3d9 \uc2dc\uc791',
+  end: '\uc6b4\ub3d9 \uc885\ub8cc',
+  instructor: '\uac15\uc0ac \ubaa8\ub378',
+  myPose: '\ub0b4 \uc790\uc138',
+};
+
 const exerciseOptions: Exercise[] = [
-  { id: 'squat',         icon: 'SQ', label: '스쿼트' },
-  { id: 'hammer_curl',   icon: 'HC', label: '해머 컬' },
-  { id: 'lateral_raise', icon: 'LR', label: '레터럴 레이즈' },
-  { id: 'pull_up',       icon: 'PU', label: '풀업' },
+  { id: 'squat', icon: 'SQ', label: TEXT.squat },
+  { id: 'hammer_curl', icon: 'HC', label: TEXT.hammerCurl },
+  { id: 'lateral_raise', icon: 'LR', label: TEXT.lateralRaise },
+  { id: 'pull_up', icon: 'PU', label: TEXT.pullup },
 ];
 
 const REPS_PER_SET = 8;
+
+type FeedbackSample = {
+  score: number;
+  message: string;
+  bodyPart: string;
+  severity: number;
+  muscles: Record<string, string>;
+};
+
+const BODY_PART_LABELS: Record<string, string> = {
+  knee: '\ubb34\ub98e',
+  hip: '\uace8\ubc18',
+  torso: '\uc0c1\uccb4',
+  ankle: '\ubc1c\ubaa9',
+  balance: '\uade0\ud615',
+  elbow: '\ud314\uafc8\uce58',
+  shoulder: '\uc5b4\uae68',
+  wrist: '\uc190\ubaa9',
+  ok: '\uc804\uccb4 \uc790\uc138',
+};
+
+const MUSCLE_LABELS: Record<string, string> = {
+  chest: '\uac00\uc2b4',
+  abs: '\ubcf5\uadfc',
+  lower_back: '\ud558\ubd80 \ud5c8\ub9ac',
+  left_quad: '\uc88c \ub300\ud1f4',
+  right_quad: '\uc6b0 \ub300\ud1f4',
+  left_hamstring: '\uc88c \ud584\uc2a4\ud2b8\ub9c1',
+  right_hamstring: '\uc6b0 \ud584\uc2a4\ud2b8\ub9c1',
+  left_glute: '\uc88c \ub454\uadfc',
+  right_glute: '\uc6b0 \ub454\uadfc',
+};
+
+function labelBodyPart(part: string): string {
+  return BODY_PART_LABELS[part] ?? part;
+}
+
+function labelMuscle(muscle: string): string {
+  return MUSCLE_LABELS[muscle] ?? muscle;
+}
+
+function buildFinalFeedback(samples: FeedbackSample[], avgScore: number, reps: number) {
+  if (samples.length === 0) {
+    return [{
+      title: '\ubd84\uc11d \ub370\uc774\ud130 \ubd80\uc871',
+      message: '\uc6b4\ub3d9 \uc911 \uc218\uc9d1\ub41c \uc790\uc138 \ud53c\ub4dc\ubc31\uc774 \ubd80\uc871\ud569\ub2c8\ub2e4. \uce74\uba54\ub77c\uac00 \uc804\uc2e0\uc744 \uc548\uc815\uc801\uc73c\ub85c \uc7a1\ub3c4\ub85d \ub9de\ucd98 \ub4a4 \ub2e4\uc2dc \uce21\uc815\ud558\uc138\uc694.',
+    }];
+  }
+
+  const validScores = samples.map((sample) => sample.score).filter((score) => Number.isFinite(score) && score > 0);
+  const minScore = validScores.length ? Math.min(...validScores) : avgScore;
+  const maxScore = validScores.length ? Math.max(...validScores) : avgScore;
+  const problemSamples = samples.filter((sample) => sample.bodyPart && sample.bodyPart !== 'ok' && sample.bodyPart !== 'pending');
+
+  const bodyCounts = new Map<string, number>();
+  const messageCounts = new Map<string, number>();
+  const muscleCounts = new Map<string, number>();
+
+  for (const sample of problemSamples) {
+    bodyCounts.set(sample.bodyPart, (bodyCounts.get(sample.bodyPart) ?? 0) + 1);
+    if (sample.message) messageCounts.set(sample.message, (messageCounts.get(sample.message) ?? 0) + 1);
+  }
+
+  for (const sample of samples) {
+    for (const [muscle, level] of Object.entries(sample.muscles)) {
+      if (level === 'high' || level === 'med' || level === 'mid') {
+        muscleCounts.set(muscle, (muscleCounts.get(muscle) ?? 0) + (level === 'high' ? 2 : 1));
+      }
+    }
+  }
+
+  const topBody = [...bodyCounts.entries()].sort((a, b) => b[1] - a[1])[0];
+  const topMessages = [...messageCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 2);
+  const topMuscles = [...muscleCounts.entries()].sort((a, b) => b[1] - a[1]).slice(0, 3);
+
+  const sections = [{
+    title: '\uc804\uccb4 \ud3c9\uac00',
+    message: `\ud3c9\uade0 \uc810\uc218\ub294 ${avgScore}\uc810\uc785\ub2c8\ub2e4. \uc138\uc158 \uc911 \ucd5c\uc800 ${Math.round(minScore)}\uc810, \ucd5c\uace0 ${Math.round(maxScore)}\uc810\uc73c\ub85c \uce21\uc815\ub410\uace0 \ucd1d ${reps}\ud68c\ub97c \uc218\ud589\ud588\uc2b5\ub2c8\ub2e4.`,
+  }];
+
+  if (topBody) {
+    sections.push({
+      title: '\uac00\uc7a5 \uc790\uc8fc \ud754\ub4e4\ub9b0 \ubd80\uc704',
+      message: `${labelBodyPart(topBody[0])} \uad00\ub828 \uacbd\uace0\uac00 ${topBody[1]}\ud68c \uac10\uc9c0\ub410\uc2b5\ub2c8\ub2e4. \ub2e4\uc74c \uc138\ud2b8\uc5d0\uc11c\ub294 \uc774 \ubd80\uc704\ub97c \uba3c\uc800 \uc758\uc2dd\ud558\uba74\uc11c \ucc9c\ucc9c\ud788 \ubc18\ubcf5\ud558\uc138\uc694.`,
+    });
+  } else {
+    sections.push({
+      title: '\uc790\uc138 \uc548\uc815\uc131',
+      message: '\ubc18\ubcf5\uc801\uc73c\ub85c \ub204\uc801\ub41c \ud070 \uc790\uc138 \uc624\ub958\ub294 \uc801\uc5c8\uc2b5\ub2c8\ub2e4. \ud604\uc7ac \uc18d\ub3c4\uc640 \uac00\ub3d9 \ubc94\uc704\ub97c \uc720\uc9c0\ud558\uc138\uc694.',
+    });
+  }
+
+  if (topMessages.length > 0) {
+    sections.push({
+      title: '\ubc18\ubcf5\ub41c \uad50\uc815 \ud3ec\uc778\ud2b8',
+      message: topMessages.map(([message, count]) => `${message} (${count}\ud68c)`).join(' / '),
+    });
+  }
+
+  if (topMuscles.length > 0) {
+    sections.push({
+      title: '\ud53c\ub85c \ub204\uc801 \ubd80\uc704',
+      message: `${topMuscles.map(([muscle]) => labelMuscle(muscle)).join(', ')} \ucabd \ud53c\ub85c \uc2e0\ud638\uac00 \ubc18\ubcf5\ub410\uc2b5\ub2c8\ub2e4. \uc790\uc138\uac00 \ubb34\ub108\uc9c0\uae30 \uc804\uc5d0 \ud734\uc2dd \uc2dc\uac04\uc744 \uc870\uae08 \ub298\ub9ac\uc138\uc694.`,
+    });
+  }
+
+  sections.push({
+    title: '\ub2e4\uc74c \uc138\ud2b8 \uae30\uc900',
+    message: avgScore >= 75
+      ? '\ud604\uc7ac \ub9ac\ub4ec\uc740 \uc720\uc9c0\ud558\ub418, \ubc18\ubcf5 \ud6c4\ubc18\uc5d0\ub3c4 \uac19\uc740 \uada4\uc801\uc744 \uc720\uc9c0\ud558\ub294\uc9c0 \ud655\uc778\ud558\uc138\uc694.'
+      : '\uc18d\ub3c4\ub97c \ub0ae\ucd94\uace0 \ud55c \ubc18\ubcf5\ub9c8\ub2e4 \uc2dc\uc791 \uc790\uc138\ub97c \ub2e4\uc2dc \ub9de\ucd98 \ub4a4 \uc9c4\ud589\ud558\uc138\uc694. \uc810\uc218\ubcf4\ub2e4 \uac19\uc740 \uc790\uc138\ub97c \ubc18\ubcf5\ud558\ub294 \uac83\uc774 \uc6b0\uc120\uc785\ub2c8\ub2e4.',
+  });
+
+  return sections;
+}
 
 function deriveGrade(score: number): string {
   if (score >= 90) return 'A';
@@ -33,7 +160,7 @@ function App() {
   const [selectedExercise, setSelectedExercise] = useState<Exercise>(exerciseOptions[0]);
   const [sets, setSets] = useState(3);
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
-  const [feedback, setFeedback] = useState<FeedbackItem>({ status: 'ok', message: '측정 중입니다.' });
+  const [feedback, setFeedback] = useState<FeedbackItem>({ status: 'ok', message: TEXT.measuring });
   const [score, setScore] = useState(0);
   const [reps, setReps] = useState(0);
 
@@ -43,13 +170,13 @@ function App() {
     status: wsStatus,
     poseCount,
     lastPoseAt,
+    sessionControl,
     selectExercise,
     startSession,
     endSession,
   } = useWebSocket();
-  const expertFramesRef = useExpertPose2D(selectedExercise.id);
+  const expertPose = useExpertPose2D(selectedExercise.id);
 
-  // Sync exercise selection to viewer via localStorage
   useEffect(() => {
     localStorage.setItem('expertExercise', selectedExercise.id);
     selectExercise({ exerciseType: selectedExercise.id, sets, repsPerSet: REPS_PER_SET });
@@ -58,39 +185,49 @@ function App() {
   const scoresRef = useRef<number[]>([]);
   const feedbackLogRef = useRef<FeedbackItem[]>([]);
   const seenMessagesRef = useRef<Set<string>>(new Set());
+  const feedbackSamplesRef = useRef<FeedbackSample[]>([]);
 
   useEffect(() => {
     if (!liveFrame?.feedback) return;
-    const { score: s, message, rep_count, body_part } = liveFrame.feedback;
+    const { score: frameScore, message, rep_count, body_part, severity, muscle_fatigue } = liveFrame.feedback;
 
-    if (typeof s === 'number' && s > 0) {
-      setScore(Math.round(s));
-      scoresRef.current.push(s);
+    if (typeof frameScore === 'number' && frameScore > 0) {
+      setScore(Math.round(frameScore));
+      scoresRef.current.push(frameScore);
     }
     if (typeof rep_count === 'number') setReps(rep_count);
 
+    feedbackSamplesRef.current.push({
+      score: typeof frameScore === 'number' ? frameScore : 0,
+      message: message || '',
+      bodyPart: body_part || '',
+      severity: typeof severity === 'number' ? severity : 0,
+      muscles: muscle_fatigue ?? {},
+    });
+
     if (message && body_part !== 'pending') {
-      const fbStatus: 'ok' | 'warn' = body_part === 'ok' ? 'ok' : 'warn';
-      setFeedback({ status: fbStatus, message });
+      const nextStatus: 'ok' | 'warn' = body_part === 'ok' ? 'ok' : 'warn';
+      setFeedback({ status: nextStatus, message });
 
       if (!seenMessagesRef.current.has(message)) {
         seenMessagesRef.current.add(message);
-        feedbackLogRef.current.push({ status: fbStatus, message });
+        feedbackLogRef.current.push({ status: nextStatus, message });
       }
     }
   }, [liveFrame]);
 
   const changeSets = (delta: number) => {
-    setSets((c) => Math.max(1, Math.min(10, c + delta)));
+    setSets((current) => Math.max(1, Math.min(10, current + delta)));
   };
 
   const handleStartWorkout = () => {
     scoresRef.current = [];
     feedbackLogRef.current = [];
+    feedbackSamplesRef.current = [];
     seenMessagesRef.current = new Set();
     setScore(0);
     setReps(0);
-    setFeedback({ status: 'ok', message: '측정 중입니다.' });
+    setFeedback({ status: 'ok', message: TEXT.measuring });
     startSession({ exerciseType: selectedExercise.id, sets, repsPerSet: REPS_PER_SET });
     reset();
     start();
@@ -101,23 +238,18 @@ function App() {
     endSession();
     stop();
 
-    const avgScore =
-      scoresRef.current.length > 0
-        ? Math.round(scoresRef.current.reduce((a, b) => a + b, 0) / scoresRef.current.length)
-        : score;
+    const avgScore = scoresRef.current.length > 0
+      ? Math.round(scoresRef.current.reduce((sum, item) => sum + item, 0) / scoresRef.current.length)
+      : score;
 
-    const feedbackList: FeedbackItem[] =
-      feedbackLogRef.current.length > 0
-        ? feedbackLogRef.current.slice(-4)
-        : [
-            {
-              status: avgScore >= 70 ? 'ok' : 'warn',
-              message:
-                avgScore >= 70
-                  ? '전반적으로 안정적인 자세를 유지했습니다.'
-                  : '자세 교정이 더 필요합니다. 다시 시도해보세요.',
-            },
-          ];
+    const feedbackList: FeedbackItem[] = feedbackLogRef.current.length > 0
+      ? feedbackLogRef.current.slice(-4)
+      : [{
+          status: avgScore >= 70 ? 'ok' : 'warn',
+          message: avgScore >= 70
+            ? '\uc804\ubc18\uc801\uc73c\ub85c \uc548\uc815\uc801\uc778 \uc790\uc138\ub97c \uc720\uc9c0\ud588\uc2b5\ub2c8\ub2e4.'
+            : '\uc790\uc138 \uad50\uc815\uc774 \ub354 \ud544\uc694\ud569\ub2c8\ub2e4. \ub2e4\uc2dc \uc2dc\ub3c4\ud574\ubcf4\uc138\uc694.',
+        }];
 
     const computed: SessionResult = {
       exercise: selectedExercise.label,
@@ -128,6 +260,7 @@ function App() {
       durationMinutes: Math.round(elapsed / 6) / 10,
       accuracy: avgScore,
       feedback: feedbackList,
+      finalFeedback: buildFinalFeedback(feedbackSamplesRef.current, avgScore, reps),
     };
 
     setSessionResult(computed);
@@ -138,7 +271,7 @@ function App() {
   const handleRetry = () => {
     reset();
     setSessionResult(null);
-    setFeedback({ status: 'ok', message: '측정 중입니다.' });
+    setFeedback({ status: 'ok', message: TEXT.measuring });
     setScore(0);
     setReps(0);
     setScreen(0);
@@ -148,7 +281,6 @@ function App() {
 
   return (
     <div className="app-shell">
-      {/* Screen 0: Exercise selection */}
       <ScreenContainer active={screen === 0} id="s0">
         <div className="s0-glow" />
         <div className="s0-grid" />
@@ -158,9 +290,9 @@ function App() {
             PS<em>vR</em>
           </h1>
           <p className="subtitle">
-            AI가 자세를 실시간으로 분석하고
+            {'AI\uac00 \uc790\uc138\ub97c \uc2e4\uc2dc\uac04\uc73c\ub85c \ubd84\uc11d\ud558\uace0'}
             <br />
-            맞춤형 피드백을 제공합니다.
+            {'\ub9de\ucda4\ud615 \ud53c\ub4dc\ubc31\uc744 \uc81c\uacf5\ud569\ub2c8\ub2e4.'}
           </p>
 
           <ExerciseSelector
@@ -172,12 +304,11 @@ function App() {
           <SetControl count={sets} onChange={changeSets} />
 
           <button className="btn-start" onClick={handleStartWorkout} type="button">
-            운동 시작
+            {TEXT.start}
           </button>
         </div>
       </ScreenContainer>
 
-      {/* Screen 1: Workout */}
       <ScreenContainer active={screen === 1} id="s1">
         <Hud
           time={formattedTime}
@@ -194,10 +325,18 @@ function App() {
           <div className="panel">
             <div className="panel-label">
               <span className="p-dot purple" />
-              강사 모델 — {selectedExercise.label}
+              {TEXT.instructor} - {selectedExercise.label}
             </div>
             <div className="render-slot">
-              <SkeletonCanvas2D framesRef={expertFramesRef} fps={15} color="#a78bfa" />
+              <SkeletonCanvas2D
+                framesRef={expertPose.framesRef}
+                framesVersion={expertPose.version}
+                playbackVersion={sessionControl?.version ?? 0}
+                playbackPhaseMs={sessionControl?.expert_phase_ms ?? 0}
+                loading={expertPose.loading}
+                fps={24}
+                color="#a78bfa"
+              />
             </div>
             <div style={{ height: '40px' }} />
           </div>
@@ -205,7 +344,7 @@ function App() {
           <div className="panel">
             <div className="panel-label">
               <span className="p-dot mint" />
-              내 자세
+              {TEXT.myPose}
             </div>
             <div className="render-slot">
               <SkeletonCanvas2D keypoints={liveFrame?.keypoints_2d ?? null} />
@@ -218,11 +357,10 @@ function App() {
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
             <rect x="2" y="2" width="10" height="10" rx="2" fill="currentColor" />
           </svg>
-          운동 종료
+          {TEXT.end}
         </button>
       </ScreenContainer>
 
-      {/* Screen 2: Results */}
       <ScreenContainer active={screen === 2} id="s2">
         <div className="s2-glow" />
         {sessionResult && (
