@@ -1,0 +1,35 @@
+{
+  "note": "Reference only. Runtime source is final/s01_preprocessing/rep_detector.py ANGLE_REP_RULES.",
+  "squat": {
+    "joint": "hip-knee-ankle",
+    "direction": "decrease",
+    "ready": 155,
+    "target": 125,
+    "return": 150,
+    "min_range": 25
+  },
+  "hammer_curl": {
+    "joint": "shoulder-elbow-wrist",
+    "direction": "decrease",
+    "ready": 145,
+    "target": 75,
+    "return": 135,
+    "min_range": 55
+  },
+  "pullup": {
+    "joint": "shoulder-elbow-wrist",
+    "direction": "decrease",
+    "ready": 140,
+    "target": 95,
+    "return": 130,
+    "min_range": 35
+  },
+  "lateral_raise": {
+    "joint": "hip-shoulder-wrist",
+    "direction": "increase",
+    "ready": 30,
+    "target": 70,
+    "return": 40,
+    "min_range": 35
+  }
+}

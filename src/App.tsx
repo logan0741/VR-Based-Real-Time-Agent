@@ -10,6 +10,7 @@ import SkeletonCanvas2D from './components/SkeletonCanvas2D';
 import { useTimer } from './hooks/useTimer';
 import { type ExerciseProgress, useWebSocket } from './hooks/useWebSocket';
 import { useExpertPose2D } from './hooks/useExpertPose2D';
+import { initialProgress, progressFromTotalReps, REPS_PER_SET } from './utils/workoutProgress';
 
 const TEXT = {
   squat: '\uc2a4\ucffc\ud2b8',
@@ -29,20 +30,6 @@ const exerciseOptions: Exercise[] = [
   { id: 'lateral_raise', icon: 'LR', label: TEXT.lateralRaise },
   { id: 'pull_up', icon: 'PU', label: TEXT.pullup },
 ];
-
-const REPS_PER_SET = 8;
-
-function initialProgress(sets: number): ExerciseProgress {
-  return {
-    current_set: 1,
-    total_sets: sets,
-    rep_in_set: 0,
-    reps_per_set: REPS_PER_SET,
-    total_reps: 0,
-    total_target_reps: sets * REPS_PER_SET,
-    completed: false,
-  };
-}
 
 type FeedbackSample = {
   score: number;
@@ -208,17 +195,19 @@ function App() {
       setScore(Math.round(frameScore));
       scoresRef.current.push(frameScore);
     }
-    const nextProgress = liveFrame.progress ?? (
-      typeof liveFrame.feedback.total_reps === 'number'
+    const fallbackProgress = typeof liveFrame.feedback.total_reps === 'number'
+      ? progressFromTotalReps(liveFrame.feedback.total_reps, sets)
+      : null;
+    const nextProgress: ExerciseProgress | null = liveFrame.progress ?? (
+      fallbackProgress
         ? {
-            current_set: liveFrame.feedback.current_set
-              ?? Math.min(sets, Math.floor(liveFrame.feedback.total_reps / REPS_PER_SET) + 1),
-            total_sets: liveFrame.feedback.total_sets ?? sets,
-            rep_in_set: liveFrame.feedback.rep_in_set ?? 0,
-            reps_per_set: liveFrame.feedback.reps_per_set ?? REPS_PER_SET,
-            total_reps: liveFrame.feedback.total_reps,
-            total_target_reps: liveFrame.feedback.total_target_reps ?? sets * REPS_PER_SET,
-            completed: Boolean(liveFrame.feedback.completed),
+            current_set: liveFrame.feedback.current_set ?? fallbackProgress.current_set,
+            total_sets: liveFrame.feedback.total_sets ?? fallbackProgress.total_sets,
+            rep_in_set: liveFrame.feedback.rep_in_set ?? fallbackProgress.rep_in_set,
+            reps_per_set: liveFrame.feedback.reps_per_set ?? fallbackProgress.reps_per_set,
+            total_reps: fallbackProgress.total_reps,
+            total_target_reps: liveFrame.feedback.total_target_reps ?? fallbackProgress.total_target_reps,
+            completed: liveFrame.feedback.completed ?? fallbackProgress.completed,
           }
         : null
     );
@@ -228,15 +217,7 @@ function App() {
       setReps(nextProgress.total_reps);
     } else if (typeof rep_count === 'number') {
       setReps(rep_count);
-      setProgress({
-        current_set: Math.min(sets, Math.floor(rep_count / REPS_PER_SET) + 1),
-        total_sets: sets,
-        rep_in_set: rep_count % REPS_PER_SET,
-        reps_per_set: REPS_PER_SET,
-        total_reps: rep_count,
-        total_target_reps: sets * REPS_PER_SET,
-        completed: rep_count >= sets * REPS_PER_SET,
-      });
+      setProgress(progressFromTotalReps(rep_count, sets));
     }
 
     feedbackSamplesRef.current.push({

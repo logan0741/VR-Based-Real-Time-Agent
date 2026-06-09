@@ -1,24 +1,27 @@
-"""정규화된 관절 프레임을 1개씩 입력받아 운동 1회 구간을 증분으로 감지한다."""
+"""Angle/range based repetition detector for COCO-17 keypoint frames."""
 from __future__ import annotations
 
-from collections import deque
 from enum import Enum, auto
 
 import numpy as np
 
-from .utils.keypoints import LEFT_KNEE, RIGHT_KNEE, LEFT_WRIST, RIGHT_WRIST, LEFT_SHOULDER, RIGHT_SHOULDER, NOSE
-
-SUPPORTED_DETECTOR_TYPES: frozenset[str] = frozenset({"squat", "hammer_curl", "pullup", "lateral_raise"})
-SUPPORTED_NORMALIZER_TYPES: frozenset[str] = frozenset({"front", "side_left", "side_right"})
+from .rep_rules import ANGLE_REP_RULES, SUPPORTED_DETECTOR_TYPES, SUPPORTED_NORMALIZER_TYPES
+from .rep_signals import extract_rep_signal
 
 
 class _RepState(Enum):
-    WAIT_VALLEY = auto()
-    WAIT_PEAK = auto()
+    WAIT_READY = auto()
+    WAIT_TARGET = auto()
+    WAIT_RETURN = auto()
 
 
 class RepDetector:
-    """종목별 감지 방법으로 운동 1회 구간 목록을 증분으로 반환하는 클래스."""
+    """Detect completed reps from exercise-specific joint angles.
+
+    The detector intentionally does not count tiny jitter. A rep must start from
+    a ready position, cross a target angle, move through a minimum range, and
+    return to the ready side before it is counted.
+    """
 
     def __init__(
         self,
@@ -27,81 +30,78 @@ class RepDetector:
         slope_window: int,
         min_rep_frames: int,
     ) -> None:
-        """감지 방법, 정규화 타입, 기울기 윈도우 크기, 최소 rep 길이를 설정한다."""
         if rep_detector_type not in SUPPORTED_DETECTOR_TYPES:
-            raise ValueError(f"지원하지 않는 rep_detector_type: {rep_detector_type!r}")
+            raise ValueError(f"Unsupported rep_detector_type: {rep_detector_type!r}")
         if normalizer_type not in SUPPORTED_NORMALIZER_TYPES:
-            raise ValueError(f"지원하지 않는 normalizer_type: {normalizer_type!r}")
+            raise ValueError(f"Unsupported normalizer_type: {normalizer_type!r}")
 
         self._type = rep_detector_type
         self._normalizer_type = normalizer_type
-        self._slope_window = slope_window
         self._min_rep_frames = min_rep_frames
 
-        self._state: _RepState = _RepState.WAIT_VALLEY
+        self._state: _RepState = _RepState.WAIT_READY
         self._rep_start: int = 0
         self._reps: list[tuple[int, int]] = []
         self._frame_idx: int = 0
-        self._prev_signal: float = 0.0
-        self._diff_buffer: deque[float] = deque(maxlen=slope_window)
-        self._prev_slope: float = 0.0
+        self._range_min: float = float("inf")
+        self._range_max: float = float("-inf")
 
     def update(self, norm_frame: np.ndarray) -> list[tuple[int, int]]:
-        """정규화된 관절 프레임 1개를 입력받아 누적 rep 구간 목록을 반환한다. norm_frame shape=(17,3), dtype=float32."""
         signal = self._extract_signal(norm_frame)
-        diff = signal - self._prev_signal
-        self._prev_signal = signal
-        self._diff_buffer.append(diff)
-
-        curr_slope = float(np.mean(self._diff_buffer))
-        self._step(curr_slope)
-        self._prev_slope = curr_slope
+        self._step(signal)
         self._frame_idx += 1
-
         return self._valid_reps()
 
     def finalize(self) -> list[tuple[int, int]]:
-        """시퀀스 종료 시 WAIT_PEAK 상태의 미완료 rep을 마감하고 누적 rep 목록을 반환한다."""
-        if self._state == _RepState.WAIT_PEAK:
-            self._reps.append((self._rep_start, self._frame_idx - 1))
-            self._state = _RepState.WAIT_VALLEY
         return self._valid_reps()
 
     def _extract_signal(self, norm_frame: np.ndarray) -> float:
-        """종목·방향에 따라 단일 프레임에서 1D 신호를 추출한다. norm_frame shape=(17,3), dtype=float32."""
-        if self._type == "squat":
-            if self._normalizer_type == "side_left":
-                return float(norm_frame[LEFT_KNEE, 0])
-            if self._normalizer_type == "side_right":
-                return float(norm_frame[RIGHT_KNEE, 0])
-            return float((norm_frame[LEFT_KNEE, 0] + norm_frame[RIGHT_KNEE, 0]) / 2.0)
+        return extract_rep_signal(self._type, self._normalizer_type, norm_frame)
 
-        if self._type == "pullup":
-            avg_wrist_y = (norm_frame[LEFT_WRIST, 0] + norm_frame[RIGHT_WRIST, 0]) / 2.0
-            return float(norm_frame[NOSE, 0] - avg_wrist_y)
+    def _step(self, signal: float) -> None:
+        rule = ANGLE_REP_RULES[self._type]
+        direction = str(rule["direction"])
+        ready = float(rule["ready"])
+        target = float(rule["target"])
+        finish = float(rule["return"])
+        min_range = float(rule["min_range"])
 
-        if self._type == "hammer_curl":
-            if self._normalizer_type == "side_left":
-                return float(norm_frame[LEFT_WRIST, 0] - norm_frame[LEFT_SHOULDER, 0])
-            return float(norm_frame[RIGHT_WRIST, 0] - norm_frame[RIGHT_SHOULDER, 0])
+        if self._state == _RepState.WAIT_READY:
+            if _is_ready(signal, direction, ready):
+                self._rep_start = self._frame_idx
+                self._range_min = signal
+                self._range_max = signal
+                self._state = _RepState.WAIT_TARGET
+            return
 
-        if self._type == "lateral_raise":
-            left = norm_frame[LEFT_WRIST, 0] - norm_frame[LEFT_SHOULDER, 0]
-            right = norm_frame[RIGHT_WRIST, 0] - norm_frame[RIGHT_SHOULDER, 0]
-            return float((left + right) / 2.0)
+        self._range_min = min(self._range_min, signal)
+        self._range_max = max(self._range_max, signal)
 
-        return 0.0
+        if self._state == _RepState.WAIT_TARGET:
+            if _hit_target(signal, direction, target):
+                self._state = _RepState.WAIT_RETURN
+            return
 
-    def _step(self, curr_slope: float) -> None:
-        """기울기 부호 전환으로 valley·peak를 감지하고 내부 상태를 갱신한다."""
-        prev = self._prev_slope
-        if self._state == _RepState.WAIT_VALLEY and prev < 0 and curr_slope > 0:
-            self._state = _RepState.WAIT_PEAK
-        elif self._state == _RepState.WAIT_PEAK and prev > 0 and curr_slope < 0:
-            self._reps.append((self._rep_start, self._frame_idx))
+        if self._state == _RepState.WAIT_RETURN and _is_ready(signal, direction, finish):
+            moved_range = self._range_max - self._range_min
+            if moved_range >= min_range:
+                self._reps.append((self._rep_start, self._frame_idx))
             self._rep_start = self._frame_idx
-            self._state = _RepState.WAIT_VALLEY
+            self._range_min = signal
+            self._range_max = signal
+            self._state = _RepState.WAIT_TARGET
 
     def _valid_reps(self) -> list[tuple[int, int]]:
-        """min_rep_frames 이상인 rep 구간만 반환한다."""
         return [(s, e) for s, e in self._reps if e - s >= self._min_rep_frames]
+
+
+def _is_ready(signal: float, direction: str, threshold: float) -> bool:
+    if direction == "increase":
+        return signal <= threshold
+    return signal >= threshold
+
+
+def _hit_target(signal: float, direction: str, threshold: float) -> bool:
+    if direction == "increase":
+        return signal >= threshold
+    return signal <= threshold
