@@ -109,6 +109,14 @@ button {
   color: var(--accent);
 }
 
+.stat-sub {
+  margin-top: 2px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  line-height: 1;
+  color: var(--muted);
+}
+
 .stat.compact {
   min-width: 42px;
 }

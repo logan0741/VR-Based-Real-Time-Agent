@@ -8,7 +8,7 @@ import SetControl from './components/SetControl';
 import ScreenContainer from './components/ScreenContainer';
 import SkeletonCanvas2D from './components/SkeletonCanvas2D';
 import { useTimer } from './hooks/useTimer';
-import { useWebSocket } from './hooks/useWebSocket';
+import { type ExerciseProgress, useWebSocket } from './hooks/useWebSocket';
 import { useExpertPose2D } from './hooks/useExpertPose2D';
 
 const TEXT = {
@@ -31,6 +31,18 @@ const exerciseOptions: Exercise[] = [
 ];
 
 const REPS_PER_SET = 8;
+
+function initialProgress(sets: number): ExerciseProgress {
+  return {
+    current_set: 1,
+    total_sets: sets,
+    rep_in_set: 0,
+    reps_per_set: REPS_PER_SET,
+    total_reps: 0,
+    total_target_reps: sets * REPS_PER_SET,
+    completed: false,
+  };
+}
 
 type FeedbackSample = {
   score: number;
@@ -163,6 +175,7 @@ function App() {
   const [feedback, setFeedback] = useState<FeedbackItem>({ status: 'ok', message: TEXT.measuring });
   const [score, setScore] = useState(0);
   const [reps, setReps] = useState(0);
+  const [progress, setProgress] = useState<ExerciseProgress>(() => initialProgress(3));
 
   const { elapsed, formattedTime, start, stop, reset } = useTimer();
   const {
@@ -195,7 +208,36 @@ function App() {
       setScore(Math.round(frameScore));
       scoresRef.current.push(frameScore);
     }
-    if (typeof rep_count === 'number') setReps(rep_count);
+    const nextProgress = liveFrame.progress ?? (
+      typeof liveFrame.feedback.total_reps === 'number'
+        ? {
+            current_set: liveFrame.feedback.current_set
+              ?? Math.min(sets, Math.floor(liveFrame.feedback.total_reps / REPS_PER_SET) + 1),
+            total_sets: liveFrame.feedback.total_sets ?? sets,
+            rep_in_set: liveFrame.feedback.rep_in_set ?? 0,
+            reps_per_set: liveFrame.feedback.reps_per_set ?? REPS_PER_SET,
+            total_reps: liveFrame.feedback.total_reps,
+            total_target_reps: liveFrame.feedback.total_target_reps ?? sets * REPS_PER_SET,
+            completed: Boolean(liveFrame.feedback.completed),
+          }
+        : null
+    );
+
+    if (nextProgress) {
+      setProgress(nextProgress);
+      setReps(nextProgress.total_reps);
+    } else if (typeof rep_count === 'number') {
+      setReps(rep_count);
+      setProgress({
+        current_set: Math.min(sets, Math.floor(rep_count / REPS_PER_SET) + 1),
+        total_sets: sets,
+        rep_in_set: rep_count % REPS_PER_SET,
+        reps_per_set: REPS_PER_SET,
+        total_reps: rep_count,
+        total_target_reps: sets * REPS_PER_SET,
+        completed: rep_count >= sets * REPS_PER_SET,
+      });
+    }
 
     feedbackSamplesRef.current.push({
       score: typeof frameScore === 'number' ? frameScore : 0,
@@ -220,6 +262,16 @@ function App() {
     setSets((current) => Math.max(1, Math.min(10, current + delta)));
   };
 
+  useEffect(() => {
+    setProgress((current) => ({
+      ...current,
+      current_set: Math.min(sets, current.current_set),
+      total_sets: sets,
+      total_target_reps: sets * current.reps_per_set,
+      completed: current.total_reps >= sets * current.reps_per_set,
+    }));
+  }, [sets]);
+
   const handleStartWorkout = () => {
     scoresRef.current = [];
     feedbackLogRef.current = [];
@@ -227,6 +279,7 @@ function App() {
     seenMessagesRef.current = new Set();
     setScore(0);
     setReps(0);
+    setProgress(initialProgress(sets));
     setFeedback({ status: 'ok', message: TEXT.measuring });
     startSession({ exerciseType: selectedExercise.id, sets, repsPerSet: REPS_PER_SET });
     reset();
@@ -274,10 +327,13 @@ function App() {
     setFeedback({ status: 'ok', message: TEXT.measuring });
     setScore(0);
     setReps(0);
+    setProgress(initialProgress(sets));
     setScreen(0);
   };
 
-  const currentSet = Math.min(sets, Math.floor(reps / REPS_PER_SET) + 1);
+  const currentSet = progress.current_set;
+  const repsInSet = progress.rep_in_set;
+  const repsPerSet = progress.reps_per_set;
 
   return (
     <div className="app-shell">
@@ -313,8 +369,11 @@ function App() {
         <Hud
           time={formattedTime}
           currentSet={currentSet}
-          totalSets={sets}
-          reps={reps}
+          totalSets={progress.total_sets}
+          reps={repsInSet}
+          repsPerSet={repsPerSet}
+          totalReps={reps}
+          totalTargetReps={progress.total_target_reps}
           score={score}
           wsStatus={wsStatus}
           poseCount={poseCount}

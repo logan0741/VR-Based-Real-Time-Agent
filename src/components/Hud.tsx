@@ -5,6 +5,9 @@ type HudProps = {
   currentSet: number;
   totalSets: number;
   reps: number;
+  repsPerSet: number;
+  totalReps: number;
+  totalTargetReps: number;
   score: number;
   wsStatus?: string;
   poseCount?: number;
@@ -16,6 +19,9 @@ export default function Hud({
   currentSet,
   totalSets,
   reps,
+  repsPerSet,
+  totalReps,
+  totalTargetReps,
   score,
   wsStatus = 'connecting',
   poseCount = 0,
@@ -40,7 +46,8 @@ export default function Hud({
         <div className="hud-sep" />
         <div className="stat">
           <label>Reps</label>
-          <div className="val accent">{reps}</div>
+          <div className="val accent">{reps}<small>/{repsPerSet}</small></div>
+          <div className="stat-sub">total {totalReps}/{totalTargetReps}</div>
         </div>
         <div className="hud-sep" />
         <div className="stat compact">

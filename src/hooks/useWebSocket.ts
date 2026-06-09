@@ -5,16 +5,34 @@ export type PoseFrame = {
   data_type?: string;
   keypoints_2d?: number[][];
   frame_id?: string;
+  progress?: ExerciseProgress;
   feedback?: {
     score: number;
     message: string;
     rep_count: number;
     rep_scores: number[];
+    current_set?: number;
+    total_sets?: number;
+    rep_in_set?: number;
+    reps_per_set?: number;
+    total_reps?: number;
+    total_target_reps?: number;
+    completed?: boolean;
     body_part?: string;
     state?: string;
     severity?: number;
     muscle_fatigue?: Record<string, string>;
   };
+};
+
+export type ExerciseProgress = {
+  current_set: number;
+  total_sets: number;
+  rep_in_set: number;
+  reps_per_set: number;
+  total_reps: number;
+  total_target_reps: number;
+  completed: boolean;
 };
 
 export type SessionControl = {

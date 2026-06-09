@@ -1052,6 +1052,38 @@ class ConnectionManager:
             "expert_phase_ms": max(0, int(time.time() * 1000) - started_at),
         }
 
+    def exercise_progress(self, rep_count: int) -> Dict[str, int | bool]:
+        sets = max(1, int(self.session_control.get("sets", 1) or 1))
+        reps_per_set = max(1, int(self.session_control.get("reps_per_set", 8) or 8))
+        total_target_reps = sets * reps_per_set
+        total_reps = max(0, int(rep_count or 0))
+        completed = total_reps >= total_target_reps
+
+        if completed:
+            current_set = sets
+            rep_in_set = reps_per_set
+        else:
+            current_set = min(sets, (total_reps // reps_per_set) + 1)
+            rep_in_set = total_reps % reps_per_set
+
+        return {
+            "current_set": current_set,
+            "total_sets": sets,
+            "rep_in_set": rep_in_set,
+            "reps_per_set": reps_per_set,
+            "total_reps": total_reps,
+            "total_target_reps": total_target_reps,
+            "completed": completed,
+        }
+
+    def attach_progress(self, message: Dict[str, Any]) -> Dict[str, Any]:
+        feedback = message.get("feedback")
+        if isinstance(feedback, dict):
+            progress = self.exercise_progress(int(feedback.get("rep_count", 0) or 0))
+            feedback.update(progress)
+            message["progress"] = progress
+        return message
+
     def start_session_control(self, payload: Dict[str, Any]) -> Dict[str, Any]:
         self.session_control_version += 1
         exercise_type = normalize_exercise_type(payload.get("exercise_type", "squat"))
@@ -1130,6 +1162,7 @@ async def websocket_endpoint(websocket: WebSocket):
             )
             response.setdefault("debug", {})
             response["debug"]["dropped_to_latest"] = True
+            manager.attach_progress(response)
             await manager.broadcast_json(response)
 
     try:
