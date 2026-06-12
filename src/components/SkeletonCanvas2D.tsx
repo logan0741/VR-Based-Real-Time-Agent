@@ -12,21 +12,27 @@ const COCO_BONES: [number, number][] = [
 ];
 
 const CONF_THRESHOLD = 0.05;
+const JOINT_RADIUS = 4;
+const BAD_JOINT_RADIUS = 8;
 
-// kyeongho branch color scheme
 const LEFT_JOINTS = new Set([5, 7, 9, 11, 13, 15]);
 const RIGHT_JOINTS = new Set([6, 8, 10, 12, 14, 16]);
+const COLOR_CENTER = '#ffffff';
+const COLOR_LEFT = '#00ff00';
+const COLOR_RIGHT = '#0066ff';
+const COLOR_BAD = '#ff2d2d';
 
 function jointColor(idx: number): string {
-  if (LEFT_JOINTS.has(idx)) return '#00ff00';
-  if (RIGHT_JOINTS.has(idx)) return '#ff3333';
-  return '#ffffff';
+  if (LEFT_JOINTS.has(idx)) return COLOR_LEFT;
+  if (RIGHT_JOINTS.has(idx)) return COLOR_RIGHT;
+  return COLOR_CENTER;
 }
 
-function boneColor(i: number, j: number): string {
+function boneColor(i: number, j: number, badJoints: Set<number>): string {
+  if (badJoints.has(i) || badJoints.has(j)) return COLOR_BAD;
   const iL = LEFT_JOINTS.has(i), iR = RIGHT_JOINTS.has(i);
   const jL = LEFT_JOINTS.has(j), jR = RIGHT_JOINTS.has(j);
-  if ((iL && jR) || (iR && jL)) return '#ffffff';
+  if ((iL && jR) || (iR && jL)) return COLOR_CENTER;
   return jointColor(i);
 }
 
@@ -85,6 +91,7 @@ function drawFrame(
   canvas: HTMLCanvasElement,
   keypoints: number[][],
   mirror: boolean,
+  badJointsInput: number[] = [],
 ) {
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
@@ -107,6 +114,7 @@ function drawFrame(
   ctx.fillRect(0, 0, w, h);
 
   const points = normalizeToCanvas(keypoints, w, h, mirror);
+  const badJoints = new Set(badJointsInput);
 
   ctx.lineWidth = 1;
   ctx.lineCap = 'round';
@@ -114,7 +122,9 @@ function drawFrame(
     const p1 = points[i], p2 = points[j];
     if (!p1 || !p2) continue;
     if (p1.conf < CONF_THRESHOLD || p2.conf < CONF_THRESHOLD) continue;
-    ctx.strokeStyle = boneColor(i, j);
+    const isBad = badJoints.has(i) || badJoints.has(j);
+    ctx.strokeStyle = boneColor(i, j, badJoints);
+    ctx.lineWidth = isBad ? 2.5 : 1.25;
     ctx.globalAlpha = Math.min(p1.conf, p2.conf) < 0.6 ? 0.5 : 0.85;
     ctx.beginPath();
     ctx.moveTo(p1.x, p1.y);
@@ -127,10 +137,11 @@ function drawFrame(
     const p = points[idx];
     if (!p || p.conf < CONF_THRESHOLD) continue;
     const alpha = p.conf < 0.3 ? 0.3 : p.conf < 0.6 ? 0.6 : 1.0;
+    const isBad = badJoints.has(idx);
     ctx.globalAlpha = alpha;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-    ctx.fillStyle = jointColor(idx);
+    ctx.arc(p.x, p.y, isBad ? BAD_JOINT_RADIUS : JOINT_RADIUS, 0, Math.PI * 2);
+    ctx.fillStyle = isBad ? COLOR_BAD : jointColor(idx);
     ctx.fill();
   }
   ctx.globalAlpha = 1.0;
@@ -159,6 +170,7 @@ type Props = {
   playbackPhaseMs?: number;
   loading?: boolean;
   keypoints?: number[][] | null;
+  badJoints?: number[];
   fps?: number;
   mirror?: boolean;
   color?: string; // kept for API compat, unused
@@ -171,6 +183,7 @@ export default function SkeletonCanvas2D({
   playbackPhaseMs = 0,
   loading = false,
   keypoints,
+  badJoints = [],
   fps = 15,
   mirror = false,
 }: Props) {
@@ -220,8 +233,8 @@ export default function SkeletonCanvas2D({
   // Live pose — redraw on every keypoints update
   useEffect(() => {
     if (!keypoints || !canvasRef.current) return;
-    drawFrame(canvasRef.current, keypoints, mirror);
-  }, [keypoints, mirror]);
+    drawFrame(canvasRef.current, keypoints, mirror, badJoints);
+  }, [keypoints, mirror, badJoints]);
 
   return (
     <canvas

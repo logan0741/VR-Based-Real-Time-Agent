@@ -18,6 +18,7 @@ export type PoseFrame = {
     total_reps?: number;
     total_target_reps?: number;
     completed?: boolean;
+    bad_joints?: number[];
     body_part?: string;
     state?: string;
     severity?: number;

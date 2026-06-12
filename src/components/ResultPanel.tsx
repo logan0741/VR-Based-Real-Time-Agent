@@ -1,3 +1,5 @@
+import { useState } from 'react';
+import { requestFinalFeedbackTts } from '../services/ttsApi';
 import type { SessionResult } from '../types';
 
 type ResultPanelProps = {
@@ -7,6 +9,32 @@ type ResultPanelProps = {
 };
 
 export default function ResultPanel({ result, onRetry, onHome }: ResultPanelProps) {
+  const [ttsUrl, setTtsUrl] = useState<string | null>(null);
+  const [ttsStatus, setTtsStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [ttsMessage, setTtsMessage] = useState('');
+
+  const handleCreateTts = async () => {
+    setTtsStatus('loading');
+    setTtsMessage('');
+    setTtsUrl(null);
+
+    try {
+      const response = await requestFinalFeedbackTts(result);
+      if (response.status === 'ok' && response.audio_url) {
+        setTtsUrl(response.audio_url);
+        setTtsStatus('ready');
+        setTtsMessage(response.cached ? '저장된 음성을 불러왔습니다.' : '최종 피드백 음성이 생성되었습니다.');
+        return;
+      }
+
+      setTtsStatus('error');
+      setTtsMessage(response.message ?? 'TTS 음성 생성에 실패했습니다.');
+    } catch (error) {
+      setTtsStatus('error');
+      setTtsMessage(error instanceof Error ? error.message : 'TTS 요청 중 오류가 발생했습니다.');
+    }
+  };
+
   return (
     <div className="s2-inner">
       <p className="result-tag">
@@ -45,6 +73,24 @@ export default function ResultPanel({ result, onRetry, onHome }: ResultPanelProp
             <span>{section.message}</span>
           </div>
         ))}
+      </div>
+
+      <div className="feedback-box tts-box">
+        <div className="fb-title">최종 피드백 음성</div>
+        <button
+          className="btn-tts"
+          type="button"
+          onClick={handleCreateTts}
+          disabled={ttsStatus === 'loading'}
+        >
+          {ttsStatus === 'loading' ? '음성 생성 중' : '음성 생성'}
+        </button>
+        {ttsMessage ? <p className={`tts-message ${ttsStatus}`}>{ttsMessage}</p> : null}
+        {ttsUrl ? (
+          <audio className="tts-player" src={ttsUrl} controls preload="metadata">
+            최종 피드백 음성을 재생할 수 없습니다.
+          </audio>
+        ) : null}
       </div>
 
       <div className="feedback-box">

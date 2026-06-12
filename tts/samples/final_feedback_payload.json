@@ -1,0 +1,25 @@
+{
+  "exercise": "squat",
+  "sets": 3,
+  "score": 82,
+  "grade": "B+",
+  "totalReps": 15,
+  "durationMinutes": 2,
+  "accuracy": 82,
+  "feedback": [
+    {
+      "status": "warn",
+      "message": "무릎이 안쪽으로 모이지 않게 유지하세요."
+    }
+  ],
+  "finalFeedback": [
+    {
+      "title": "전체 평가",
+      "message": "평균 점수는 82점입니다. 총 15회를 수행했습니다."
+    },
+    {
+      "title": "다음 세트 기준",
+      "message": "현재 리듬은 유지하되 반복 후반에도 같은 궤적을 유지하세요."
+    }
+  ]
+}

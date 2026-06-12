@@ -644,6 +644,44 @@ button {
   margin-bottom: 24px;
 }
 
+.tts-box {
+  display: grid;
+  gap: 12px;
+}
+
+.btn-tts {
+  justify-self: start;
+  padding: 11px 20px;
+  background: rgba(0,255,178,0.1);
+  border: 1px solid rgba(0,255,178,0.28);
+  border-radius: 999px;
+  color: var(--accent2);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.btn-tts:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.tts-message {
+  color: rgba(255,255,255,0.74);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.tts-message.error {
+  color: var(--danger);
+}
+
+.tts-player {
+  width: 100%;
+  min-height: 40px;
+}
+
 .fb-title {
   font-size: 10px;
   letter-spacing: 0.1em;

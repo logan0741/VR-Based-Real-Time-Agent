@@ -50,12 +50,14 @@ class FeedbackEngine:
         if body_part in {"pending", "ok"}:
             message = {
                 "warming_up": "측정 중입니다.",
-                "low_confidence": "자세를 화면 중앙에 맞춰주세요.",
+                "low_confidence": "자세를 다시 화면 중앙에 맞춰주세요.",
                 "ok": "자세가 안정적입니다.",
             }[state]
+            bad_joints: list[int] = []
         else:
             body_templates = FEEDBACK_TEMPLATES[self._exercise][body_part]
             message = body_templates.get(state, body_templates["generic"])
+            bad_joints = sorted(int(idx) for idx in self._cfg["body_parts"][body_part]["joints"])
 
         return {
             "exercise": self._exercise,
@@ -63,6 +65,7 @@ class FeedbackEngine:
             "state": state,
             "severity": float(severity),
             "message": message,
+            "bad_joints": bad_joints,
         }
 
     def _has_min_confidence(self, user_raw_keypoints: np.ndarray) -> bool:

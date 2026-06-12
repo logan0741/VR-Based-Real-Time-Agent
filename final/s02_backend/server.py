@@ -32,6 +32,7 @@ from ..s01_preprocessing.pose_normalizer import PoseNormalizer
 from ..s01_preprocessing.rep_detector import RepDetector
 from ..s01_preprocessing.expert_cache import ExpertPoseCache
 from ..s01_preprocessing.feedback import FeedbackEngine, FeedbackPolicy
+from ..s07_tts import synthesize_final_feedback
 
 try:
     from ..s01_preprocessing.dtw_comparator import DTWComparator
@@ -542,6 +543,7 @@ class FastPosePipeline:
                 "severity": prep["severity"],
                 "rep_count": prep["rep_count"],
                 "rep_scores": prep["rep_scores"],
+                "bad_joints": prep.get("bad_joints", []),
                 "muscle_fatigue": fatigue_state,
             }
             if is_pending_feedback(feedback_block):
@@ -552,6 +554,7 @@ class FastPosePipeline:
                     "message": fatigue_summary,
                     "body_part": "ok",
                     "severity": 0.0,
+                    "bad_joints": [],
                 })
         else:
             pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
@@ -561,6 +564,7 @@ class FastPosePipeline:
                 "message": fatigue_summary,
                 "rep_count": 0,
                 "rep_scores": [],
+                "bad_joints": [],
                 "muscle_fatigue": fatigue_state,
             }
 
@@ -616,6 +620,7 @@ class FastPosePipeline:
                 "severity": prep["severity"],
                 "rep_count": prep["rep_count"],
                 "rep_scores": prep["rep_scores"],
+                "bad_joints": prep.get("bad_joints", []),
                 "muscle_fatigue": fatigue_state,
             }
             if is_pending_feedback(feedback_block):
@@ -626,6 +631,7 @@ class FastPosePipeline:
                     "message": fatigue_summary,
                     "body_part": "ok",
                     "severity": 0.0,
+                    "bad_joints": [],
                 })
         else:
             pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
@@ -635,6 +641,7 @@ class FastPosePipeline:
                 "message": fatigue_summary,
                 "rep_count": 0,
                 "rep_scores": [],
+                "bad_joints": [],
                 "muscle_fatigue": fatigue_state,
             }
 
@@ -743,6 +750,12 @@ _viewer_dir = Path(__file__).resolve().parents[1] / "s05_frontend"
 if _viewer_dir.exists():
     app.mount("/viewer", StaticFiles(directory=str(_viewer_dir), html=True), name="viewer_2d")
 
+_assets_dir = Path(__file__).resolve().parents[1] / "assets"
+_tts_output_dir = _assets_dir / "tts"
+_tts_output_dir.mkdir(parents=True, exist_ok=True)
+if _assets_dir.exists():
+    app.mount("/assets", StaticFiles(directory=str(_assets_dir)), name="assets")
+
 _react_dist_dir = Path(__file__).resolve().parents[2] / "dist"
 if _react_dist_dir.exists():
     app.mount("/app", StaticFiles(directory=str(_react_dist_dir), html=True), name="react_app")
@@ -804,6 +817,12 @@ async def start_session(payload: Dict[str, Any]):
 @app.post("/api/session/end")
 async def end_session():
     return app.state.pose_pipeline.finish_session(app.state.http_session_tracker)
+
+
+@app.post("/api/tts/final-feedback")
+async def create_final_feedback_tts(payload: Dict[str, Any]):
+    result = synthesize_final_feedback(payload, _tts_output_dir)
+    return result.to_dict()
 
 
 @app.get("/api/expert-smplx")

@@ -387,7 +387,10 @@ function App() {
               {TEXT.myPose}
             </div>
             <div className="render-slot">
-              <SkeletonCanvas2D keypoints={liveFrame?.keypoints_2d ?? null} />
+              <SkeletonCanvas2D
+                keypoints={liveFrame?.keypoints_2d ?? null}
+                badJoints={liveFrame?.feedback?.bad_joints ?? []}
+              />
             </div>
             <FeedbackChip status={feedback.status} message={feedback.message} />
           </div>

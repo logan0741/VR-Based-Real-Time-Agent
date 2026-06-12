@@ -28,20 +28,31 @@ const COCO_BONES = [
     [12, 14], [14, 16],                         // Right leg
 ];
 
-const BONE_COLORS = {
-    head:  "#b388ff",
-    torso: "#4a9eff",
-    left:  "#00e5ff",
-    right: "#00e676",
-    hip:   "#ff9100",
-};
+const LEFT_JOINTS = new Set([5, 7, 9, 11, 13, 15]);
+const RIGHT_JOINTS = new Set([6, 8, 10, 12, 14, 16]);
+const COLOR_CENTER = "#ffffff";
+const COLOR_LEFT = "#00ff00";
+const COLOR_RIGHT = "#0066ff";
+const COLOR_BAD = "#ff2d2d";
 
-function getBoneColor(i, j) {
-    if (i <= 4 || j <= 4) return BONE_COLORS.head;
-    if ((i === 5 && j === 6) || (i === 5 && j === 11) || (i === 6 && j === 12)) return BONE_COLORS.torso;
-    if (i === 11 && j === 12) return BONE_COLORS.hip;
-    if ([5, 7, 9, 11, 13, 15].includes(i) && [5, 7, 9, 11, 13, 15].includes(j)) return BONE_COLORS.left;
-    return BONE_COLORS.right;
+function confAlpha(confidence) {
+    if (confidence < 0.3) return 0.3;
+    if (confidence < 0.6) return 0.6;
+    return 1.0;
+}
+
+function getJointColor(idx) {
+    if (LEFT_JOINTS.has(idx)) return COLOR_LEFT;
+    if (RIGHT_JOINTS.has(idx)) return COLOR_RIGHT;
+    return COLOR_CENTER;
+}
+
+function getBoneColor(i, j, badJoints = new Set()) {
+    if (badJoints.has(i) || badJoints.has(j)) return COLOR_BAD;
+    const iL = LEFT_JOINTS.has(i), iR = RIGHT_JOINTS.has(i);
+    const jL = LEFT_JOINTS.has(j), jR = RIGHT_JOINTS.has(j);
+    if ((iL && jR) || (iR && jL)) return COLOR_CENTER;
+    return getJointColor(i);
 }
 
 // ================================================================
@@ -76,6 +87,7 @@ let currentExpertExercise = "";
 let currentExpertControlVersion = -1;
 let expertStartLocalMs = performance.now();
 const EXPERT_FPS = 24;
+let currentBadJoints = new Set();
 
 // ================================================================
 // WebSocket Connection
@@ -181,7 +193,7 @@ function handleFrame(data) {
     // Draw user skeleton from keypoints_2d
     const keypoints = data.keypoints_2d;
     if (keypoints && keypoints.length === 17) {
-        drawSkeleton("user-canvas", keypoints, true);
+        drawSkeleton("user-canvas", keypoints, true, currentBadJoints);
         document.getElementById("user-overlay").classList.add("hidden");
     }
 
@@ -202,7 +214,7 @@ function handleFrame(data) {
 // Skeleton Drawing
 // ================================================================
 
-function drawSkeleton(canvasId, keypoints, isUser) {
+function drawSkeleton(canvasId, keypoints, isUser, badJoints = new Set()) {
     const canvas = document.getElementById(canvasId);
     const ctx = canvas.getContext("2d");
     const w = canvas.width;
@@ -226,8 +238,10 @@ function drawSkeleton(canvasId, keypoints, isUser) {
         const p2 = points[j];
         if (!p1 || !p2) continue;
 
-        ctx.strokeStyle = getBoneColor(i, j);
-        ctx.globalAlpha = 0.85;
+        const isBad = badJoints.has(i) || badJoints.has(j);
+        ctx.strokeStyle = getBoneColor(i, j, badJoints);
+        ctx.lineWidth = isBad ? 4 : 3;
+        ctx.globalAlpha = Math.min(confAlpha(p1.conf ?? 1), confAlpha(p2.conf ?? 1)) * 0.85;
         ctx.beginPath();
         ctx.moveTo(p1.x, p1.y);
         ctx.lineTo(p2.x, p2.y);
@@ -240,16 +254,20 @@ function drawSkeleton(canvasId, keypoints, isUser) {
         const p = points[i];
         if (!p) continue;
 
+        const isBad = badJoints.has(i);
+        const radius = isBad ? 9 : 4;
+
         // Outer glow
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 6, 0, Math.PI * 2);
-        ctx.fillStyle = "rgba(0, 229, 255, 0.15)";
+        ctx.arc(p.x, p.y, isBad ? 13 : 6, 0, Math.PI * 2);
+        ctx.fillStyle = isBad ? "rgba(255, 45, 45, 0.22)" : "rgba(255, 255, 255, 0.12)";
         ctx.fill();
 
         // Inner dot
         ctx.beginPath();
-        ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
-        ctx.fillStyle = "#00e5ff";
+        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.globalAlpha = confAlpha(p.conf ?? 1);
+        ctx.fillStyle = isBad ? COLOR_BAD : getJointColor(i);
         ctx.fill();
 
         // White center
@@ -291,9 +309,9 @@ function normalizeToCanvas(keypoints, canvasW, canvasH, mirror) {
     // Extract x, y based on detected format
     const points2D = keypoints.map(kp => {
         if (isMoveNetYX) {
-            return { rawX: kp[1], rawY: kp[0] };  // swap: [y,x] to x,y
+            return { rawX: kp[1], rawY: kp[0], conf: kp[2] ?? 1 };  // swap: [y,x] to x,y
         } else {
-            return { rawX: kp[0], rawY: kp[1] };   // already [x,y]
+            return { rawX: kp[0], rawY: kp[1], conf: kp[2] ?? 1 };   // already [x,y]
         }
     });
 
@@ -334,7 +352,7 @@ function normalizeToCanvas(keypoints, canvasW, canvasH, mirror) {
         let x = (p.rawX - centerX) * scale + canvasW / 2;
         const y = (p.rawY - centerY) * scale + canvasH / 2;
         if (mirror) x = canvasW - x;
-        return { x, y };
+        return { x, y, conf: p.conf };
     });
 }
 
@@ -361,6 +379,7 @@ function bodyPartLabel(bodyPart) {
 
 function updateFeedback(feedback) {
     if (!feedback) return;
+    currentBadJoints = new Set(Array.isArray(feedback.bad_joints) ? feedback.bad_joints : []);
 
     // Score: use server-computed DTW score directly
     const score = typeof feedback.score === "number" ? feedback.score : 0;
