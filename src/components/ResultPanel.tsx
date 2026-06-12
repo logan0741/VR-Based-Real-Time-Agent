@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { requestFinalFeedbackTts } from '../services/ttsApi';
 import type { SessionResult } from '../types';
 
@@ -9,11 +9,13 @@ type ResultPanelProps = {
 };
 
 export default function ResultPanel({ result, onRetry, onHome }: ResultPanelProps) {
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const autoRequestedRef = useRef(false);
   const [ttsUrl, setTtsUrl] = useState<string | null>(null);
   const [ttsStatus, setTtsStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [ttsMessage, setTtsMessage] = useState('');
 
-  const handleCreateTts = async () => {
+  const createTts = useCallback(async () => {
     setTtsStatus('loading');
     setTtsMessage('');
     setTtsUrl(null);
@@ -33,7 +35,24 @@ export default function ResultPanel({ result, onRetry, onHome }: ResultPanelProp
       setTtsStatus('error');
       setTtsMessage(error instanceof Error ? error.message : 'TTS 요청 중 오류가 발생했습니다.');
     }
-  };
+  }, [result]);
+
+  useEffect(() => {
+    if (autoRequestedRef.current) return;
+    autoRequestedRef.current = true;
+    createTts();
+  }, [createTts]);
+
+  useEffect(() => {
+    if (!ttsUrl || !audioRef.current) return;
+    audioRef.current.currentTime = 0;
+    const playResult = audioRef.current.play();
+    if (playResult) {
+      playResult.catch(() => {
+        setTtsMessage('음성이 준비되었습니다. 브라우저 정책으로 자동 재생이 막히면 재생 버튼을 누르세요.');
+      });
+    }
+  }, [ttsUrl]);
 
   return (
     <div className="s2-inner">
@@ -80,14 +99,14 @@ export default function ResultPanel({ result, onRetry, onHome }: ResultPanelProp
         <button
           className="btn-tts"
           type="button"
-          onClick={handleCreateTts}
+          onClick={createTts}
           disabled={ttsStatus === 'loading'}
         >
-          {ttsStatus === 'loading' ? '음성 생성 중' : '음성 생성'}
+          {ttsStatus === 'loading' ? '음성 생성 중' : '다시 생성'}
         </button>
         {ttsMessage ? <p className={`tts-message ${ttsStatus}`}>{ttsMessage}</p> : null}
         {ttsUrl ? (
-          <audio className="tts-player" src={ttsUrl} controls preload="metadata">
+          <audio ref={audioRef} className="tts-player" src={ttsUrl} controls preload="auto">
             최종 피드백 음성을 재생할 수 없습니다.
           </audio>
         ) : null}
