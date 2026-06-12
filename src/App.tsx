@@ -159,6 +159,7 @@ function App() {
   const [selectedExercise, setSelectedExercise] = useState<Exercise>(exerciseOptions[0]);
   const [sets, setSets] = useState(3);
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
+  const [userMirror, setUserMirror] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackItem>({ status: 'ok', message: TEXT.measuring });
   const [score, setScore] = useState(0);
   const [reps, setReps] = useState(0);
@@ -189,8 +190,9 @@ function App() {
 
   useEffect(() => {
     if (!liveFrame?.feedback) return;
-    const { score: frameScore, message, rep_count, body_part, severity, muscle_fatigue, countable } = liveFrame.feedback;
+    const { score: frameScore, message, rep_count, body_part, severity, muscle_fatigue, countable, feedback_event } = liveFrame.feedback;
     const isCountable = countable !== false;
+    const isFeedbackEvent = feedback_event === true;
 
     if (isCountable && typeof frameScore === 'number' && frameScore > 0) {
       setScore(Math.round(frameScore));
@@ -221,7 +223,7 @@ function App() {
       setProgress(progressFromTotalReps(rep_count, sets));
     }
 
-    if (isCountable) {
+    if (isCountable && isFeedbackEvent) {
       feedbackSamplesRef.current.push({
         score: typeof frameScore === 'number' ? frameScore : 0,
         message: message || '',
@@ -235,7 +237,7 @@ function App() {
       const nextStatus: 'ok' | 'warn' = body_part === 'ok' ? 'ok' : 'warn';
       setFeedback({ status: nextStatus, message });
 
-      if (!seenMessagesRef.current.has(message)) {
+      if (isCountable && isFeedbackEvent && !seenMessagesRef.current.has(message)) {
         seenMessagesRef.current.add(message);
         feedbackLogRef.current.push({ status: nextStatus, message });
       }
@@ -388,11 +390,19 @@ function App() {
             <div className="panel-label">
               <span className="p-dot mint" />
               {TEXT.myPose}
+              <button
+                className={`mirror-toggle ${userMirror ? 'on' : ''}`}
+                type="button"
+                onClick={() => setUserMirror((current) => !current)}
+              >
+                좌우 반전
+              </button>
             </div>
             <div className="render-slot">
               <SkeletonCanvas2D
                 keypoints={liveFrame?.keypoints_2d ?? null}
                 badJoints={liveFrame?.feedback?.bad_joints ?? []}
+                mirror={userMirror}
               />
             </div>
             <FeedbackChip status={feedback.status} message={feedback.message} />

@@ -62,11 +62,11 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "torso": {
                 "joints": (LEFT_SHOULDER, RIGHT_SHOULDER),
                 "dtw_slice": (0, 2),
-                "threshold": 0.16,
+                "threshold": 0.10,
                 "classify": {
                     "type": "axis_compare",
                     "axis": 1,
-                    "axis_tolerance": 0.04,
+                    "axis_tolerance": 0.02,
                     "pos": "too_forward",
                     "neg": "too_upright",
                 },
@@ -74,11 +74,11 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "hip": {
                 "joints": (LEFT_HIP, RIGHT_HIP),
                 "dtw_slice": (2, 4),
-                "threshold": 0.16,
+                "threshold": 0.10,
                 "classify": {
                     "type": "axis_compare",
                     "axis": 0,
-                    "axis_tolerance": 0.04,
+                    "axis_tolerance": 0.02,
                     "pos": "too_low",
                     "neg": "too_high",
                 },
@@ -86,11 +86,11 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "knee": {
                 "joints": (LEFT_KNEE, RIGHT_KNEE),
                 "dtw_slice": (4, 6),
-                "threshold": 0.18,
+                "threshold": 0.12,
                 "classify": {
                     "type": "axis_compare",
                     "axis": 1,
-                    "axis_tolerance": 0.04,
+                    "axis_tolerance": 0.02,
                     "pos": "too_forward",
                     "neg": "too_backward",
                 },
@@ -98,11 +98,11 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "ankle": {
                 "joints": (LEFT_ANKLE, RIGHT_ANKLE),
                 "dtw_slice": (6, 8),
-                "threshold": 0.16,
+                "threshold": 0.10,
                 "classify": {
                     "type": "axis_compare",
                     "axis": 1,
-                    "axis_tolerance": 0.04,
+                    "axis_tolerance": 0.02,
                     "pos": "too_forward",
                     "neg": "limited",
                 },
@@ -115,11 +115,11 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "elbow": {
                 "joints": (LEFT_ELBOW,),
                 "dtw_slice": (1, 2),
-                "threshold": 0.18,
+                "threshold": 0.12,
                 "classify": {
                     "type": "axis_compare",
                     "axis": 1,
-                    "axis_tolerance": 0.04,
+                    "axis_tolerance": 0.02,
                     "pos": "too_forward",
                     "neg": "too_backward",
                 },
@@ -127,11 +127,11 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "torso": {
                 "joints": (LEFT_SHOULDER,),
                 "dtw_slice": (0, 1),
-                "threshold": 0.16,
+                "threshold": 0.10,
                 "classify": {
                     "type": "axis_compare",
                     "axis": 1,
-                    "axis_tolerance": 0.04,
+                    "axis_tolerance": 0.02,
                     "pos": "too_forward",
                     "neg": "leaning_back",
                 },
@@ -139,11 +139,11 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "wrist": {
                 "joints": (LEFT_WRIST,),
                 "dtw_slice": (2, 3),
-                "threshold": 0.18,
+                "threshold": 0.12,
                 "classify": {
                     "type": "axis_compare",
                     "axis": 1,
-                    "axis_tolerance": 0.04,
+                    "axis_tolerance": 0.02,
                     "pos": "flexion",
                     "neg": "extension",
                 },
@@ -159,12 +159,12 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "shoulder": {
                 "joints": (LEFT_SHOULDER, RIGHT_SHOULDER),
                 "dtw_slice": (0, 2),
-                "threshold": 0.16,
+                "threshold": 0.10,
                 "classify": {
                     "type": "gap_compare",
                     "axis": 0,
-                    "axis_tolerance": 0.04,
-                    "gap_threshold": 0.08,
+                    "axis_tolerance": 0.02,
+                    "gap_threshold": 0.05,
                     "gap_state": "misaligned",
                     "pos": "too_high",
                     "neg": "too_low",
@@ -173,12 +173,12 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "elbow": {
                 "joints": (LEFT_ELBOW, RIGHT_ELBOW),
                 "dtw_slice": (2, 4),
-                "threshold": 0.18,
+                "threshold": 0.12,
                 "classify": {
                     "type": "gap_compare",
                     "axis": 1,
-                    "axis_tolerance": 0.04,
-                    "gap_threshold": 0.11,
+                    "axis_tolerance": 0.02,
+                    "gap_threshold": 0.08,
                     "gap_state": "misaligned",
                     "pos": "too_wide",
                     "neg": "too_narrow",
@@ -195,12 +195,12 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "shoulder": {
                 "joints": (LEFT_SHOULDER, RIGHT_SHOULDER),
                 "dtw_slice": (0, 2),
-                "threshold": 0.16,
+                "threshold": 0.10,
                 "classify": {
                     "type": "gap_compare",
                     "axis": 0,
-                    "axis_tolerance": 0.04,
-                    "gap_threshold": 0.09,
+                    "axis_tolerance": 0.02,
+                    "gap_threshold": 0.06,
                     "gap_state": "misaligned",
                     "pos": "too_low",
                     "neg": "too_high",
@@ -209,12 +209,12 @@ EXERCISE_CONFIGS: dict[tuple[str, str], ExerciseViewCfg] = {
             "elbow": {
                 "joints": (LEFT_ELBOW, RIGHT_ELBOW),
                 "dtw_slice": (2, 4),
-                "threshold": 0.18,
+                "threshold": 0.12,
                 "classify": {
                     "type": "gap_compare",
                     "axis": 0,
-                    "axis_tolerance": 0.04,
-                    "gap_threshold": 0.11,
+                    "axis_tolerance": 0.02,
+                    "gap_threshold": 0.08,
                     "gap_state": "misaligned",
                     "pos": "too_low",
                     "neg": "too_high",

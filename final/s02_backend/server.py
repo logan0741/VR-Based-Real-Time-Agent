@@ -141,7 +141,8 @@ class PreprocessingSession:
             ScoreEngine(self._cfg["weights"], self._cfg["max_distance"], self._cfg["n_frames"])
             if _DTW_AVAILABLE else None
         )
-        self._feedback_policy = FeedbackPolicy(hold_frames=self._cfg["target_fps"] * 3)
+        hold_frames = int(os.environ.get("FEEDBACK_HOLD_FRAMES", str(self._cfg["target_fps"] * 3)))
+        self._feedback_policy = FeedbackPolicy(hold_frames=max(1, hold_frames))
 
         self._norm_buffer: List[Any] = []
         self._last_dist_matrix: Optional[Any] = None
@@ -178,6 +179,7 @@ class PreprocessingSession:
                 "bad_joints": [],
                 "all_candidates": {},
                 "countable": False,
+                "feedback_event": True,
             })
             self._frame_idx += 1
             return result
@@ -196,6 +198,7 @@ class PreprocessingSession:
                 "bad_joints": [],
                 "all_candidates": {},
                 "countable": False,
+                "feedback_event": True,
             }
 
         self._norm_buffer.append(norm_kp)
@@ -251,6 +254,7 @@ class PreprocessingSession:
             result["rep_count"] = len(all_reps)
             result["rep_scores"] = rep_scores
             result["countable"] = True
+            result["feedback_event"] = False
             self._frame_idx += 1
             return result
 
@@ -259,13 +263,9 @@ class PreprocessingSession:
         joint_distances = self._last_dist_matrix[-1] if self._last_dist_matrix is not None else None
         feedback_result = self._feedback_engine.analyze(kpts_np, norm_kp, expert_norm_kp, joint_distances)
 
-        if new_reps:
-            self._feedback_policy.on_rep_complete(self._frame_idx, feedback_result)
-
-        policy_message = self._feedback_policy.update(self._frame_idx)
-        live_message = str(feedback_result.get("message", policy_message))
-        body_part = str(feedback_result.get("body_part", ""))
-        message = live_message if body_part not in {"", "pending"} else policy_message
+        visible_feedback, feedback_event = self._feedback_policy.consider(self._frame_idx, feedback_result)
+        message = str(visible_feedback.get("message", "측정 중입니다."))
+        body_part = str(visible_feedback.get("body_part", "pending"))
 
         self._frame_idx += 1
 
@@ -275,11 +275,12 @@ class PreprocessingSession:
             "rep_scores": rep_scores,
             "message": message,
             "body_part": body_part,
-            "state": str(feedback_result.get("state", "")),
-            "severity": float(feedback_result.get("severity", 0.0)),
-            "bad_joints": feedback_result.get("bad_joints", []),
-            "all_candidates": feedback_result.get("all_candidates", {}),
+            "state": str(visible_feedback.get("state", "")),
+            "severity": float(visible_feedback.get("severity", 0.0)),
+            "bad_joints": visible_feedback.get("bad_joints", []),
+            "all_candidates": visible_feedback.get("all_candidates", {}),
             "countable": True,
+            "feedback_event": feedback_event,
         }
         self._last_result = result
         return result
