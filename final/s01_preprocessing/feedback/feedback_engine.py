@@ -37,14 +37,25 @@ class FeedbackEngine:
             return self._build_result("pending", "low_confidence", 0.0)
 
         scores = self._body_scores(joint_distances)
+        all_states: dict[str, str] = {
+            part: self._classify_state(part, user_norm_keypoints, expert_norm_keypoints)
+            for part in scores
+        }
+        all_candidates: dict[str, dict[str, object]] = {
+            part: self._build_result(part, all_states[part], scores[part])
+            for part in scores
+        }
+
         body_part = max(scores, key=scores.__getitem__)
         severity = scores[body_part]
 
         if severity < self._cfg["body_parts"][body_part]["threshold"]:
-            return self._build_result("ok", "ok", severity)
+            result = self._build_result("ok", "ok", severity)
+        else:
+            result = self._build_result(body_part, all_states[body_part], severity)
 
-        state = self._classify_state(body_part, user_norm_keypoints, expert_norm_keypoints)
-        return self._build_result(body_part, state, severity)
+        result["all_candidates"] = all_candidates
+        return result
 
     def _build_result(self, body_part: str, state: str, severity: float) -> dict[str, object]:
         if body_part in {"pending", "ok"}:

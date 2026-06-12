@@ -74,10 +74,29 @@ MUSCLE_LABELS = {
     "right_glute": "\uc6b0 \ub454\uadfc",
 }
 
+MUSCLE_BAD_JOINTS = {
+    "chest": (5, 6),
+    "abs": (5, 6, 11, 12),
+    "lower_back": (5, 6, 11, 12),
+    "left_quad": (11, 13),
+    "right_quad": (12, 14),
+    "left_hamstring": (11, 13, 15),
+    "right_hamstring": (12, 14, 16),
+    "left_glute": (11, 13),
+    "right_glute": (12, 14),
+}
+
 
 def format_fatigue_summary(prefix: str, muscles: List[str]) -> str:
     labels = [MUSCLE_LABELS.get(muscle, muscle) for muscle in muscles]
     return f"{prefix}: {', '.join(labels)}"
+
+
+def fatigue_bad_joints(muscles: List[str]) -> List[int]:
+    joints: set[int] = set()
+    for muscle in muscles:
+        joints.update(MUSCLE_BAD_JOINTS.get(muscle, ()))
+    return sorted(joints)
 
 
 def is_pending_feedback(feedback: Dict[str, Any]) -> bool:
@@ -449,10 +468,13 @@ class FastPosePipeline:
         mid_fatigue = [k for k, v in fatigue_state.items() if v in {"mid", "med"}]
         if high_fatigue:
             fatigue_summary = format_fatigue_summary("\uc8fc\uc758", high_fatigue)
+            fatigue_joints = fatigue_bad_joints(high_fatigue)
         elif mid_fatigue:
             fatigue_summary = format_fatigue_summary("\ubcf4\ud1b5", mid_fatigue)
+            fatigue_joints = fatigue_bad_joints(mid_fatigue)
         else:
             fatigue_summary = "\uc591\ud638"
+            fatigue_joints = []
 
         pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
         session_tracker.record_frame(pose_score, fatigue_summary)
@@ -554,7 +576,7 @@ class FastPosePipeline:
                     "message": fatigue_summary,
                     "body_part": "ok",
                     "severity": 0.0,
-                    "bad_joints": [],
+                    "bad_joints": fatigue_joints,
                 })
         else:
             pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
@@ -564,7 +586,7 @@ class FastPosePipeline:
                 "message": fatigue_summary,
                 "rep_count": 0,
                 "rep_scores": [],
-                "bad_joints": [],
+                "bad_joints": fatigue_joints,
                 "muscle_fatigue": fatigue_state,
             }
 
@@ -604,10 +626,13 @@ class FastPosePipeline:
         mid_fatigue = [k for k, v in fatigue_state.items() if v in {"mid", "med"}]
         if high_fatigue:
             fatigue_summary = format_fatigue_summary("\uc8fc\uc758", high_fatigue)
+            fatigue_joints = fatigue_bad_joints(high_fatigue)
         elif mid_fatigue:
             fatigue_summary = format_fatigue_summary("\ubcf4\ud1b5", mid_fatigue)
+            fatigue_joints = fatigue_bad_joints(mid_fatigue)
         else:
             fatigue_summary = "\uc591\ud638"
+            fatigue_joints = []
 
         if preprocessing_session is not None:
             prep = preprocessing_session.process(kpts_np)
@@ -631,7 +656,7 @@ class FastPosePipeline:
                     "message": fatigue_summary,
                     "body_part": "ok",
                     "severity": 0.0,
-                    "bad_joints": [],
+                    "bad_joints": fatigue_joints,
                 })
         else:
             pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
@@ -641,7 +666,7 @@ class FastPosePipeline:
                 "message": fatigue_summary,
                 "rep_count": 0,
                 "rep_scores": [],
-                "bad_joints": [],
+                "bad_joints": fatigue_joints,
                 "muscle_fatigue": fatigue_state,
             }
 
