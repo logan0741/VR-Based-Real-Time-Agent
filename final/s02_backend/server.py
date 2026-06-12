@@ -43,6 +43,9 @@ except ImportError:
     print("[Pipeline] dtaidistance 亦껋꼶梨룩땻類잆럦???DTW ??????????繹먮봿?? pip install dtaidistance==2.3.12")
 
 
+CAMERA_MIN_CONFIDENCE = 0.25
+
+
 EXERCISE_ALIASES = {
     "pull_up": "pullup",
 }
@@ -143,15 +146,17 @@ class PreprocessingSession:
         self._norm_buffer: List[Any] = []
         self._last_dist_matrix: Optional[Any] = None
         self._last_result: Dict[str, Any] = {
-            "score": 50,
+            "score": 0,
             "rep_count": 0,
             "rep_scores": [],
             "message": "measuring",
             "body_part": "",
             "severity": 0.0,
+            "bad_joints": [],
+            "countable": False,
         }
         self._run_realtime_dtw = env_bool("PREPROCESSING_REALTIME_DTW", True)
-        self._feedback_interval_frames = max(1, int(os.environ.get("FEEDBACK_INTERVAL_FRAMES", "1")))
+        self._feedback_interval_frames = max(1, int(os.environ.get("FEEDBACK_INTERVAL_FRAMES", "8")))
         self._known_reps: int = 0
         self._frame_idx: int = 0
 
@@ -159,10 +164,39 @@ class PreprocessingSession:
         """1?熬곣뫁?????㉱????⑥щ턄??⑤벡夷?????얍ㅇ???낅빢鸚??怨뺢덧?꾩룄?????ｌ뫒亦???겶??꾩룇瑗???類ｋ펲."""
         import numpy as _np
 
+        camera_message = self._camera_visibility_message(kpts_np)
+        if camera_message is not None:
+            result = dict(self._last_result)
+            result.update({
+                "score": 0,
+                "rep_count": self._known_reps,
+                "rep_scores": [],
+                "message": camera_message,
+                "body_part": "camera",
+                "state": "out_of_frame",
+                "severity": 0.0,
+                "bad_joints": [],
+                "all_candidates": {},
+                "countable": False,
+            })
+            self._frame_idx += 1
+            return result
+
         try:
             norm_kp = self._normalizer.normalize(kpts_np)
         except ValueError:
-            return {"score": 50, "rep_count": 0, "rep_scores": [], "message": "????????븐뻼??繞벿살탳???嶺뚮씮??議쏀떊?源껋돪??", "body_part": "", "severity": 0.0}
+            return {
+                "score": 0,
+                "rep_count": self._known_reps,
+                "rep_scores": [],
+                "message": "전신이 카메라에 모두 나오도록 화면 중앙에 맞춰주세요.",
+                "body_part": "camera",
+                "state": "out_of_frame",
+                "severity": 0.0,
+                "bad_joints": [],
+                "all_candidates": {},
+                "countable": False,
+            }
 
         self._norm_buffer.append(norm_kp)
 
@@ -216,6 +250,7 @@ class PreprocessingSession:
             result = dict(self._last_result)
             result["rep_count"] = len(all_reps)
             result["rep_scores"] = rep_scores
+            result["countable"] = True
             self._frame_idx += 1
             return result
 
@@ -240,7 +275,11 @@ class PreprocessingSession:
             "rep_scores": rep_scores,
             "message": message,
             "body_part": body_part,
+            "state": str(feedback_result.get("state", "")),
             "severity": float(feedback_result.get("severity", 0.0)),
+            "bad_joints": feedback_result.get("bad_joints", []),
+            "all_candidates": feedback_result.get("all_candidates", {}),
+            "countable": True,
         }
         self._last_result = result
         return result
@@ -251,15 +290,37 @@ class PreprocessingSession:
         self._norm_buffer.clear()
         self._last_dist_matrix = None
         self._last_result = {
-            "score": 50,
+            "score": 0,
             "rep_count": 0,
             "rep_scores": [],
             "message": "measuring",
             "body_part": "",
             "severity": 0.0,
+            "bad_joints": [],
+            "countable": False,
         }
         self._known_reps = 0
         self._frame_idx = 0
+
+    def _camera_visibility_message(self, kpts_np: Any) -> Optional[str]:
+        import numpy as _np
+
+        points = _np.asarray(kpts_np, dtype=float)
+        if points.shape[0] < 17 or points.shape[1] < 3:
+            return "전신이 카메라에 모두 나오도록 화면 중앙에 맞춰주세요."
+
+        required_joints = set(self._cfg["confidence_joints"])
+        for part_cfg in self._cfg["body_parts"].values():
+            required_joints.update(part_cfg["joints"])
+
+        for idx in required_joints:
+            y, x, conf = points[int(idx), :3]
+            if conf < CAMERA_MIN_CONFIDENCE:
+                return "전신이 카메라에 모두 나오도록 뒤로 물러서 주세요."
+            if x < 0.02 or x > 0.98 or y < 0.02 or y > 0.98:
+                return "전신이 카메라 화면 안에 모두 들어오도록 위치를 조정해주세요."
+
+        return None
 
 
 def load_env_file(path: Path) -> None:
@@ -548,10 +609,13 @@ class FastPosePipeline:
         mid_fatigue = [k for k, v in fatigue_state.items() if v in {"mid", "med"}]
         if high_fatigue:
             fatigue_summary = format_fatigue_summary("\uc8fc\uc758", high_fatigue)
+            fatigue_joints = fatigue_bad_joints(high_fatigue)
         elif mid_fatigue:
             fatigue_summary = format_fatigue_summary("\ubcf4\ud1b5", mid_fatigue)
+            fatigue_joints = fatigue_bad_joints(mid_fatigue)
         else:
             fatigue_summary = "\uc591\ud638"
+            fatigue_joints = []
 
         # ???깆젷 DTW ???逾?熬곣뫁逾??(???깆굯?? ???裕?stub
         if preprocessing_session is not None:
@@ -566,6 +630,7 @@ class FastPosePipeline:
                 "rep_count": prep["rep_count"],
                 "rep_scores": prep["rep_scores"],
                 "bad_joints": prep.get("bad_joints", []),
+                "countable": prep.get("countable", True),
                 "muscle_fatigue": fatigue_state,
             }
             if is_pending_feedback(feedback_block):
@@ -587,10 +652,12 @@ class FastPosePipeline:
                 "rep_count": 0,
                 "rep_scores": [],
                 "bad_joints": fatigue_joints,
+                "countable": True,
                 "muscle_fatigue": fatigue_state,
             }
 
-        session_tracker.record_frame(pose_score, feedback_block["label"])
+        if feedback_block.get("countable", True):
+            session_tracker.record_frame(pose_score, feedback_block["label"])
         session_id = session_tracker.ensure_active()["session_id"]
         dur_ms = (time.perf_counter() - start_t) * 1000
 
@@ -646,6 +713,7 @@ class FastPosePipeline:
                 "rep_count": prep["rep_count"],
                 "rep_scores": prep["rep_scores"],
                 "bad_joints": prep.get("bad_joints", []),
+                "countable": prep.get("countable", True),
                 "muscle_fatigue": fatigue_state,
             }
             if is_pending_feedback(feedback_block):
@@ -667,10 +735,12 @@ class FastPosePipeline:
                 "rep_count": 0,
                 "rep_scores": [],
                 "bad_joints": fatigue_joints,
+                "countable": True,
                 "muscle_fatigue": fatigue_state,
             }
 
-        session_tracker.record_frame(pose_score, feedback_block["label"])
+        if feedback_block.get("countable", True):
+            session_tracker.record_frame(pose_score, feedback_block["label"])
         session_id = session_tracker.ensure_active()["session_id"]
         dur_ms = (time.perf_counter() - start_t) * 1000
 

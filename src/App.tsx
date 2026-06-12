@@ -189,13 +189,14 @@ function App() {
 
   useEffect(() => {
     if (!liveFrame?.feedback) return;
-    const { score: frameScore, message, rep_count, body_part, severity, muscle_fatigue } = liveFrame.feedback;
+    const { score: frameScore, message, rep_count, body_part, severity, muscle_fatigue, countable } = liveFrame.feedback;
+    const isCountable = countable !== false;
 
-    if (typeof frameScore === 'number' && frameScore > 0) {
+    if (isCountable && typeof frameScore === 'number' && frameScore > 0) {
       setScore(Math.round(frameScore));
       scoresRef.current.push(frameScore);
     }
-    const fallbackProgress = typeof liveFrame.feedback.total_reps === 'number'
+    const fallbackProgress = isCountable && typeof liveFrame.feedback.total_reps === 'number'
       ? progressFromTotalReps(liveFrame.feedback.total_reps, sets)
       : null;
     const nextProgress: ExerciseProgress | null = liveFrame.progress ?? (
@@ -212,21 +213,23 @@ function App() {
         : null
     );
 
-    if (nextProgress) {
+    if (isCountable && nextProgress) {
       setProgress(nextProgress);
       setReps(nextProgress.total_reps);
-    } else if (typeof rep_count === 'number') {
+    } else if (isCountable && typeof rep_count === 'number') {
       setReps(rep_count);
       setProgress(progressFromTotalReps(rep_count, sets));
     }
 
-    feedbackSamplesRef.current.push({
-      score: typeof frameScore === 'number' ? frameScore : 0,
-      message: message || '',
-      bodyPart: body_part || '',
-      severity: typeof severity === 'number' ? severity : 0,
-      muscles: muscle_fatigue ?? {},
-    });
+    if (isCountable) {
+      feedbackSamplesRef.current.push({
+        score: typeof frameScore === 'number' ? frameScore : 0,
+        message: message || '',
+        bodyPart: body_part || '',
+        severity: typeof severity === 'number' ? severity : 0,
+        muscles: muscle_fatigue ?? {},
+      });
+    }
 
     if (message && body_part !== 'pending') {
       const nextStatus: 'ok' | 'warn' = body_part === 'ok' ? 'ok' : 'warn';

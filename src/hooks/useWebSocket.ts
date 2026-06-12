@@ -22,6 +22,7 @@ export type PoseFrame = {
     body_part?: string;
     state?: string;
     severity?: number;
+    countable?: boolean;
     muscle_fatigue?: Record<string, string>;
   };
 };
