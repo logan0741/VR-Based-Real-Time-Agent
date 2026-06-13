@@ -43,7 +43,8 @@ except ImportError:
     print("[Pipeline] dtaidistance 亦껋꼶梨룩땻類잆럦???DTW ??????????繹먮봿?? pip install dtaidistance==2.3.12")
 
 
-CAMERA_MIN_CONFIDENCE = 0.25
+CAMERA_MIN_CONFIDENCE = float(os.environ.get("CAMERA_MIN_CONFIDENCE", "0.12"))
+CAMERA_EDGE_MARGIN = float(os.environ.get("CAMERA_EDGE_MARGIN", "0.01"))
 
 
 EXERCISE_ALIASES = {
@@ -311,15 +312,15 @@ class PreprocessingSession:
         if points.shape[0] < 17 or points.shape[1] < 3:
             return "전신이 카메라에 모두 나오도록 화면 중앙에 맞춰주세요."
 
-        required_joints = set(self._cfg["confidence_joints"])
-        for part_cfg in self._cfg["body_parts"].values():
-            required_joints.update(part_cfg["joints"])
+        required_joints = set(int(idx) for idx in self._cfg.get("keypoints_used", ()))
+        if not required_joints:
+            required_joints = set(range(17))
 
         for idx in required_joints:
             y, x, conf = points[int(idx), :3]
             if conf < CAMERA_MIN_CONFIDENCE:
                 return "전신이 카메라에 모두 나오도록 뒤로 물러서 주세요."
-            if x < 0.02 or x > 0.98 or y < 0.02 or y > 0.98:
+            if x < CAMERA_EDGE_MARGIN or x > 1.0 - CAMERA_EDGE_MARGIN or y < CAMERA_EDGE_MARGIN or y > 1.0 - CAMERA_EDGE_MARGIN:
                 return "전신이 카메라 화면 안에 모두 들어오도록 위치를 조정해주세요."
 
         return None
@@ -859,7 +860,7 @@ _tts_output_dir.mkdir(parents=True, exist_ok=True)
 if _assets_dir.exists():
     app.mount("/assets", StaticFiles(directory=str(_assets_dir)), name="assets")
 
-_react_dist_dir = Path(__file__).resolve().parents[2] / "dist"
+_react_dist_dir = Path(__file__).resolve().parents[1] / "app_dist"
 if _react_dist_dir.exists():
     app.mount("/app", StaticFiles(directory=str(_react_dist_dir), html=True), name="react_app")
 
@@ -1259,6 +1260,8 @@ async def websocket_endpoint(websocket: WebSocket):
             )
             response.setdefault("debug", {})
             response["debug"]["dropped_to_latest"] = True
+            response["debug"]["client_timestamp_ms"] = current_msg.get("client_timestamp_ms")
+            response["debug"]["server_processed_at_ms"] = int(time.time() * 1000)
             manager.attach_progress(response)
             await manager.broadcast_json(response)
 
@@ -1273,6 +1276,7 @@ async def websocket_endpoint(websocket: WebSocket):
             if data_type == "keypoints":
                 payload = msg.get("payload")
                 if payload:
+                    server_received_ms = int(time.time() * 1000)
                     pose_message = {
                         "status": "ok",
                         "data_type": "pose",
@@ -1281,6 +1285,8 @@ async def websocket_endpoint(websocket: WebSocket):
                         "debug": {
                             "relay_only": True,
                             "client_timestamp_ms": msg.get("client_timestamp_ms"),
+                            "server_received_ms": server_received_ms,
+                            "server_relay_sent_ms": int(time.time() * 1000),
                         },
                     }
                     manager.latest_pose_message = pose_message

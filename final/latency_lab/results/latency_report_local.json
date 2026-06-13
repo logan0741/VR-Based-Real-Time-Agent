@@ -1,0 +1,5639 @@
+{
+  "metadata": {
+    "created_at_utc": "2026-06-13T01:42:12.353083+00:00",
+    "ws_url": "ws://127.0.0.1:8000/ws/pose",
+    "frames_sent": 90,
+    "target_fps": 30.0,
+    "exercise_type": "squat",
+    "python": "3.8.10",
+    "platform": "Windows-10-10.0.26200-SP0",
+    "method": "Synthetic COCO-17 keypoints sent as viewer; separate app-like receiver measures broadcast latency.",
+    "scope_note": "Browser camera inference and canvas draw time are not included."
+  },
+  "summary": {
+    "viewer_relay_echo": {
+      "count": 90,
+      "min_ms": 1.787,
+      "avg_ms": 4.034,
+      "median_ms": 2.757,
+      "p90_ms": 3.73,
+      "p95_ms": 5.504,
+      "max_ms": 61.169
+    },
+    "app_relay_receive": {
+      "count": 90,
+      "min_ms": 1.981,
+      "avg_ms": 4.235,
+      "median_ms": 2.957,
+      "p90_ms": 3.901,
+      "p95_ms": 5.607,
+      "max_ms": 61.337
+    },
+    "viewer_processed_feedback": {
+      "count": 90,
+      "min_ms": 3.655,
+      "avg_ms": 9.289,
+      "median_ms": 5.588,
+      "p90_ms": 9.262,
+      "p95_ms": 35.081,
+      "max_ms": 68.84
+    },
+    "app_processed_feedback": {
+      "count": 90,
+      "min_ms": 3.942,
+      "avg_ms": 9.509,
+      "median_ms": 5.781,
+      "p90_ms": 9.498,
+      "p95_ms": 35.33,
+      "max_ms": 69.166
+    },
+    "frame_delivery": {
+      "relay_frames_at_viewer": 90,
+      "relay_frames_at_app": 90,
+      "processed_frames_at_viewer": 90,
+      "processed_frames_at_app": 90
+    }
+  },
+  "samples": [
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0000",
+      "sample_type": "relay_pose",
+      "latency_ms": 61.169,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924599
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0000",
+      "sample_type": "relay_pose",
+      "latency_ms": 61.337,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924599
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0001",
+      "sample_type": "relay_pose",
+      "latency_ms": 18.365,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924646
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0001",
+      "sample_type": "relay_pose",
+      "latency_ms": 18.617,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924646
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0000",
+      "sample_type": "processed_feedback",
+      "latency_ms": 67.865,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.97,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0000",
+      "sample_type": "processed_feedback",
+      "latency_ms": 68.439,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.97,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0002",
+      "sample_type": "relay_pose",
+      "latency_ms": 5.73,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924665
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0002",
+      "sample_type": "relay_pose",
+      "latency_ms": 5.877,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924665
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0001",
+      "sample_type": "processed_feedback",
+      "latency_ms": 25.759,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.91,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0001",
+      "sample_type": "processed_feedback",
+      "latency_ms": 26.005,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.91,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0002",
+      "sample_type": "processed_feedback",
+      "latency_ms": 10.166,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.37,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0002",
+      "sample_type": "processed_feedback",
+      "latency_ms": 10.393,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.37,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0003",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.286,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924723
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0003",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.56,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924723
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0003",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.851,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.11,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0003",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.142,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.11,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0004",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.104,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924754
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0004",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.297,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924754
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0004",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.112,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0004",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.43,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0005",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.439,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924784
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0005",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.645,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924784
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0005",
+      "sample_type": "processed_feedback",
+      "latency_ms": 8.461,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.44,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0005",
+      "sample_type": "processed_feedback",
+      "latency_ms": 8.727,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.44,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0006",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.674,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924815
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0006",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.878,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924815
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0006",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.977,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.94,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0006",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.188,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.94,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0007",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.752,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924861
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0007",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.963,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924861
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0007",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.548,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.88,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0007",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.802,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.88,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0008",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.899,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924892
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0008",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.152,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924892
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0008",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.259,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.96,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0008",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.483,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.96,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0009",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.648,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924938
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0009",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.838,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924938
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0009",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.074,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.74,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0009",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.201,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.74,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0010",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.405,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924986
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0010",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.553,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314924986
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0010",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.345,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.82,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0010",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.551,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.82,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0011",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.447,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925031
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0011",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.631,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925031
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0011",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.751,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.18,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0011",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.922,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.18,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0012",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.121,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925078
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0012",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.285,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925078
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0012",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.15,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.7,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0012",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.325,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.7,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0013",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.433,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925125
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0013",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.585,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925125
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0013",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.361,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.6,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0013",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.499,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.6,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0014",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.518,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925171
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0014",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.804,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925171
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0014",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.525,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.85,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0014",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.716,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.85,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0015",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.803,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925217
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0015",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.093,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925217
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0015",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.615,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.2,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0015",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.773,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.2,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0016",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.172,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925265
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0016",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.396,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925265
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0016",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.114,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.06,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0016",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.315,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.06,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0017",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.311,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925312
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0017",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.452,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925312
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0017",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.225,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.57,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0017",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.433,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.57,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0018",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.222,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925359
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0018",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.415,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925359
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0018",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.732,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.6,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0018",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.897,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.6,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0019",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.411,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925405
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0019",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.604,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925405
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0019",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.998,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.31,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0019",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.231,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.31,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0020",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.062,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925453
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0020",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.195,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925453
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0020",
+      "sample_type": "processed_feedback",
+      "latency_ms": 42.22,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 38.11,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0020",
+      "sample_type": "processed_feedback",
+      "latency_ms": 42.427,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 38.11,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0021",
+      "sample_type": "relay_pose",
+      "latency_ms": 1.787,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925495
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0021",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.067,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925495
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0021",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.072,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.9,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0021",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.392,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.9,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0022",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.944,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925546
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0022",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.093,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925546
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0022",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.97,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.66,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0022",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.1,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.66,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0023",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.825,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925593
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0023",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.98,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925593
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0023",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.51,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.91,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0023",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.657,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.91,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0024",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.427,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925640
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0024",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.57,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925640
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0024",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.621,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.83,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0024",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.937,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.83,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0025",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.623,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925686
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0025",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.784,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925686
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0025",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.957,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.83,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0025",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.107,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.83,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0026",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.071,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925732
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0026",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.2,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925732
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0026",
+      "sample_type": "processed_feedback",
+      "latency_ms": 3.655,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.58,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0026",
+      "sample_type": "processed_feedback",
+      "latency_ms": 3.942,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.58,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0027",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.084,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925778
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0027",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.311,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925778
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0027",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.531,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0027",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.685,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0028",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.689,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925826
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0028",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.883,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925826
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0028",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.844,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.65,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0028",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.002,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.65,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0029",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.878,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925873
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0029",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.042,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925873
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0029",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.729,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.88,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0029",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.958,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.88,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0030",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.814,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925918
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0030",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.197,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925918
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0030",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.391,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.26,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0030",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.601,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.26,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0031",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.743,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925965
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0031",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.918,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314925965
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0031",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.609,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.62,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0031",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.744,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.62,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0032",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.762,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926012
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0032",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.95,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926012
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0032",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.465,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.06,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0032",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.617,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.06,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0033",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.1,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926059
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0033",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.251,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926059
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0033",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.665,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.96,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0033",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.813,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.96,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0034",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.045,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926105
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0034",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.282,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926105
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0034",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.789,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0034",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.044,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0035",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.01,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926151
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0035",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.295,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926151
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0035",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.245,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.61,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0035",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.403,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.61,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0036",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.097,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926197
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0036",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.487,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926197
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0036",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.256,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.03,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0036",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.462,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.03,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0037",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.897,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926243
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0037",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.051,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926243
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0037",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.859,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.65,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0037",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.012,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.65,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0038",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.152,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926290
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0038",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.418,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926290
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0038",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.469,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.7,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0038",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.618,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.7,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0039",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.277,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926338
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0039",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.555,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926338
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0039",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.948,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0039",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.092,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0040",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.498,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926385
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0040",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.613,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926385
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0040",
+      "sample_type": "processed_feedback",
+      "latency_ms": 51.649,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 46.91,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0040",
+      "sample_type": "processed_feedback",
+      "latency_ms": 51.827,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 46.91,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0041",
+      "sample_type": "relay_pose",
+      "latency_ms": 5.228,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926432
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0041",
+      "sample_type": "relay_pose",
+      "latency_ms": 5.276,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926432
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0041",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.652,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.78,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0041",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.79,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.78,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0042",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.383,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926480
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0042",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.573,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926480
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0042",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.596,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.05,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0042",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.724,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.05,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0043",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.418,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926526
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0043",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.594,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926526
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0043",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.251,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.61,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0043",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.396,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.61,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0044",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.093,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926572
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0044",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.241,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926572
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0044",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.259,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.61,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0044",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.411,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.61,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0045",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.044,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926620
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0045",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.286,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926620
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0045",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.061,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.03,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0045",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.209,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.03,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0046",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.006,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926667
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0046",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.157,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926667
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0046",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.009,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.67,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0046",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.17,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.67,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0047",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.073,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926713
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0047",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.266,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926713
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0047",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.999,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0047",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.645,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0048",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.803,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926760
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0048",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.023,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926760
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0048",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.237,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.29,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0048",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.532,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.29,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0049",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.368,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926805
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0049",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.56,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926805
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0049",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.545,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.87,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0049",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.686,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.87,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0050",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.143,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926850
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0050",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.328,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926850
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0050",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.046,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.79,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0050",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.218,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.79,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0051",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.213,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926881
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0051",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.513,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926881
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0051",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.805,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.57,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0051",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.977,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.57,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0052",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.219,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926912
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0052",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.407,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926912
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0052",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.837,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.67,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0052",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.018,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.67,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0053",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.736,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926943
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0053",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.896,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926943
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0053",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.67,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.64,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0053",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.809,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.64,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0054",
+      "sample_type": "relay_pose",
+      "latency_ms": 1.851,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926975
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0054",
+      "sample_type": "relay_pose",
+      "latency_ms": 1.981,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314926975
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0054",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.104,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.98,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0054",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.332,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.98,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0055",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.023,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927007
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0055",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.273,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927007
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0055",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.238,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.3,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0055",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.437,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.3,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0056",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.287,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927054
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0056",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.525,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927054
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0056",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.552,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.63,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0056",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.699,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.63,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0057",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.451,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927085
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0057",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.756,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927085
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0057",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.652,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0057",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.402,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.93,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0058",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.015,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927115
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0058",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.171,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927115
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0058",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.414,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.82,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0058",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.593,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.82,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0059",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.433,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927146
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0059",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.625,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927146
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0059",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.633,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.76,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0059",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.761,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.76,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0060",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.148,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927177
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0060",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.322,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927177
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0061",
+      "sample_type": "relay_pose",
+      "latency_ms": 20.091,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927225
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0061",
+      "sample_type": "relay_pose",
+      "latency_ms": 20.235,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927225
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0060",
+      "sample_type": "processed_feedback",
+      "latency_ms": 68.84,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 63.78,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0060",
+      "sample_type": "processed_feedback",
+      "latency_ms": 69.166,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 63.78,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0062",
+      "sample_type": "relay_pose",
+      "latency_ms": 4.309,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927245
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0062",
+      "sample_type": "relay_pose",
+      "latency_ms": 4.446,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927245
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0061",
+      "sample_type": "processed_feedback",
+      "latency_ms": 24.882,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.82,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0061",
+      "sample_type": "processed_feedback",
+      "latency_ms": 25.081,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.82,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0062",
+      "sample_type": "processed_feedback",
+      "latency_ms": 8.38,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.64,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0062",
+      "sample_type": "processed_feedback",
+      "latency_ms": 8.604,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.64,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0063",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.495,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927301
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0063",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.696,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927301
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0063",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.554,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.08,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0063",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.726,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.08,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0064",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.337,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927331
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0064",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.477,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927331
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0064",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.276,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.1,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0064",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.45,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.1,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0065",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.613,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927363
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0065",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.803,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927363
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0065",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.793,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.69,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0065",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.965,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.69,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0066",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.729,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927408
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0066",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.941,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927408
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0066",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.059,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.32,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0066",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.232,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.32,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0067",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.591,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927439
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0067",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.87,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927439
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0067",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.017,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.91,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0067",
+      "sample_type": "processed_feedback",
+      "latency_ms": 7.262,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.91,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0068",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.039,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927469
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0068",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.332,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927469
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0068",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.944,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.04,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0068",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.137,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.04,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0069",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.252,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927515
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0069",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.675,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927515
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0069",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.668,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.59,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0069",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.831,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.59,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0070",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.294,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927562
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0070",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.484,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927562
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0070",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.303,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.97,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0070",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.547,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.97,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0071",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.338,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927608
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0071",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.533,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927608
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0071",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.485,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.02,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0071",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.651,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.02,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0072",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.517,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927654
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0072",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.667,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927654
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0072",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.381,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.95,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0072",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.619,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.95,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0073",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.38,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927701
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0073",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.746,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927701
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0073",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.919,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.72,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0073",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.098,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.72,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0074",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.17,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927747
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0074",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.349,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927747
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0074",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.931,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.07,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0074",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.16,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.07,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0075",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.579,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927794
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0075",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.743,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927794
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0075",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.608,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.82,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0075",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.736,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.82,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0076",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.286,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927840
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0076",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.441,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927840
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0076",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.777,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.64,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0076",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.03,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.64,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0077",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.234,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927887
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0077",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.48,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927887
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0077",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.814,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.81,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0077",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.091,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.81,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0078",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.631,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927933
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0078",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.81,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927933
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0078",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.788,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.88,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0078",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.927,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.88,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0079",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.939,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927980
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0079",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.202,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314927980
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0079",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.967,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.9,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0079",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.134,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.9,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0080",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.986,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928025
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0080",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.162,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928025
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0080",
+      "sample_type": "processed_feedback",
+      "latency_ms": 66.451,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 60.54,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0080",
+      "sample_type": "processed_feedback",
+      "latency_ms": 67.076,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 60.54,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0081",
+      "sample_type": "relay_pose",
+      "latency_ms": 22.107,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928070
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0081",
+      "sample_type": "relay_pose",
+      "latency_ms": 22.235,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928070
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0082",
+      "sample_type": "relay_pose",
+      "latency_ms": 4.631,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928091
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0082",
+      "sample_type": "relay_pose",
+      "latency_ms": 4.887,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928091
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0081",
+      "sample_type": "processed_feedback",
+      "latency_ms": 26.355,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.61,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0081",
+      "sample_type": "processed_feedback",
+      "latency_ms": 26.655,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.61,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0082",
+      "sample_type": "processed_feedback",
+      "latency_ms": 9.161,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.1,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0082",
+      "sample_type": "processed_feedback",
+      "latency_ms": 9.399,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.1,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0083",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.9,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928147
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0083",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.131,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928147
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0083",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.644,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.11,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0083",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.821,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.11,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0084",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.506,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928178
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0084",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.694,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928178
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0084",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.344,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.18,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0084",
+      "sample_type": "processed_feedback",
+      "latency_ms": 6.561,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.18,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0085",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.338,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928209
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0085",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.55,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928209
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0085",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.791,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.85,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0085",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.963,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.85,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0086",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.16,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928240
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0086",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.29,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928240
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0086",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.076,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.63,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0086",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.736,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.63,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0087",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.29,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928270
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0087",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.411,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928270
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0087",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.064,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.34,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0087",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.269,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 1.34,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0088",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.449,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928300
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0088",
+      "sample_type": "relay_pose",
+      "latency_ms": 3.605,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928300
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0088",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.188,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.64,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0088",
+      "sample_type": "processed_feedback",
+      "latency_ms": 5.323,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.64,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0089",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.248,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928330
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0089",
+      "sample_type": "relay_pose",
+      "latency_ms": 2.4,
+      "received_data_type": "pose",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "relay_only": true,
+        "client_timestamp_ms": 1781314928330
+      }
+    },
+    {
+      "client": "viewer_echo",
+      "frame_id": "latency_lab_569_0089",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.654,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.68,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    },
+    {
+      "client": "app_receiver",
+      "frame_id": "latency_lab_569_0089",
+      "sample_type": "processed_feedback",
+      "latency_ms": 4.867,
+      "received_data_type": "feedback",
+      "status": "ok",
+      "message": null,
+      "body_part": null,
+      "debug": {
+        "backend": "2d_only",
+        "inference_ms": 0.68,
+        "smoothing_enabled": false,
+        "smoothing_frame": 0,
+        "dropped_to_latest": true
+      }
+    }
+  ]
+}

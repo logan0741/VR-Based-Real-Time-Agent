@@ -1,40 +1,57 @@
-# Final — 실행 가이드
+# VR Real-Time Pose App Final
 
-## 파이프라인 선택
+`final` is the standalone production folder for the current 2D real-time pose
+feedback system.
 
-| 파일 | 용도 | Unity 필요 |
-|------|------|-----------|
-| `pipeline_web_only.py` | 웹 브라우저(Quest 3)만으로 동작 | ❌ |
-| `pipeline_full.py` | Unity + 웹 뷰어 전체 시스템 | ✅ |
-| `pipeline_test.py` | 전체 컴포넌트 검증 | ❌ |
+## Run
 
-## 빠른 시작
-
-```bash
-# 1. 의존성 설치
-pip install -r requirements.txt
-npm install && npm run build
-
-# 2. 웹 전용 실행 (Quest 3 브라우저)
-python final/pipeline_web_only.py
-
-# 3. 전체 실행 (Unity 포함)
-python final/pipeline_full.py
-
-# 4. 시스템 검증
-python final/pipeline_test.py
+```powershell
+.\final\scripts\01_install.ps1
+.\final\scripts\02_build_app.ps1
+.\final\scripts\03_run_server.ps1
 ```
 
-## 폴더 구조
+Open:
 
+```text
+http://127.0.0.1:8000/app/
+http://127.0.0.1:8000/viewer/
+http://127.0.0.1:8000/api/health
 ```
+
+Domain, when Cloudflare tunnel is running:
+
+```text
+https://app.gun-hee.com/app/
+https://viewer.gun-hee.com/viewer/
+https://pt.gun-hee.com/api/health
+```
+
+## Verify
+
+```powershell
+.\final\scripts\05_verify.ps1
+```
+
+## Core Structure
+
+```text
 final/
-├── pipeline_web_only.py   # Unity 없이 웹으로만 동작
-├── pipeline_full.py       # 전체 파이프라인 (Unity 포함)
-├── pipeline_test.py       # 컴포넌트 검증
-├── backend/README.md      # 백엔드 아키텍처 및 API 문서
-├── frontend/README.md     # React 앱 빌드 및 구조
-├── unity/README.md        # Unity 연동 가이드 및 좌표 변환
-├── server/README.md       # 서버 배포 방법
-└── assets/README.md       # 모델 파일 및 데이터 안내
+  app_dist/              React production build served at /app/
+  assets/                Expert videos/keypoints and runtime TTS output
+  latency_lab/           Local/domain WebSocket latency measurement
+  s01_preprocessing/     Normalization, rep detection, scoring, feedback
+  s02_backend/           FastAPI server, WebSocket relay, session control
+  s03_database/          Optional MySQL session persistence
+  s05_frontend/          Phone viewer page with TF.js MoveNet camera
+  s07_tts/               Final feedback TTS service
+  scripts/               Install/build/run/verify scripts
+  src/                   React Quest/app source
 ```
+
+## Main Documents
+
+- `FINAL_ARCHITECTURE.md`: final architecture, rules, logic, troubleshooting.
+- `REPORT_SYSTEM_STRUCTURE.md`: report-ready overall system structure.
+- `REPORT_COMPONENT_STRUCTURES.md`: report-ready component-by-component structure.
+- `PIPELINE.md`: runtime pipeline summary.

@@ -786,7 +786,9 @@ window.addEventListener("load", () => {
     if (location.hostname !== "127.0.0.1" && location.hostname !== "localhost") {
         const wsProto = location.protocol === "https:" ? "wss" : "ws";
         const wsPort = location.protocol === "https:" ? "" : ":8000";
-        const wsUrl = `${wsProto}://${location.hostname}${wsPort}/ws/pose`;
+        const wsUrl = location.hostname.endsWith("gun-hee.com")
+            ? "wss://pt.gun-hee.com/ws/pose"
+            : `${wsProto}://${location.hostname}${wsPort}/ws/pose`;
         document.getElementById("server-url").value = wsUrl;
     }
     // Scale canvases for high-DPI screens (one frame after layout)
