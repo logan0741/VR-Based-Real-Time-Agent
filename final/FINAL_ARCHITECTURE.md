@@ -129,6 +129,11 @@ MoveNet in the browser returns pixel coordinates, so viewer normalizes:
 [kp.y / videoHeight, kp.x / videoWidth, kp.score]
 ```
 
+For phone portrait capture, the viewer first requests portrait video
+constraints. If the detected body axis is still horizontal, the viewer rotates
+the normalized keypoints on the phone side only and keeps the server/app
+coordinate contract unchanged.
+
 The app canvas converts normalized coordinates to canvas coordinates and applies
 mirror only at draw time.
 

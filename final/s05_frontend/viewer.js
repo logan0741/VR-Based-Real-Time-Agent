@@ -544,6 +544,7 @@ let detectStartedAt = 0;
 const SEND_INTERVAL_MS = 66;   // 15fps to server; local skeleton still draws immediately.
 const DETECT_INTERVAL_MS = 33; // 30fps display (browser-local)
 const DETECT_TIMEOUT_MS = 1200;
+const MOBILE_UA_RE = /Android|iPhone|iPad|iPod/i;
 const cameraDebug = {
     detected: 0,
     sent: 0,
@@ -553,6 +554,76 @@ const cameraDebug = {
     lastDetectAt: 0,
     lastError: "",
 };
+
+function isMobilePortrait() {
+    const isMobile = MOBILE_UA_RE.test(navigator.userAgent || "");
+    const isPortrait = window.matchMedia
+        ? window.matchMedia("(orientation: portrait)").matches
+        : window.innerHeight >= window.innerWidth;
+    return isMobile && isPortrait;
+}
+
+function cameraConstraints() {
+    if (isMobilePortrait()) {
+        return {
+            video: {
+                width: { ideal: 480 },
+                height: { ideal: 640 },
+                aspectRatio: { ideal: 0.75 },
+                facingMode: "user",
+            },
+        };
+    }
+    return { video: { width: 640, height: 480, facingMode: "user" } };
+}
+
+function pointRanges(points) {
+    const valid = points.filter(kp => (kp[2] ?? 1) > 0.15);
+    const src = valid.length >= 6 ? valid : points;
+    const ys = src.map(kp => kp[0]);
+    const xs = src.map(kp => kp[1]);
+    return {
+        minY: Math.min(...ys),
+        maxY: Math.max(...ys),
+        minX: Math.min(...xs),
+        maxX: Math.max(...xs),
+    };
+}
+
+function orientationScore(points) {
+    const r = pointRanges(points);
+    const rangeY = r.maxY - r.minY;
+    const rangeX = r.maxX - r.minX;
+    const headY = points[0]?.[0] ?? r.minY;
+    const lower = [11, 12, 13, 14, 15, 16]
+        .map(i => points[i])
+        .filter(Boolean)
+        .map(kp => kp[0]);
+    const lowerY = lower.length ? lower.reduce((a, b) => a + b, 0) / lower.length : r.maxY;
+    return (rangeY - rangeX) + (lowerY - headY);
+}
+
+function rotatePayload(points, direction) {
+    return points.map(([y, x, conf]) => {
+        if (direction === "cw") return [x, 1 - y, conf ?? 0.9];
+        return [1 - x, y, conf ?? 0.9];
+    });
+}
+
+function correctMobilePortraitPayload(points) {
+    if (!isMobilePortrait()) return points;
+    const r = pointRanges(points);
+    const rangeY = r.maxY - r.minY;
+    const rangeX = r.maxX - r.minX;
+    if (rangeX <= rangeY * 1.05) return points;
+
+    const cw = rotatePayload(points, "cw");
+    const ccw = rotatePayload(points, "ccw");
+    const candidates = [points, cw, ccw];
+    return candidates.reduce((best, current) => (
+        orientationScore(current) > orientationScore(best) ? current : best
+    ), points);
+}
 
 function wsStateLabel() {
     if (!ws) return "none";
@@ -629,9 +700,7 @@ async function startCamera() {
 
         // Get webcam stream
         const video = document.getElementById("webcam-video");
-        const stream = await getCameraStream({
-            video: { width: 640, height: 480, facingMode: "user" }
-        });
+        const stream = await getCameraStream(cameraConstraints());
         video.srcObject = stream;
         await new Promise((resolve, reject) => {
             video.onloadeddata = resolve;
@@ -725,7 +794,9 @@ async function detectLoop() {
                 // TF.js returns pixel coords; normalize to [0,1] matching KEYPOINT_FORMAT=movenet_yx
                 const vw = video.videoWidth || 640;
                 const vh = video.videoHeight || 480;
-                const payload = poses[0].keypoints.map(kp => [kp.y / vh, kp.x / vw, kp.score ?? 0.9]);
+                const payload = correctMobilePortraitPayload(
+                    poses[0].keypoints.map(kp => [kp.y / vh, kp.x / vw, kp.score ?? 0.9])
+                );
                 drawSkeleton("user-canvas", payload, true);
                 document.getElementById("user-overlay").classList.add("hidden");
                 localCameraFrame++;

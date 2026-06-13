@@ -13,8 +13,10 @@ s05_frontend/
 viewer.js
   -> startCamera()
   -> getCameraStream()
+  -> cameraConstraints()
   -> detectLoop()
   -> normalize MoveNet pixel coords
+  -> correctMobilePortraitPayload()
   -> drawSkeleton()
   -> ws.send(keypoints)
 ```
