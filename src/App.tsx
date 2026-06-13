@@ -192,7 +192,7 @@ function App() {
     if (!liveFrame?.feedback) return;
     const { score: frameScore, message, rep_count, body_part, severity, muscle_fatigue, countable, feedback_event } = liveFrame.feedback;
     const isCountable = countable !== false;
-    const isFeedbackEvent = feedback_event === true;
+    const isFeedbackEvent = feedback_event !== false;
 
     if (isCountable && typeof frameScore === 'number' && frameScore > 0) {
       setScore(Math.round(frameScore));
@@ -396,13 +396,16 @@ function App() {
               <button
                 className={`mirror-toggle ${userMirror ? 'on' : ''}`}
                 type="button"
-                onClick={() => setUserMirror((current) => !current)}
+                aria-pressed={userMirror}
+                data-label={userMirror ? '반전 ON' : '좌우 반전'}
+                onPointerDown={() => setUserMirror((current) => !current)}
               >
                 좌우 반전
               </button>
             </div>
             <div className="render-slot">
               <SkeletonCanvas2D
+                key={userMirror ? 'user-mirror-on' : 'user-mirror-off'}
                 keypoints={liveFrame?.keypoints_2d ?? null}
                 badJoints={liveFrame?.feedback?.bad_joints ?? []}
                 mirror={userMirror}

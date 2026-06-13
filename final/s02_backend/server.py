@@ -265,6 +265,7 @@ class PreprocessingSession:
 
         visible_feedback, feedback_event = self._feedback_policy.consider(self._frame_idx, feedback_result)
         message = str(visible_feedback.get("message", "측정 중입니다."))
+        message = str(visible_feedback.get("message") or "측정 중입니다.")
         body_part = str(visible_feedback.get("body_part", "pending"))
 
         self._frame_idx += 1
@@ -632,6 +633,7 @@ class FastPosePipeline:
                 "rep_scores": prep["rep_scores"],
                 "bad_joints": prep.get("bad_joints", []),
                 "countable": prep.get("countable", True),
+                "feedback_event": prep.get("feedback_event", True),
                 "muscle_fatigue": fatigue_state,
             }
             if is_pending_feedback(feedback_block):
@@ -717,6 +719,7 @@ class FastPosePipeline:
                 "rep_scores": prep["rep_scores"],
                 "bad_joints": prep.get("bad_joints", []),
                 "countable": prep.get("countable", True),
+                "feedback_event": prep.get("feedback_event", True),
                 "muscle_fatigue": fatigue_state,
             }
             if is_pending_feedback(feedback_block):
