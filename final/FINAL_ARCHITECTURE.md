@@ -137,6 +137,11 @@ coordinate contract unchanged.
 The app canvas converts normalized coordinates to canvas coordinates and applies
 mirror only at draw time.
 
+Expert keypoint caches are also treated as COCO-17 `[y, x, confidence]`.
+Some `.npy` files are normalized and some are pixel-scale, so the viewer checks
+whether column 0 behaves like the vertical body axis before drawing. This keeps
+expert poses upright on both desktop and phone browsers.
+
 ## Server Logic
 
 File:

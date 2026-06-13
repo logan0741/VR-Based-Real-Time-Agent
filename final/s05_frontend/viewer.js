@@ -280,8 +280,9 @@ function drawSkeleton(canvasId, keypoints, isUser, badJoints = new Set()) {
 
 function normalizeToCanvas(keypoints, canvasW, canvasH, mirror) {
     // Auto-detect coordinate format:
-    // MoveNet: [y, x, confidence], values in 0~1, nose y around 0.15~0.3
-    // Pixel:   [x, y, z], values can be large (640x480 or 1920x1080)
+    // MoveNet/expert cache: [y, x, confidence]. Values can be normalized
+    // or pixel-scale depending on how the expert .npy file was generated.
+    // Pixel [x, y, z] is also accepted for legacy data.
     //
     // Heuristic: if all values in [0,1] range AND nose (col0) is near the
     // top (smallest among body joints), it's MoveNet [y,x,conf] format.
@@ -300,11 +301,13 @@ function normalizeToCanvas(keypoints, canvasW, canvasH, mirror) {
     const range0 = max0 - min0;
     const range1 = max1 - min1;
 
-    // MoveNet [y,x,conf]: nose col0 should be near top (small value),
-    // ankle col0 should be near bottom (large value)
+    // [y,x,conf]: nose col0 should be near top (small value),
+    // ankle col0 should be near bottom (large value). For pixel expert
+    // caches, col0 also carries the larger vertical range.
     const noseCol0 = col0[0];  // nose
     const ankleCol0 = Math.max(col0[15] || 0, col0[16] || 0);  // ankles
-    const isMoveNetYX = allNormalized && noseCol0 < ankleCol0;
+    const yAxisLooksVertical = noseCol0 < ankleCol0 && range0 >= range1 * 1.05;
+    const isMoveNetYX = allNormalized ? noseCol0 < ankleCol0 : yAxisLooksVertical;
 
     // Extract x, y based on detected format
     const points2D = keypoints.map(kp => {
