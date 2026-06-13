@@ -1,0 +1,103 @@
+{
+  "metadata": {
+    "frames": 90,
+    "fps": 30.0,
+    "exercise": "squat",
+    "local_url": "ws://127.0.0.1:8000/ws/pose",
+    "cloud_url": "wss://pt.gun-hee.com/ws/pose"
+  },
+  "local": {
+    "viewer_relay_echo": {
+      "count": 90,
+      "min_ms": 1.787,
+      "avg_ms": 4.034,
+      "median_ms": 2.757,
+      "p90_ms": 3.73,
+      "p95_ms": 5.504,
+      "max_ms": 61.169
+    },
+    "app_relay_receive": {
+      "count": 90,
+      "min_ms": 1.981,
+      "avg_ms": 4.235,
+      "median_ms": 2.957,
+      "p90_ms": 3.901,
+      "p95_ms": 5.607,
+      "max_ms": 61.337
+    },
+    "viewer_processed_feedback": {
+      "count": 90,
+      "min_ms": 3.655,
+      "avg_ms": 9.289,
+      "median_ms": 5.588,
+      "p90_ms": 9.262,
+      "p95_ms": 35.081,
+      "max_ms": 68.84
+    },
+    "app_processed_feedback": {
+      "count": 90,
+      "min_ms": 3.942,
+      "avg_ms": 9.509,
+      "median_ms": 5.781,
+      "p90_ms": 9.498,
+      "p95_ms": 35.33,
+      "max_ms": 69.166
+    },
+    "frame_delivery": {
+      "relay_frames_at_viewer": 90,
+      "relay_frames_at_app": 90,
+      "processed_frames_at_viewer": 90,
+      "processed_frames_at_app": 90
+    }
+  },
+  "cloudflare": {
+    "viewer_relay_echo": {
+      "count": 90,
+      "min_ms": 183.48,
+      "avg_ms": 203.291,
+      "median_ms": 196.57,
+      "p90_ms": 235.051,
+      "p95_ms": 238.21,
+      "max_ms": 274.706
+    },
+    "app_relay_receive": {
+      "count": 90,
+      "min_ms": 180.627,
+      "avg_ms": 201.012,
+      "median_ms": 195.159,
+      "p90_ms": 231.562,
+      "p95_ms": 235.606,
+      "max_ms": 270.284
+    },
+    "viewer_processed_feedback": {
+      "count": 90,
+      "min_ms": 184.602,
+      "avg_ms": 207.892,
+      "median_ms": 199.331,
+      "p90_ms": 238.931,
+      "p95_ms": 245.746,
+      "max_ms": 276.251
+    },
+    "app_processed_feedback": {
+      "count": 90,
+      "min_ms": 182.788,
+      "avg_ms": 205.692,
+      "median_ms": 197.519,
+      "p90_ms": 237.95,
+      "p95_ms": 247.397,
+      "max_ms": 272.424
+    },
+    "frame_delivery": {
+      "relay_frames_at_viewer": 90,
+      "relay_frames_at_app": 90,
+      "processed_frames_at_viewer": 90,
+      "processed_frames_at_app": 90
+    }
+  },
+  "conclusion": {
+    "local_relay_avg_ms": 4.235,
+    "cloudflare_relay_avg_ms": 201.012,
+    "local_processed_avg_ms": 9.509,
+    "cloudflare_processed_avg_ms": 205.692
+  }
+}

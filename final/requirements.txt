@@ -1,0 +1,27 @@
+# Core dependencies
+smplx>=0.1.28
+torch>=2.0.0
+numpy>=1.24.0
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.1.0
+websockets>=10.4
+pymysql>=1.1.0
+
+# Pose estimation
+mediapipe>=0.10.9
+opencv-python>=4.8.0
+tensorflow>=2.13.0
+tensorflow-hub>=0.16.0
+
+# Visualization & diagnostics
+matplotlib>=3.7.0
+pyttsx3>=2.90
+
+# DTW & signal processing
+scipy>=1.10.0
+dtaidistance==2.3.12
+
+# Utilities
+websocket-client>=1.6.0
+typing_extensions>=4.8.0
