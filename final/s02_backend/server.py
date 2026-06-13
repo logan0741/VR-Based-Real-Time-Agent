@@ -1013,7 +1013,40 @@ async def get_expert_poses(exercise: str = "squat"):
     exercise: squat | hammer_curl | lateral_raise | pull_up
     """
     project_root = Path(__file__).resolve().parents[2]
-    # Primary: {exercise}_expert_keypoints.json
+    canonical = normalize_exercise_type(exercise)
+    assets_dir = Path(__file__).resolve().parents[1] / "assets" / "expert_videos"
+
+    npy_candidates: List[Path] = []
+    cfg = EXERCISES.get(canonical)
+    if cfg is not None:
+        npy_candidates.append(Path(cfg["video_path"]).with_suffix(".npy"))
+    npy_candidates.extend(assets_dir / f"{name}.npy" for name in exercise_file_candidates(exercise))
+
+    seen_npy: set[Path] = set()
+    for path in npy_candidates:
+        path = path.resolve()
+        if path in seen_npy:
+            continue
+        seen_npy.add(path)
+        if path.exists():
+            try:
+                import numpy as _np
+
+                data = _np.load(str(path), allow_pickle=True).item()
+                frames = data.get("raw_sequence", data.get("sequence"))
+                if frames is None:
+                    return {"status": "error", "message": f"No keypoint sequence in {path.name}"}
+                return {
+                    "status": "ok",
+                    "exercise": canonical,
+                    "filename": path.name,
+                    "total_frames": int(frames.shape[0]),
+                    "frames": frames.tolist(),
+                }
+            except Exception as exc:
+                return {"status": "error", "message": str(exc)}
+
+    # Backward compatibility: root {exercise}_expert_keypoints.json files.
     candidates = [
         *(project_root / f"{name}_expert_keypoints.json" for name in exercise_file_candidates(exercise)),
         project_root / "squat_expert_keypoints.json",  # fallback
