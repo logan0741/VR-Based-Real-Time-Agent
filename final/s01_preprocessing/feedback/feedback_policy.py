@@ -24,7 +24,6 @@ class FeedbackPolicy:
         self._expire_at: int = -1
 
     def consider(self, frame_idx: int, candidate: dict[str, object]) -> tuple[dict[str, Any], bool]:
-        """Return the visible feedback and whether this frame accepted a new event."""
         if self._expire_at != -1 and frame_idx >= self._expire_at:
             self._active_result = dict(PENDING_RESULT)
             self._expire_at = -1
@@ -35,7 +34,7 @@ class FeedbackPolicy:
         body_part = str(candidate.get("body_part", ""))
         message = str(candidate.get("message", ""))
         if body_part in {"", "pending"} or not message:
-            return dict(self._active_result), False
+            return dict(candidate) if message else dict(PENDING_RESULT), False
 
         self._active_result = dict(candidate)
         self._expire_at = frame_idx + self._hold_frames

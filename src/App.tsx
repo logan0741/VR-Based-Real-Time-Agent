@@ -223,7 +223,9 @@ function App() {
       setProgress(progressFromTotalReps(rep_count, sets));
     }
 
-    if (isCountable && isFeedbackEvent) {
+    const alreadySeenMessage = message ? seenMessagesRef.current.has(message) : false;
+
+    if (isCountable && isFeedbackEvent && !alreadySeenMessage) {
       feedbackSamplesRef.current.push({
         score: typeof frameScore === 'number' ? frameScore : 0,
         message: message || '',
@@ -234,10 +236,11 @@ function App() {
     }
 
     if (message && body_part !== 'pending') {
-      const nextStatus: 'ok' | 'warn' = body_part === 'ok' ? 'ok' : 'warn';
+      const hasBadJoints = (liveFrame.feedback.bad_joints?.length ?? 0) > 0;
+      const nextStatus: 'ok' | 'warn' = body_part === 'ok' && !hasBadJoints ? 'ok' : 'warn';
       setFeedback({ status: nextStatus, message });
 
-      if (isCountable && isFeedbackEvent && !seenMessagesRef.current.has(message)) {
+      if (isCountable && isFeedbackEvent && !alreadySeenMessage) {
         seenMessagesRef.current.add(message);
         feedbackLogRef.current.push({ status: nextStatus, message });
       }
@@ -403,6 +406,7 @@ function App() {
                 keypoints={liveFrame?.keypoints_2d ?? null}
                 badJoints={liveFrame?.feedback?.bad_joints ?? []}
                 mirror={userMirror}
+                mirrorVersion={userMirror ? 1 : 0}
               />
             </div>
             <FeedbackChip status={feedback.status} message={feedback.message} />

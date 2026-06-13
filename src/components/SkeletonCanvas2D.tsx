@@ -171,6 +171,7 @@ type Props = {
   loading?: boolean;
   keypoints?: number[][] | null;
   badJoints?: number[];
+  mirrorVersion?: number;
   fps?: number;
   mirror?: boolean;
   color?: string; // kept for API compat, unused
@@ -184,6 +185,7 @@ export default function SkeletonCanvas2D({
   loading = false,
   keypoints,
   badJoints = [],
+  mirrorVersion = 0,
   fps = 15,
   mirror = false,
 }: Props) {
@@ -234,7 +236,7 @@ export default function SkeletonCanvas2D({
   useEffect(() => {
     if (!keypoints || !canvasRef.current) return;
     drawFrame(canvasRef.current, keypoints, mirror, badJoints);
-  }, [keypoints, mirror, badJoints]);
+  }, [keypoints, mirror, badJoints, mirrorVersion]);
 
   return (
     <canvas

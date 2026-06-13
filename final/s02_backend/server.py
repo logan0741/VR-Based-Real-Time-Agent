@@ -643,6 +643,7 @@ class FastPosePipeline:
                     "body_part": "ok",
                     "severity": 0.0,
                     "bad_joints": fatigue_joints,
+                    "feedback_event": bool(fatigue_joints),
                 })
         else:
             pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
@@ -654,6 +655,7 @@ class FastPosePipeline:
                 "rep_scores": [],
                 "bad_joints": fatigue_joints,
                 "countable": True,
+                "feedback_event": bool(fatigue_joints),
                 "muscle_fatigue": fatigue_state,
             }
 
@@ -726,6 +728,7 @@ class FastPosePipeline:
                     "body_part": "ok",
                     "severity": 0.0,
                     "bad_joints": fatigue_joints,
+                    "feedback_event": bool(fatigue_joints),
                 })
         else:
             pose_score = min(100, max(0, 100 - len(high_fatigue) * 15 - len(mid_fatigue) * 5))
@@ -737,6 +740,7 @@ class FastPosePipeline:
                 "rep_scores": [],
                 "bad_joints": fatigue_joints,
                 "countable": True,
+                "feedback_event": bool(fatigue_joints),
                 "muscle_fatigue": fatigue_state,
             }
 
