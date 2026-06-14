@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Exercise, FeedbackItem, SessionResult } from './types';
 import ExerciseSelector from './components/ExerciseSelector';
 import FeedbackChip from './components/FeedbackChip';
@@ -10,7 +10,7 @@ import SkeletonCanvas2D from './components/SkeletonCanvas2D';
 import { useTimer } from './hooks/useTimer';
 import { type ExerciseProgress, useWebSocket } from './hooks/useWebSocket';
 import { useExpertPose2D } from './hooks/useExpertPose2D';
-import { initialProgress, progressFromTotalReps, REPS_PER_SET } from './utils/workoutProgress';
+import { DEFAULT_REPS_PER_SET, initialProgress, progressFromTotalReps } from './utils/workoutProgress';
 
 const TEXT = {
   squat: '\uc2a4\ucffc\ud2b8',
@@ -22,6 +22,12 @@ const TEXT = {
   end: '\uc6b4\ub3d9 \uc885\ub8cc',
   instructor: '\uac15\uc0ac \ubaa8\ub378',
   myPose: '\ub0b4 \uc790\uc138',
+  sets: '\uc138\ud2b8 \uc218',
+  repsPerSet: '\uc138\ud2b8\ub2f9 \ud69f\uc218',
+  decreaseSets: '\uc138\ud2b8 \uc904\uc774\uae30',
+  increaseSets: '\uc138\ud2b8 \ub298\ub9ac\uae30',
+  decreaseReps: '\ud69f\uc218 \uc904\uc774\uae30',
+  increaseReps: '\ud69f\uc218 \ub298\ub9ac\uae30',
 };
 
 const exerciseOptions: Exercise[] = [
@@ -158,12 +164,13 @@ function App() {
   const [screen, setScreen] = useState(0);
   const [selectedExercise, setSelectedExercise] = useState<Exercise>(exerciseOptions[0]);
   const [sets, setSets] = useState(3);
+  const [targetRepsPerSet, setTargetRepsPerSet] = useState(DEFAULT_REPS_PER_SET);
   const [sessionResult, setSessionResult] = useState<SessionResult | null>(null);
   const [userMirror, setUserMirror] = useState(false);
   const [feedback, setFeedback] = useState<FeedbackItem>({ status: 'ok', message: TEXT.measuring });
   const [score, setScore] = useState(0);
   const [reps, setReps] = useState(0);
-  const [progress, setProgress] = useState<ExerciseProgress>(() => initialProgress(3));
+  const [progress, setProgress] = useState<ExerciseProgress>(() => initialProgress(3, DEFAULT_REPS_PER_SET));
 
   const { elapsed, formattedTime, start, stop, reset } = useTimer();
   const {
@@ -180,13 +187,14 @@ function App() {
 
   useEffect(() => {
     localStorage.setItem('expertExercise', selectedExercise.id);
-    selectExercise({ exerciseType: selectedExercise.id, sets, repsPerSet: REPS_PER_SET });
-  }, [selectedExercise.id, selectExercise, sets]);
+    selectExercise({ exerciseType: selectedExercise.id, sets, repsPerSet: targetRepsPerSet });
+  }, [selectedExercise.id, selectExercise, sets, targetRepsPerSet]);
 
   const scoresRef = useRef<number[]>([]);
   const feedbackLogRef = useRef<FeedbackItem[]>([]);
   const seenMessagesRef = useRef<Set<string>>(new Set());
   const feedbackSamplesRef = useRef<FeedbackSample[]>([]);
+  const sessionEndedRef = useRef(false);
 
   useEffect(() => {
     if (!liveFrame?.feedback) return;
@@ -199,7 +207,7 @@ function App() {
       scoresRef.current.push(frameScore);
     }
     const fallbackProgress = isCountable && typeof liveFrame.feedback.total_reps === 'number'
-      ? progressFromTotalReps(liveFrame.feedback.total_reps, sets)
+      ? progressFromTotalReps(liveFrame.feedback.total_reps, sets, targetRepsPerSet)
       : null;
     const nextProgress: ExerciseProgress | null = liveFrame.progress ?? (
       fallbackProgress
@@ -220,7 +228,7 @@ function App() {
       setReps(nextProgress.total_reps);
     } else if (isCountable && typeof rep_count === 'number') {
       setReps(rep_count);
-      setProgress(progressFromTotalReps(rep_count, sets));
+      setProgress(progressFromTotalReps(rep_count, sets, targetRepsPerSet));
     }
 
     const alreadySeenMessage = message ? seenMessagesRef.current.has(message) : false;
@@ -245,10 +253,14 @@ function App() {
         feedbackLogRef.current.push({ status: nextStatus, message });
       }
     }
-  }, [liveFrame]);
+  }, [liveFrame, targetRepsPerSet, sets]);
 
   const changeSets = (delta: number) => {
     setSets((current) => Math.max(1, Math.min(10, current + delta)));
+  };
+
+  const changeRepsPerSet = (delta: number) => {
+    setTargetRepsPerSet((current) => Math.max(1, Math.min(50, current + delta)));
   };
 
   useEffect(() => {
@@ -256,27 +268,33 @@ function App() {
       ...current,
       current_set: Math.min(sets, current.current_set),
       total_sets: sets,
-      total_target_reps: sets * current.reps_per_set,
-      completed: current.total_reps >= sets * current.reps_per_set,
+      reps_per_set: targetRepsPerSet,
+      rep_in_set: current.completed ? targetRepsPerSet : current.total_reps % targetRepsPerSet,
+      total_target_reps: sets * targetRepsPerSet,
+      completed: current.total_reps >= sets * targetRepsPerSet,
     }));
-  }, [sets]);
+  }, [sets, targetRepsPerSet]);
 
   const handleStartWorkout = () => {
+    sessionEndedRef.current = false;
     scoresRef.current = [];
     feedbackLogRef.current = [];
     feedbackSamplesRef.current = [];
     seenMessagesRef.current = new Set();
     setScore(0);
     setReps(0);
-    setProgress(initialProgress(sets));
+    setProgress(initialProgress(sets, targetRepsPerSet));
     setFeedback({ status: 'ok', message: TEXT.measuring });
-    startSession({ exerciseType: selectedExercise.id, sets, repsPerSet: REPS_PER_SET });
+    startSession({ exerciseType: selectedExercise.id, sets, repsPerSet: targetRepsPerSet });
     reset();
     start();
     setScreen(1);
   };
 
-  const handleEndSession = () => {
+  const handleEndSession = useCallback(() => {
+    if (sessionEndedRef.current) return;
+    sessionEndedRef.current = true;
+
     endSession();
     stop();
 
@@ -296,6 +314,7 @@ function App() {
     const computed: SessionResult = {
       exercise: selectedExercise.label,
       sets,
+      repsPerSet: targetRepsPerSet,
       score: avgScore,
       grade: deriveGrade(avgScore),
       totalReps: reps,
@@ -308,15 +327,21 @@ function App() {
     setSessionResult(computed);
     setScore(avgScore);
     setScreen(2);
-  };
+  }, [elapsed, endSession, reps, targetRepsPerSet, score, selectedExercise.label, sets, stop]);
+
+  useEffect(() => {
+    if (screen !== 1 || !progress.completed || sessionEndedRef.current) return;
+    handleEndSession();
+  }, [handleEndSession, progress.completed, screen]);
 
   const handleRetry = () => {
+    sessionEndedRef.current = false;
     reset();
     setSessionResult(null);
     setFeedback({ status: 'ok', message: TEXT.measuring });
     setScore(0);
     setReps(0);
-    setProgress(initialProgress(sets));
+    setProgress(initialProgress(sets, targetRepsPerSet));
     setScreen(0);
   };
 
@@ -346,7 +371,21 @@ function App() {
             onSelect={setSelectedExercise}
           />
 
-          <SetControl count={sets} onChange={changeSets} />
+          <SetControl
+            count={sets}
+            label={TEXT.sets}
+            decreaseLabel={TEXT.decreaseSets}
+            increaseLabel={TEXT.increaseSets}
+            onChange={changeSets}
+          />
+
+          <SetControl
+            count={targetRepsPerSet}
+            label={TEXT.repsPerSet}
+            decreaseLabel={TEXT.decreaseReps}
+            increaseLabel={TEXT.increaseReps}
+            onChange={changeRepsPerSet}
+          />
 
           <button className="btn-start" onClick={handleStartWorkout} type="button">
             {TEXT.start}

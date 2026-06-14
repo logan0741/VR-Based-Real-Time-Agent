@@ -5,6 +5,29 @@ feedback system.
 
 ## Run
 
+One-command pipeline:
+
+```powershell
+.\final\scripts\00_pipeline.ps1
+```
+
+First-time setup:
+
+```powershell
+.\final\scripts\00_pipeline.ps1 -Install
+```
+
+Verify/build without starting the server:
+
+```powershell
+.\final\scripts\00_pipeline.ps1 -NoServer
+```
+
+The pipeline verifies Python files, builds the React app, then starts the
+FastAPI server in the current PowerShell window.
+
+Manual steps:
+
 ```powershell
 .\final\scripts\01_install.ps1
 .\final\scripts\02_build_app.ps1

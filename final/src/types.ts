@@ -17,6 +17,7 @@ export type FinalFeedbackSection = {
 export type SessionResult = {
   exercise: string;
   sets: number;
+  repsPerSet: number;
   score: number;
   grade: string;
   totalReps: number;

@@ -52,6 +52,9 @@ type WebSocketStatus = 'connecting' | 'open' | 'closed' | 'error';
 
 function buildWsUrl(): string {
   const proto = window.location.protocol === 'https:' ? 'wss' : 'ws';
+  if (window.location.hostname.endsWith('gun-hee.com')) {
+    return 'wss://pt.gun-hee.com/ws/pose';
+  }
   if (window.location.protocol === 'http:' && window.location.port && window.location.port !== '8000') {
     return `${proto}://${window.location.hostname}:8000/ws/pose`;
   }

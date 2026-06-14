@@ -34,6 +34,12 @@ const COLOR_CENTER = "#ffffff";
 const COLOR_LEFT = "#00ff00";
 const COLOR_RIGHT = "#0066ff";
 const COLOR_BAD = "#ff2d2d";
+const EXERCISE_LABELS = {
+    squat: "스쿼트",
+    hammer_curl: "해머 컬",
+    lateral_raise: "레터럴 레이즈",
+    pull_up: "풀업",
+};
 
 function confAlpha(confidence) {
     if (confidence < 0.3) return 0.3;
@@ -486,6 +492,12 @@ function syncExpertExercise(control) {
     }
 }
 
+function updateExpertTitle(exercise) {
+    const title = document.querySelector("#expert-panel .panel-header h2");
+    if (!title) return;
+    title.textContent = `전문가 포즈 - ${EXERCISE_LABELS[exercise] || exercise || "스쿼트"}`;
+}
+
 async function pollExpertExercise() {
     const baseUrl = location.origin || "http://127.0.0.1:8000";
     try {
@@ -505,6 +517,7 @@ async function loadExpertPoses(exerciseName) {
     currentExpertExercise = exercise;
     expertLoaded = false;
     expertFrames = [];
+    updateExpertTitle(exercise);
     try {
         const resp = await fetch(`${baseUrl}/api/expert?exercise=${encodeURIComponent(exercise)}`);
         const data = await resp.json();
@@ -613,8 +626,10 @@ function rotatePayload(points, direction) {
     });
 }
 
-function correctMobilePortraitPayload(points) {
+function correctMobilePortraitPayload(points, videoWidth = 0, videoHeight = 0) {
     if (!isMobilePortrait()) return points;
+    if (videoHeight >= videoWidth) return points;
+
     const r = pointRanges(points);
     const rangeY = r.maxY - r.minY;
     const rangeX = r.maxX - r.minX;
@@ -797,10 +812,9 @@ async function detectLoop() {
                 // TF.js returns pixel coords; normalize to [0,1] matching KEYPOINT_FORMAT=movenet_yx
                 const vw = video.videoWidth || 640;
                 const vh = video.videoHeight || 480;
-                const payload = correctMobilePortraitPayload(
-                    poses[0].keypoints.map(kp => [kp.y / vh, kp.x / vw, kp.score ?? 0.9])
-                );
-                drawSkeleton("user-canvas", payload, true);
+                const payload = poses[0].keypoints.map(kp => [kp.y / vh, kp.x / vw, kp.score ?? 0.9]);
+                const displayPayload = correctMobilePortraitPayload(payload, vw, vh);
+                drawSkeleton("user-canvas", displayPayload, true);
                 document.getElementById("user-overlay").classList.add("hidden");
                 localCameraFrame++;
                 ws.send(JSON.stringify({

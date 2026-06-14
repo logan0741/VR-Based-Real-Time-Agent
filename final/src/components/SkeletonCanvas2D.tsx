@@ -47,12 +47,17 @@ function normalizeToCanvas(
   const max0 = Math.max(...col0), min0 = Math.min(...col0);
   const max1 = Math.max(...col1), min1 = Math.min(...col1);
   const allNorm = max0 <= 1.5 && max1 <= 1.5 && min0 >= -0.5 && min1 >= -0.5;
-  const isMoveNetYX = allNorm && col0[0] < Math.max(col0[15] ?? 0, col0[16] ?? 0);
+  const range0 = max0 - min0;
+  const range1 = max1 - min1;
+  const noseCol0 = col0[0];
+  const ankleCol0 = Math.max(col0[15] ?? 0, col0[16] ?? 0);
+  const yAxisLooksVertical = noseCol0 < ankleCol0 && range0 >= range1 * 1.05;
+  const isMoveNetYX = allNorm ? noseCol0 < ankleCol0 : yAxisLooksVertical;
 
   const pts = keypoints.map(kp => ({
     rawX: isMoveNetYX ? kp[1] : kp[0],
     rawY: isMoveNetYX ? kp[0] : kp[1],
-    conf: isMoveNetYX ? (kp[2] ?? 1) : 1,  // confidence only from MoveNet
+    conf: kp[2] ?? 1,
   }));
 
   let minX = Infinity, maxX = -Infinity, minY = Infinity, maxY = -Infinity;

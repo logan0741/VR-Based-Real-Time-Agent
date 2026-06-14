@@ -1,5 +1,28 @@
 # Runtime Pipeline
 
+## Run Command
+
+Standard run:
+
+```powershell
+.\final\scripts\00_pipeline.ps1
+```
+
+First-time setup and run:
+
+```powershell
+.\final\scripts\00_pipeline.ps1 -Install
+```
+
+Verify/build without starting the server:
+
+```powershell
+.\final\scripts\00_pipeline.ps1 -NoServer
+```
+
+The script runs verification/build first, then starts the FastAPI server at
+`http://127.0.0.1:8000/`. Keep that PowerShell window open while testing.
+
 ## 1. Viewer
 
 `s05_frontend/viewer.js` runs on the phone browser.

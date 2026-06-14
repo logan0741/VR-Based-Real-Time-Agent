@@ -1,17 +1,26 @@
 type SetControlProps = {
   count: number;
+  label: string;
+  decreaseLabel: string;
+  increaseLabel: string;
   onChange: (delta: number) => void;
 };
 
-export default function SetControl({ count, onChange }: SetControlProps) {
+export default function SetControl({
+  count,
+  label,
+  decreaseLabel,
+  increaseLabel,
+  onChange,
+}: SetControlProps) {
   return (
     <div className="set-row">
-      <span className="set-label">세트 수</span>
-      <button className="set-btn" type="button" onClick={() => onChange(-1)} aria-label="세트 줄이기">
+      <span className="set-label">{label}</span>
+      <button className="set-btn" type="button" onClick={() => onChange(-1)} aria-label={decreaseLabel}>
         -
       </button>
       <span className="set-count">{count}</span>
-      <button className="set-btn" type="button" onClick={() => onChange(1)} aria-label="세트 늘리기">
+      <button className="set-btn" type="button" onClick={() => onChange(1)} aria-label={increaseLabel}>
         +
       </button>
     </div>

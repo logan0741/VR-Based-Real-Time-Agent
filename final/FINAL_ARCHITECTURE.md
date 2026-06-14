@@ -73,6 +73,11 @@ https://app.gun-hee.com/app/
 https://pt.gun-hee.com/api/health
 ```
 
+For `*.gun-hee.com` pages, both the viewer and VR app use
+`wss://pt.gun-hee.com/ws/pose` as the shared WebSocket endpoint. This is
+required so app-side exercise selection broadcasts reach the phone viewer and
+reload the matching expert pose.
+
 ## Folder Structure
 
 ```text
@@ -130,9 +135,11 @@ MoveNet in the browser returns pixel coordinates, so viewer normalizes:
 ```
 
 For phone portrait capture, the viewer first requests portrait video
-constraints. If the detected body axis is still horizontal, the viewer rotates
-the normalized keypoints on the phone side only and keeps the server/app
-coordinate contract unchanged.
+constraints. If the phone is portrait but the camera stream is still delivered
+as landscape, the viewer may rotate the normalized keypoints for the viewer's
+local preview only. The WebSocket payload sent to the server remains the raw
+MoveNet `[y, x, confidence]` values so the VR app, scoring pipeline, and rep
+counter share one stable coordinate contract.
 
 The app canvas converts normalized coordinates to canvas coordinates and applies
 mirror only at draw time.
@@ -222,6 +229,18 @@ Rep counting is not based on feedback text. It is based on exercise-specific
 movement signals and minimum movement duration.
 
 Relevant files:
+
+- `final/src/utils/workoutProgress.ts`
+- `final/src/App.tsx`
+
+The start screen sends both `sets` and the selected `reps_per_set` to the
+backend through `session_config` and `session_start`. The backend uses those
+same values to calculate `total_target_reps = sets * reps_per_set`.
+
+When `total_reps >= total_target_reps`, progress becomes `completed = true`.
+The VR app automatically calls the same session-end flow as the manual
+`운동 종료` button, then opens the final report and TTS feedback screen. No
+frontend-only target count is used.
 
 ```text
 rep_detector.py

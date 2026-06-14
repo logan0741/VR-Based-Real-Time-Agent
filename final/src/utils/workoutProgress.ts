@@ -1,22 +1,28 @@
 import type { ExerciseProgress } from '../hooks/useWebSocket';
 
-export const REPS_PER_SET = 8;
+export const DEFAULT_REPS_PER_SET = 8;
 
-export function initialProgress(sets: number): ExerciseProgress {
+export function initialProgress(sets: number, repsPerSet = DEFAULT_REPS_PER_SET): ExerciseProgress {
+  const safeRepsPerSet = Math.max(1, repsPerSet);
   return {
     current_set: 1,
     total_sets: sets,
     rep_in_set: 0,
-    reps_per_set: REPS_PER_SET,
+    reps_per_set: safeRepsPerSet,
     total_reps: 0,
-    total_target_reps: sets * REPS_PER_SET,
+    total_target_reps: sets * safeRepsPerSet,
     completed: false,
   };
 }
 
-export function progressFromTotalReps(totalReps: number, sets: number): ExerciseProgress {
+export function progressFromTotalReps(
+  totalReps: number,
+  sets: number,
+  repsPerSet = DEFAULT_REPS_PER_SET,
+): ExerciseProgress {
   const safeSets = Math.max(1, sets);
-  const totalTargetReps = safeSets * REPS_PER_SET;
+  const safeRepsPerSet = Math.max(1, repsPerSet);
+  const totalTargetReps = safeSets * safeRepsPerSet;
   const safeTotalReps = Math.max(0, totalReps);
   const completed = safeTotalReps >= totalTargetReps;
 
@@ -24,20 +30,20 @@ export function progressFromTotalReps(totalReps: number, sets: number): Exercise
     return {
       current_set: safeSets,
       total_sets: safeSets,
-      rep_in_set: REPS_PER_SET,
-      reps_per_set: REPS_PER_SET,
+      rep_in_set: safeRepsPerSet,
+      reps_per_set: safeRepsPerSet,
       total_reps: safeTotalReps,
       total_target_reps: totalTargetReps,
       completed,
     };
   }
 
-  if (safeTotalReps > 0 && safeTotalReps % REPS_PER_SET === 0) {
+  if (safeTotalReps > 0 && safeTotalReps % safeRepsPerSet === 0) {
     return {
-      current_set: Math.min(safeSets, safeTotalReps / REPS_PER_SET),
+      current_set: Math.min(safeSets, safeTotalReps / safeRepsPerSet),
       total_sets: safeSets,
-      rep_in_set: REPS_PER_SET,
-      reps_per_set: REPS_PER_SET,
+      rep_in_set: safeRepsPerSet,
+      reps_per_set: safeRepsPerSet,
       total_reps: safeTotalReps,
       total_target_reps: totalTargetReps,
       completed,
@@ -45,10 +51,10 @@ export function progressFromTotalReps(totalReps: number, sets: number): Exercise
   }
 
   return {
-    current_set: Math.min(safeSets, Math.floor(safeTotalReps / REPS_PER_SET) + 1),
+    current_set: Math.min(safeSets, Math.floor(safeTotalReps / safeRepsPerSet) + 1),
     total_sets: safeSets,
-    rep_in_set: safeTotalReps % REPS_PER_SET,
-    reps_per_set: REPS_PER_SET,
+    rep_in_set: safeTotalReps % safeRepsPerSet,
+    reps_per_set: safeRepsPerSet,
     total_reps: safeTotalReps,
     total_target_reps: totalTargetReps,
     completed,
