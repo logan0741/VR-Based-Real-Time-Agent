@@ -426,6 +426,26 @@ Restored the final viewer logic and kept only the domain WebSocket URL patch.
 
 ## Build And Run
 
+One-command pipeline:
+
+```powershell
+.\final\scripts\00_pipeline.ps1
+```
+
+First-time setup:
+
+```powershell
+.\final\scripts\00_pipeline.ps1 -Install
+```
+
+Verify/build only:
+
+```powershell
+.\final\scripts\00_pipeline.ps1 -NoServer
+```
+
+Manual steps:
+
 ```powershell
 .\final\scripts\01_install.ps1
 .\final\scripts\02_build_app.ps1

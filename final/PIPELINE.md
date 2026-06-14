@@ -62,8 +62,11 @@ The latest keypoint frame is processed through:
 
 1. Relay pose frames update the live 2D user skeleton.
 2. Processed frames update score, reps, sets, feedback, and red joints.
-3. Exercise selection sends `session_config`.
-4. Session end displays detailed final feedback and TTS audio.
+3. Exercise selection sends `session_config` with `exercise_type`, `sets`, and `reps_per_set`.
+4. The server broadcasts session control so the phone viewer reloads the matching expert pose.
+5. The server calculates `total_target_reps = sets * reps_per_set`.
+6. When progress becomes `completed = true`, the app automatically runs the session-end flow.
+7. Session end displays detailed final feedback and TTS audio.
 
 ## 5. Latency Measurement
 
