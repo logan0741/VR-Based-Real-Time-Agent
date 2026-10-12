@@ -9,11 +9,11 @@ await page.locator('button.btn-compare').click();
 
 // Wait longer for animation + FBX to fully load
 await page.waitForTimeout(8000);
-await page.screenshot({ path: 'C:/Users/logan/AppData/Local/Temp/screen_compare2.png' });
+await page.screenshot({ path: './screen_compare2.png' });
 console.log('frame at 8s');
 
 await page.waitForTimeout(3000);
-await page.screenshot({ path: 'C:/Users/logan/AppData/Local/Temp/screen_compare3.png' });
+await page.screenshot({ path: './screen_compare3.png' });
 console.log('frame at 11s');
 
 await browser.close();

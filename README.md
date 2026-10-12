@@ -160,3 +160,7 @@ npm run dev          # http://localhost:5173/app/  — /api, /ws 는 localhost:8
 | [`Pose3D`](../../tree/Pose3D) | 2D→3D 리프터 학습, SMPL-X 피팅, 3D 서버 환경 |
 | `Avatar3D` (여기) | 3D 아바타 시도 ★중단 |
 | [`docs-archive`](../../tree/docs-archive) | 재편 이전 작업 공간 전체 스냅샷 (지운 파일 원본은 모두 여기) |
+
+## 외부 에셋 출처
+
+- `viewer_3d_web/public/Xbot.glb` (2.9 MB) — three.js 공식 예제 모델(Mixamo 캐릭터, three.js 저장소 `examples/models/gltf/Xbot.glb` 에서 가져옴). SMPL-X FBX 와 달리 재배포가 허용돼 그대로 둔다.

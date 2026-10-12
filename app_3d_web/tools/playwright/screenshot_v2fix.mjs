@@ -14,11 +14,11 @@ await page.locator('button.btn-compare').click();
 
 // Wait for FBX load + rest-pose computation + several animation frames
 await page.waitForTimeout(10000);
-await page.screenshot({ path: 'C:/Users/logan/AppData/Local/Temp/screen_v2fix_a.png' });
+await page.screenshot({ path: './screen_v2fix_a.png' });
 console.log('frame A (10s)');
 
 await page.waitForTimeout(5000);
-await page.screenshot({ path: 'C:/Users/logan/AppData/Local/Temp/screen_v2fix_b.png' });
+await page.screenshot({ path: './screen_v2fix_b.png' });
 console.log('frame B (15s)');
 
 await browser.close();
