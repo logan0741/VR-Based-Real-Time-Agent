@@ -162,8 +162,8 @@
 
 | 런 | 데이터 | epoch | best val MPJPE (cm) | 최종 val MPJPE | train MPJPE | 비고 |
 |---|---|---|---|---|---|---|
-| `fitness_full` (배포) | 17,105 / 9,010 | 285 (early stop) | **10.08** @245 | 10.21 | 7.5 | ~17~22k samples/s, GPU |
-| `v3_pose3d` (06-08 재학습) | 같음 | 128 | 10.82 @123 (저장된 체크포인트는 val loss 최저인 epoch 88, MPJPE 10.88) | 11.10 | 9.2 | 3D 좌표 경로 재확인용 |
+| `fitness_full` (배포) | 17,105 / 9,010 | 285 (early stop) | **10.08** @245 | 10.21 | 7.57 | 약 16.7k~27.0k samples/s, GPU |
+| `v3_pose3d` (06-08 재학습) | 같음 | 128 | 10.82 @123 (저장된 체크포인트는 val loss 최저인 epoch 88, MPJPE 10.88) | 11.10 | 9.02 | 3D 좌표 경로 재확인용 |
 | `v2 smplx_lifter` (06-08) | 좌표 → 계층적 local 회전 근사 | 209 (best) | val_loss 0.08 | — | — | **추론 시 25~50° 기울어짐** |
 
 <p align="center">
@@ -295,7 +295,7 @@ python -m model_3d --check-all                                  # 더미 · pose
 python -m model_3d.train_fitness_lifter --epochs 800 --device cuda   # → model_3d/artifacts/training/<run>/ 에 곡선·지표
 ```
 
-깃허브에 못 올리는 것은 **데이터셋·바디 모델·체크포인트·영상·자격증명** 다섯뿐이며, 위치는 각 브랜치 `docs/00_환경_준비/00_처음_시작.md` 에 있다.
+깃허브에 못 올리는 것은 **데이터셋·바디 모델·체크포인트·영상·자격증명** 다섯뿐이며, 위치는 `App` · `Pose3D` 브랜치의 `docs/00_환경_준비/00_처음_시작.md` 에 있다 (`Avatar3D` 는 README §A~C 에 바로 적혀 있다).
 
 <br>
 
@@ -314,7 +314,7 @@ python -m model_3d.train_fitness_lifter --epochs 800 --device cuda   # → model
 | `main` | 프로젝트 입구 (이 문서 + `assets/`). 코드 없음 | — |
 
 ```powershell
-R = https://github.com/logan0741/VR-Based-Real-Time-Agent.git
+$R = "https://github.com/logan0741/VR-Based-Real-Time-Agent.git"
 git clone -b App      $R vr-pt-app       # 실행
 git clone -b Pose3D   $R vr-pt-pose3d    # 학습·분석 (GPU)
 git clone -b Avatar3D $R vr-pt-avatar3d  # 3D 시도 기록
@@ -326,7 +326,7 @@ git clone -b Avatar3D $R vr-pt-avatar3d  # 3D 시도 기록
 
 #### 정리된 브랜치 — 태그로 보존 (2026-10-12)
 
-재구성 전 브랜치 14개의 마지막 커밋을 `archive/<브랜치>` 태그로 남겼다 (`git checkout archive/tts` 처럼 언제든 꺼낼 수 있다). 브랜치 자체는 지우지 않았다 — 지워도 태그로 복구된다.
+재구성 전 브랜치 14개의 마지막 커밋을 `archive/<브랜치>` 태그로 남겼다 (`git checkout archive/tts` 처럼 언제든 꺼낼 수 있다). 브랜치 자체는 지우지 않았다 — 지워도 태그로 복구된다. 단 `feature/pose-keypoint-visualization` 은 이미 깃허브에서 지워져 있어 태그로만 남는다. `archive/tts` 는 origin 의 `tts` 보다 한 커밋 앞선 로컬 마지막 커밋("Finalize standalone final pipeline")을 가리킨다.
 
 | 태그 | 기간 | 무엇이었나 |
 |---|---|---|
@@ -363,7 +363,7 @@ git clone -b Avatar3D $R vr-pt-avatar3d  # 3D 시도 기록
 | `App/final/*.md` | 코드 옆 설계 문서 — 아키텍처 · 컴포넌트 구조 · 인수인계 | `FINAL_ARCHITECTURE.md` · `REPORT_SYSTEM_STRUCTURE.md` |
 | `Pose3D/docs/10_데이터/` · `20_학습/` | 데이터셋 · 2D 추정기 비교 · 리프터 학습 · SMPL-X 피팅과 좌표계 | `01_리프터_학습.md` · `02_SMPLX_피팅과_좌표계.md` |
 | `Pose3D/docs/30_실시간_서버/` · `40_분석_기록/` | 첫 서버 + 2D 뷰어 · 4월 분석 문서 전량 (`PROJECT_ANALYSIS` · `CHANGELOG` · 심층 분석) | `01_서버와_2D뷰어.md` |
-| `Avatar3D/docs/` | **왜 중단했나** · Unity 컨트롤러 가이드 · Three.js 실험 로그 · 렌더 3방식 · 스크린샷 16장 | `00_왜_중단했나.md` · `20_Three.js_SMPLX/01_실험_로그_2026-06-08.md` |
+| `Avatar3D/docs/` | **왜 중단했나** · Unity 컨트롤러 가이드 · Three.js 실험 로그 · 렌더 3방식 · 스크린샷 15장 | `00_왜_중단했나.md` · `20_Three.js_SMPLX/01_실험_로그_2026-06-08.md` |
 | `docs-archive` | 재편 이전 그대로 — 팀원 전처리 코드(`전처리/` · `전처리 2/`) · 판정 변형(`versions/`) · 루트 스크린샷·Playwright 스크립트 | 루트 |
 
 <br>
