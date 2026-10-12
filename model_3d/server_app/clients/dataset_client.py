@@ -4,9 +4,11 @@ import pickle
 import time
 import numpy as np
 import websockets
+from pathlib import Path
 
 SERVER_URL = "ws://127.0.0.1:8000/ws/pose"
-DATA_PATH = r"c:\Project\VR-Based-Real-Time-Agent\pose_3d_v3\valid.pkl"
+# 저장소 루트의 pose_3d_v3/valid.pkl (예전에는 C:\Project\... 절대 경로로 박혀 있었다)
+DATA_PATH = Path(__file__).resolve().parents[3] / "pose_3d_v3" / "valid.pkl"
 
 async def main():
     print(f"[{time.strftime('%H:%M:%S')}] 대용량 데이터셋 로딩 중... (최대 10초 소요될 수 있습니다)")

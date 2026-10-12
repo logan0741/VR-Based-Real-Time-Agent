@@ -31,7 +31,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
     parser.add_argument("--best-checkpoint", type=Path, default=None)
     parser.add_argument("--train-artifacts-dir", type=Path, default=None)
     parser.add_argument("--pipeline-output", type=Path, default=None)
-    parser.add_argument("--sample-input", type=Path, default=Path("sample_keypoints.json"))
+    parser.add_argument("--sample-input", type=Path, default=Path("data_samples/sample_keypoints.json"))
     parser.add_argument("--unity-output-dir", type=Path, default=None)
     parser.add_argument("--unity-view", default="view1")
     parser.add_argument("--unity-limit", type=int, default=0)

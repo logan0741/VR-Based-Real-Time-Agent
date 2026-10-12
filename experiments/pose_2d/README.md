@@ -39,3 +39,7 @@ python experiments/pose_2d/compare_models.py --split valid_100 --bbox-source gt 
 - `check_dataset.py` 는 `results/summaries/dataset_report.json` 을 만든다.
 - `train_template.py` 는 기본값으로 `results/batch_preview.json` 을 만든다.
 - `compare_models.py` 는 `results/comparisons/<timestamp>_<split>_<bbox_source>/` 아래에 모델별 샘플 CSV와 요약 CSV/JSON을 만든다.
+
+## 전체 비교 결과
+
+2026-04-03 valid_100 비교표(MediaPipe / MoveNet Lightning / Thunder)는 [docs/10_데이터/02_2D_포즈추정기_비교.md](../../docs/10_데이터/02_2D_포즈추정기_비교.md) 로 옮겼다.

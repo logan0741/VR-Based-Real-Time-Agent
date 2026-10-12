@@ -399,7 +399,10 @@ async def end_session():
 @app.get("/api/expert")
 async def get_expert_poses():
     project_root = Path(__file__).resolve().parents[2]
-    candidates = [project_root / "squat_left_1_keypoints.json"]
+    # Sample keypoint sequences live in data_samples/ (moved from the repo root on the Pose3D branch).
+    samples_dir = project_root / "data_samples"
+    candidates = [samples_dir / "squat_left_1_keypoints.json", project_root / "squat_left_1_keypoints.json"]
+    candidates.extend(sorted(samples_dir.glob("*_keypoints.json")))
     candidates.extend(sorted(project_root.glob("*_keypoints.json")))
 
     for path in candidates:

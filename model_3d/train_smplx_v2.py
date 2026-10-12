@@ -2,7 +2,8 @@
 
 Loads the pickled samples produced by prepare_smplx_dataset.py and trains a
 PoseLifterNet whose architecture matches the one used inside the FastAPI
-server (final/s02_backend/server.py).
+server (model_3d/server_app/server.py on this branch;
+final/s02_backend/server.py on the App branch).
 
 Checkpoints are written to model_3d/artifacts/checkpoints/v2/:
     smplx_lifter.pt       -> latest (overwritten every epoch)
@@ -43,7 +44,7 @@ LOG_EVERY = 50
 
 
 # --------------------------------------------------------------------------- #
-# Model (must match final/s02_backend/server.py PoseLifterNet)
+# Model (must match model_3d/server_app/server.py PoseLifterNet)
 # --------------------------------------------------------------------------- #
 class PoseLifterNet(nn.Module):
     """Lightweight MLP that maps COCO-17 keypoints to SMPL-X pose params."""

@@ -23,9 +23,22 @@ python-dotenv>=1.0,<2.0
 openai>=1.75,<3.0
 pyttsx3>=2.98,<3.0
 
-# Optional frameworks
-# Install one or both in conda depending on the final training/inference stack.
-# tensorflow
+# 3D stack (Pose3D branch: model_3d + server_app) — imported by the code but
+# missing from the original list; added when the branch was assembled.
+smplx>=0.1.28            # SMPL-X body model (fitter.py, smplx_coordinate_fitter.py)
+fastapi>=0.100           # model_3d/server_app/server.py
+uvicorn>=0.23            # server runner (run_steps.py --server)
+websockets>=10.4         # clients/*.py, tools/play_squat.py, tools/test_debug.py
+pymysql>=1.1             # server_app/database.py (optional; DB_ENABLED=false to skip)
+Pillow>=10.0             # experiments/pose_2d/compare_models.py
+
+# PyTorch — required by model_3d (lifter, SMPL-X fitting, training).
+# Not pinned here because the CUDA build depends on the machine; install it
+# separately, e.g. (CUDA 12.1 wheel):
+#   pip install torch --index-url https://download.pytorch.org/whl/cu121
 # torch
 # torchvision
 # torchaudio
+
+# Optional: MoveNet comparison in experiments/ (see experiments/hpe_comparison/requirements.txt)
+# tensorflow

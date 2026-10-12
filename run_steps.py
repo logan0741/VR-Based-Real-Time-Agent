@@ -203,7 +203,6 @@ def start_server(port: int = 8000) -> int:
     print("🚀 Starting Real-time Pose Server...")
     print(f"   WebSocket: ws://0.0.0.0:{port}/ws/pose")
     print(f"   2D Viewer: http://0.0.0.0:{port}/viewer/")
-    print(f"   React App: http://0.0.0.0:{port}/app/")
     print("")
     print(f"   Quest 3: Open browser → http://<PC_IP>:{port}/viewer/")
     print("   Press Ctrl+C to stop.")
@@ -211,7 +210,7 @@ def start_server(port: int = 8000) -> int:
 
     return subprocess.call([
         PYTHON, "-m", "uvicorn",
-        "final.s02_backend.server:app",
+        "model_3d.server_app.server:app",
         "--host", "0.0.0.0",
         "--port", str(port),
     ], cwd=str(PROJECT_ROOT))
@@ -239,7 +238,7 @@ def start_cloudflare_tunnel(port: int = 8000) -> int:
     print(f"Starting FastAPI server on http://127.0.0.1:{port}")
     server = subprocess.Popen([
         PYTHON, "-m", "uvicorn",
-        "final.s02_backend.server:app",
+        "model_3d.server_app.server:app",
         "--host", "0.0.0.0",
         "--port", str(port),
     ], cwd=str(PROJECT_ROOT))
@@ -406,7 +405,7 @@ def step_1_data_check(video_path: Optional[str] = None) -> int:
         else:
             print("  ⚠️ No video files found in project root.")
 
-    keypoints_file = PROJECT_ROOT / "squat_left_1_keypoints.json"
+    keypoints_file = PROJECT_ROOT / "data_samples" / "squat_left_1_keypoints.json"
     if keypoints_file.exists():
         with open(keypoints_file) as f:
             data = json.load(f)
