@@ -53,23 +53,26 @@ final layer shape in ckpt: network.16.weight (51, 512)   ← 서버 모델은 (6
 
 ## 4. PoseLifterMLP 출력 3D 관절의 좌표계
 
-### 검증된 규약 (`/api/expert-pose3d`, v3_pose3d 체크포인트 출력)
+### 검증된 규약 (2026-10-12, 체크포인트 출력 48개로 측정) — **Y-up · cm**
 
-| 성분 | 의미 | Three.js |
+| 성분 | 의미 | Three.js (Y-up) |
 | --- | --- | --- |
 | `pt[0]` | 좌우 (lateral) | X |
-| `pt[1]` | 깊이 (depth) | −Z |
-| `pt[2]` | 높이 (height, **Z-up**) | Y |
+| `pt[1]` | **높이 (height, Y-up)** | Y |
+| `pt[2]` | 깊이 (depth) | Z (카메라 방향에 따라 −Z) |
 
-```js
-new THREE.Vector3(pt[0], pt[2], -pt[1])
-```
+단위는 **cm** 다. Three.js 도 Y-up 이므로 축 교환은 필요 없고, **cm→m 스케일과 골반 원점 이동**만 하면 된다. 근거는 바로 아래 측정값과 학습 타깃이다. `/api/expert-pose3d` 는 v3 재학습 무렵 `final/s02_backend/server.py` 에 추가된 엔드포인트이고, 이 브랜치의 서버(`model_3d/server_app/server.py`)에는 없다.
 
-실제 출력에서 해부학적으로 확인되었다: 코 z≈92 > 어깨 77 > 골반 37 > 무릎 1 > 발목 −35 (cm). 이 규약과 검증값은 [Avatar3D 브랜치 README](https://github.com/logan0741/VR-Based-Real-Time-Agent/blob/Avatar3D/README.md) 에 기록된 것을 옮겼다. 이 정리에서 그 검증을 다시 하지는 않았다. `/api/expert-pose3d` 는 v3 재학습 무렵 `final/s02_backend/server.py` 에 추가된 엔드포인트이고, 이 브랜치의 서버(`model_3d/server_app/server.py`)에는 없다.
+### 출처 미확인 과거 메모 (커밋된 경로에서 재현 안 됨)
 
-실험 로그(`3d_avatar_experiment_log.md` §5)의 "x=깊이(앞뒤), y=좌우, z=높이 → `[y→X, z→Y, x→Z]`" 는 **입력 2D+깊이 키포인트**(다른 좌표 공간)를 보고 내린 초기 오진이었고, 이후 위 규약으로 바로잡혔다.
+재편 전 세션 메모와 실험 로그에는 아래 두 서술이 있었다. **둘 다 위 측정과 맞지 않으므로 쓰지 않는다.**
 
-### 이 브랜치 코드로 학습 분포 입력을 넣었을 때 (2026-10-12 측정, 위와 다름 — 확인 필요)
+| 서술 | 내용 | 왜 못 믿나 |
+| --- | --- | --- |
+| 세션 메모 | `pt[1]`=깊이→−Z, `pt[2]`=높이(Z-up)→Y, `new THREE.Vector3(pt[0], pt[2], -pt[1])`, "코 z≈92 > 어깨 77 > 골반 37 > 무릎 1 > 발목 −35 cm" | 값 범위(−35~92)가 라벨의 절대 높이(0~160)와 다르고, 커밋된 어떤 `/api/expert-pose3d` 도 MLP 를 돌리지 않는다(아래). 골반 정렬이나 다른 입력 공간에서 나온 값으로 추정 |
+| 실험 로그 `3d_avatar_experiment_log.md` §5 | "x=깊이(앞뒤), y=좌우, z=높이 → `[y→X, z→Y, x→Z]`" | **입력 2D+깊이 키포인트**(다른 좌표 공간)를 보고 내린 서술. 출력 측정과 맞지 않는다 |
+
+### 측정 — 이 브랜치 코드로 학습 분포 입력을 넣었을 때 (2026-10-12)
 
 이 브랜치의 `FitnessLabelDataset` 입력(013 검증 파일 3개, 48 샘플 평균)을 `v3_pose3d/pose3d_best.pt` 에 그대로 넣으면 **`pt[1]` 이 높이**로 나온다:
 
@@ -83,14 +86,14 @@ L ankle    pt0=   11.9 pt1=   24.5 pt2=    9.3
 
 이유는 학습 타깃에 있다. `fitness_points_to_3d_array` 는 013 3D 라벨의 x, y, z 를 변환 없이 쓰고, 그 라벨은 y 가 높이(cm, 코 평균 약 160)다. `export_fitness_unity.py` 도 같은 라벨을 `unity_y_up_z_forward` 로 내보낸다. 배포 체크포인트(`fitness_pose_lifter_latest_best.pt`)도 같은 결과였다 (코 pt1 159.3).
 
-두 결과가 다른 원인은 이 정리에서 확인하지 못했다. 알아낸 것과 가능성:
+과거 메모가 다른 값을 낸 경로는 확인하지 못했다. 알아낸 것과 가능성:
 
-- 저장소에 커밋된 모든 버전(61eaf995b, f11e24b60, 4faebc599, docs-archive 17188859b)의 `/api/expert-pose3d` 는 MLP 를 돌리지 않고 MotionBERT 결과 파일 `squat_expert_keypoints_3d_mb.json` 을 그대로 돌려준다. 그 파일은 y 가 아래쪽(코 y≈−0.97, 발목 y≈+1.0, 대략 m)이라 위 규약과도, 아래 측정과도 다르다. 따라서 위 검증은 커밋되지 않은 다른 버전의 엔드포인트나 다른 입력에서 나왔을 것이다.
+- 저장소에 커밋된 모든 버전(61eaf995b, f11e24b60, 4faebc599, docs-archive 17188859b)의 `/api/expert-pose3d` 는 MLP 를 돌리지 않고 MotionBERT 결과 파일 `squat_expert_keypoints_3d_mb.json` 을 그대로 돌려준다. 그 파일은 y 가 아래쪽(코 y≈−0.97, 발목 y≈+1.0, 대략 m)이라 과거 메모와도, 위 측정과도 다르다. 따라서 과거 메모의 값은 커밋되지 않은 다른 버전의 엔드포인트나 다른 입력에서 나왔을 것이다.
 
-1. 위 규약이 얻어진 경로에서 MLP 출력에 축 변환이나 골반 기준 정렬이 들어갔을 수 있다 (값 범위 −35~92 가 절대 높이 0~160 과 다르다).
+1. 그 경로에서 MLP 출력에 축 변환이나 골반 기준 정렬이 들어갔을 수 있다 (값 범위 −35~92 가 절대 높이 0~160 과 다르다).
 2. 입력이 학습 입력과 달랐을 수 있다. 학습 입력은 `[x/W, y/H, conf]` 인데 서버 입력은 MoveNet `[y, x, score]` 이다 (`KEYPOINT_FORMAT=movenet_yx`). x·y 가 뒤바뀐 분포 밖 입력이면 출력 축의 의미가 학습 때와 달라질 수 있다.
 
-**쓰는 쪽에서 해야 할 일**: 3D 관절을 소비하는 코드는 자기가 받는 데이터에서 코·골반·발목 값을 직접 찍어 높이 축을 확인한다. 이 브랜치의 학습·평가·Unity 내보내기 경로는 Y-up(`pt[1]`=높이)이다.
+**쓰는 쪽에서 해야 할 일**: 3D 관절을 소비하는 코드는 자기가 받는 데이터에서 코·골반·발목 값을 직접 찍어 높이 축을 확인한다. 이 브랜치의 학습·평가·Unity 내보내기 경로는 Y-up(`pt[1]`=높이, cm)이다. Avatar3D 브랜치의 README "좌표계 규약 모음" 도 같은 결론이다.
 
 ## 5. MotionBERT 시도 (`tools/run_motionbert.py`)
 
