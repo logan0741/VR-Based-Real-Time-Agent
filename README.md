@@ -59,7 +59,7 @@
 - **2D 관절점 17개만으로 끝까지 간 최종 앱.** 서버에 GPU 도 3D 모델도 없다. 포즈 추정은 스마트폰 브라우저(TF.js MoveNet)가 하고, 서버는 CPU 에서 relay·정규화·횟수·DTW·피드백·TTS 만 한다. 세 기계가 전부 브라우저로 붙는다.
 - **두 경로 분리 아키텍처.** 서버가 프레임을 받자마자 `pose` 로 중계하고, 채점은 최신 프레임만 따로 처리한다(오래된 프레임 드롭). 로컬 실측 **relay 4.2 ms · processed 9.5 ms** — 채점을 붙여도 +5 ms. 같은 경로를 Cloudflare 로 보내면 201 / 206 ms 라 **병목은 백엔드가 아니라 네트워크**임을 수치로 갈랐다.
 - **3D 아바타 경로를 두 번 시도하고 원인을 특정해 배제했다.** Unity SMPL-X(4월)는 Unity 에디터 + SMPL-X 최적화 서버 동시 실행 시 RAM 93~98% 로 멈췄고, Three.js SMPL-X(6월)는 ①배포 체크포인트가 SMPL-X 회전이 아니라 3D 좌표를 내는 모델이었고 ②학습 데이터에 SMPL-X 정답 라벨이 없으며 ③학습·추론 카메라 도메인이 달라 전신이 25~50° 기울었다. 세 가지가 한 로그에 기록돼 있다.
-- **2D→3D 리프터를 직접 학습했다.** AI허브 피트니스 자세 17,105 / 9,010 샘플, 4층 512-dim MLP, **val MPJPE 10.08**(285 epoch). 정확한 3D 좌표가 곧 쓸 수 있는 아바타는 아니라는 교훈이 여기서 나왔다.
+- **2D→3D 리프터를 직접 학습했다.** AI허브 피트니스 자세 17,105 / 9,010 샘플, 4층 512-dim MLP, **val MPJPE 10.08 cm**(285 epoch — 라벨이 cm 단위라 예전 문서의 "mm" 는 오기). 관절당 10 cm 오차는 아바타를 세우기엔 거칠었고, 더구나 서버는 이 가중치를 실제로는 한 번도 싣지 못하고 있었다(1부).
 - **횟수·피드백은 문장이 아니라 신호 규칙이다.** 종목별 **관절 각도 한 개**로 반복을 센다(스쿼트는 엉덩이-무릎-발목 각도가 155° → 125° → 150° 를 지나면 1회). 피드백은 hold 정책으로 한 구간에 한 번만, 카메라 가시성 게이트(conf ≥ 0.12)를 못 넘으면 점수·횟수가 움직이지 않는다. 세트 × 횟수가 차면 서버가 세션을 끝낸다.
 - **clone 하나로 돈다.** `App` 브랜치를 받아 `final/scripts/00_pipeline.ps1 -Install` 한 줄이면 설치·검증·React 빌드·서버까지 간다. 57 커밋 · 14 브랜치 이력은 `archive/*` 태그로 전부 보존했다.
 
@@ -67,19 +67,19 @@
 
 ### 시연 미리보기
 
-**최종 앱 (App 브랜치, 2026-10-12 캡처)** — Quest 3 브라우저에 뜨는 화면 세 장. 전문가 스쿼트 256 프레임을 사용자 입력으로 흘려 넣어 찍었다.
+**최종 앱 (App 브랜치, 2026-10-12 캡처)** — Quest 3 브라우저에 뜨는 화면 세 장. `App` 브랜치를 그대로 띄우고(DTW 포함) 전문가 스쿼트 256 프레임을 사용자 입력으로 30fps 로 흘려 넣어 Playwright 로 찍었다.
 
 | 운동 선택 | 운동 중 | 결과 |
 |---|---|---|
 | ![운동 선택](assets/app_select_20261012.png) | ![운동 중](assets/app_workout_20261012.png) | ![결과](assets/app_result_20261012.png) |
-| 4종목(SQ·HC·LR·PU) · 세트 수 · 세트당 횟수 → 서버에 `session_config` 로 전송 | 왼쪽 **강사 모델**, 오른쪽 **내 자세**. 상단 HUD 에 TIME · SET 1/3 · REPS 3/8 · SCORE 95. 틀린 관절(하부 허리)은 **빨간 점**, 아래 칩에 "보통: 하부 허리" | 평균 점수·등급, 총 횟수·시간·정확도, **최종 자세 분석** 4항목(전체 평가·안정성·피로 누적 부위·다음 세트 기준), 아래에 TTS 음성 |
+| 4종목(SQ·HC·LR·PU) · 세트 수 · 세트당 횟수 → 서버에 `session_config` 로 전송 | 왼쪽 **강사 모델**, 오른쪽 **내 자세**. 상단 HUD 에 TIME · SET 1/3 · REPS 1/8 · SCORE 83. 틀린 관절(상체)은 **빨간 점·선**, 아래 칩에 교정 문장 "상체를 조금 더 자연스럽게 숙여주세요" | 평균 점수·등급(81 · B+), 총 횟수·시간·정확도, **최종 자세 분석** 5항목(전체 평가 · 가장 자주 흔들린 부위 · 반복된 교정 포인트 · 피로 누적 부위 · 다음 세트 기준), 아래에 TTS 음성 |
 
 **2D 전환점 (2026-04-29)** — Unity 를 빼고 브라우저 Canvas 로만 그린 첫 2D 뷰어. 전문가 포즈 · 실시간 피드백(점수 링, 근육 피로도) · 사용자 포즈 3패널. 왼쪽은 2배속 GIF, 오른쪽은 6월 8일 같은 뷰어의 119 FPS 화면.
 
 | 2D 뷰어 화면 녹화 (2배속) | 2D 뷰어 — 전문가 · 피드백 · 사용자 |
 |---|---|
 | ![2D 뷰어 녹화](assets/viewer2d_live_20260429.gif) | ![2D 뷰어 3패널](assets/viewer2d_three_panel_119fps_20260608.png) |
-| 점수 76 "주의: 부하 증가 중", 좌/우 대퇴 주황. 이 구조가 그대로 최종 앱의 좌우 패널이 됐다 | 상단 119 FPS · 0.0 ms. 근육 피로도 6부위, Frame cam_115 |
+| 점수 76 "주의: 부하 증가 중", 좌/우 대퇴 주황. 이 구조가 그대로 최종 앱의 좌우 패널이 됐다 (이 시점 서버 점수는 `75 + frame%20 − 10` 플레이스홀더였고, 실제 분석은 관절 각도 기반 근육 피로도뿐이다) | 상단 119 FPS · 0.0 ms 는 응답 간격 기반 표시값이지 처리량 측정이 아니다. 근육 피로도 6부위, Frame cam_115 |
 
 **3D 아바타 경로 ★중단 (2026-04 Unity → 2026-06 Three.js)** — 서버가 보낸 63+3 axis-angle 을 SMPL-X 아바타에 직접 매핑한 Unity 시연(2배속)과, 6월에 브라우저에서 다시 시도한 Three.js SMPL-X 비교 화면.
 
@@ -99,7 +99,7 @@
   <img src="assets/latency_local_vs_cloudflare.png" alt="WebSocket 왕복 지연 — 로컬 vs Cloudflare, relay vs processed" width="720">
 </p>
 
-미리보기 GIF 는 전부 2배속이다. 출처 — 2D 뷰어 녹화: `1차 2d 녹음.mp4`(04-29) · Unity 두 컷: `첫 아바타 녹음 실험.mp4`(04-12) · `카톡 좌표 기반 영상.mp4`(04-13) · 스크린샷 원본은 `Avatar3D` 브랜치 `docs/30_스크린샷/` 과 `Pose3D` 브랜치 `docs/50_스크린샷/` · 최종 앱 세 장은 `App` 브랜치의 `final/app_dist` 를 로컬 서버로 띄워 Playwright 로 캡처.
+미리보기 GIF 는 전부 2배속이다. 출처 — 2D 뷰어 녹화: `1차 2d 녹음.mp4`(04-29) · Unity 두 컷: `첫 아바타 녹음 실험.mp4`(04-12) · `카톡 좌표 기반 영상.mp4`(04-13) · 스크린샷 원본은 `Avatar3D` 브랜치 `docs/30_스크린샷/`(15장) 과 `Pose3D` 브랜치 `docs/50_스크린샷/` · 최종 앱 세 장은 `App` 브랜치의 `final/app_dist` 를 로컬 서버로 띄워 Playwright 로 캡처. [assets/](assets/) 에는 본문에 안 쓴 전체 해상도 컷([2D 뷰어 점수 68, 04-29](assets/viewer2d_score_20260429.png) · [3D 웹앱 랜딩, 06-08](assets/web3d_landing_psvr_20260608.png))도 있다.
 
 <br>
 
@@ -113,8 +113,8 @@
 
 | | 3D 아바타 경로 | 2D 관절점 경로 |
 |---|---|---|
-| 실시간성 | SMPL-X 최적화 ≈540 ms/프레임, MLP 로 바꿔도 Unity 동시 실행 시 OOM | 브라우저 Canvas 119 FPS, 서버 processed 9.5 ms |
-| 정확성 | 3D 좌표 MPJPE 10 mm 는 좋았으나 **SMPL-X 회전 파라미터로는 변환 불가**(정답 라벨 없음) | 전문가 포즈와 같은 2D 공간에서 DTW · 관절 각도 비교 — 변환 손실 없음 |
+| 실시간성 | SMPL-X 최적화 ≈540 ms/프레임, MLP 로 바꿔도 Unity 동시 실행 시 OOM | 서버 relay 4.2 ms · processed 9.5 ms (실측), 뷰어 표시 FPS 119(응답 간격 기반 표시값) |
+| 정확성 | 3D 좌표 val MPJPE ≈10 cm — 관절당 평균 10 cm 오차. 게다가 **SMPL-X 회전 파라미터로는 변환 불가**(정답 라벨 없음) | 전문가 포즈와 같은 2D 공간에서 DTW · 관절 각도 비교 — 변환 손실 없음 |
 | 피드백 | 아바타가 기울면 "어디가 틀렸는지"를 읽을 수 없다 | 틀린 관절을 **빨간 점**으로 바로 찍는다 |
 
 > [!IMPORTANT]
@@ -160,17 +160,20 @@
 
 [`Pose3D`](../../tree/Pose3D) 브랜치 `model_3d/`. 2D 키포인트(MoveNet 17관절)에서 SMPL-X 파라미터를 Adam 으로 직접 최적화하는 `OptimizationPoseFitter` 가 첫 경로였다. 동작은 했지만 프레임당 **≈540 ms** — 실시간은 불가능했다. 그래서 2D→3D 를 한 번에 회귀하는 `PoseLifterMLP`(4층, 512-dim, GELU+LayerNorm, MSE, AdamW)를 AI허브 **013 피트니스 자세** 데이터로 학습했다:
 
-| 런 | 데이터 | epoch | best val MPJPE | 최종 val MPJPE | train MPJPE | 비고 |
+| 런 | 데이터 | epoch | best val MPJPE (cm) | 최종 val MPJPE | train MPJPE | 비고 |
 |---|---|---|---|---|---|---|
 | `fitness_full` (배포) | 17,105 / 9,010 | 285 (early stop) | **10.08** @245 | 10.21 | 7.5 | ~17~22k samples/s, GPU |
-| `v3_pose3d` (06-08 재학습) | 같음 | 128 | 10.82 @123 | 11.10 | 9.2 | 3D 좌표 경로 재확인용 |
+| `v3_pose3d` (06-08 재학습) | 같음 | 128 | 10.82 @123 (저장된 체크포인트는 val loss 최저인 epoch 88, MPJPE 10.88) | 11.10 | 9.2 | 3D 좌표 경로 재확인용 |
 | `v2 smplx_lifter` (06-08) | 좌표 → 계층적 local 회전 근사 | 209 (best) | val_loss 0.08 | — | — | **추론 시 25~50° 기울어짐** |
 
 <p align="center">
   <img src="assets/lifter_training_curve_fitness_full.png" alt="PoseLifterMLP 학습 곡선 — fitness_full, 285 epoch" width="640">
 </p>
 
-리프터는 ~5 ms 로 빨랐고 좌표 정확도도 좋았다. 문제는 **출력이 17×3 좌표**라는 점이었는데, 이것이 두 달 뒤 Three.js 실패의 뿌리가 된다.
+> [!WARNING]
+> **MPJPE 의 단위는 cm 다.** 학습 라벨(AI허브 013 `-3d.json`)이 Y-up · cm(코 y ≈ 154, 엉덩이 y ≈ 94)이고 변환 없이 그대로 회귀했으므로, 4월 문서들의 "MPJPE 10.2 mm" 는 단위 오기다 (2026-10-12 라벨·체크포인트 출력으로 재확인). 관절당 평균 10 cm 는 "쓸 만한 3D 좌표" 라기엔 거친 값이다.
+
+리프터는 ~5 ms 로 빨랐다. 그러나 **출력이 17×3 좌표**라는 점, 그리고 서버가 그 가중치를 실제로 싣지도 못하고 있었다는 점이 두 달 뒤 Three.js 실패의 뿌리가 된다.
 
 #### 전환 1: Unity SMPL-X 아바타 (2026-04-11 ~ 29) — OOM
 
@@ -184,7 +187,7 @@
 
 | 층 | 무엇이 문제였나 | 어떻게 확인했나 |
 |---|---|---|
-| 체크포인트 | 배포 체크포인트는 `PoseLifterMLP`(17×3 → 17×3 **좌표**)인데 서버는 이를 `strict=False` 로 `PoseLifterNet`(17×3 → 66 **SMPL-X 파라미터**)에 올리고 있었다 | 출력을 global_orient 로 해석하면 항상 X축 −40° — 강제로 0 을 넣어야 섰다 |
+| 체크포인트 | 배포 체크포인트는 `PoseLifterMLP`(17×3 → 17×3 **좌표**, 마지막 층 51)인데 서버는 이를 `strict=False` 로 `PoseLifterNet`(17×3 → 66 **SMPL-X 파라미터**)에 올리고 있었다. 2026-10-12 재확인: 이 로드는 파라미터 18개 중 **0개**를 바꾼다 — "Weights loaded successfully" 를 찍고는 **초기화 가중치**로 돌고 있었다 | 출력을 global_orient 로 해석하면 항상 X축 −40° — 강제로 0 을 넣어야 섰다 |
 | 데이터 | 013 데이터셋엔 SMPL-X `body_pose` 정답이 없다. 3D 좌표에서 계층적 local 회전을 근사해 v2 를 재학습(val_loss 0.08)했지만 추론 시 25~50° 기울어짐 | 학습 카메라 5대 고정 vs 추론 카메라 상이 — 도메인 불일치 |
 | 구조 | 3D 좌표로 본을 직접 돌리는 방향 A 는 SMPL-X 가 **parent 기준 local 회전**이라 성립하지 않는다. `parent.getWorldQuaternion()` 이 Three.js SkinnedMesh 에서 프레임마다 전 프레임 값을 돌려준다 | 하체(무릎·고관절)만 부분 성공, 상체 붕괴 |
 
@@ -239,7 +242,7 @@
 |---|---|---|
 | 운동 분류 90% ↑ (LSTM·Transformer·ST-GCN) | 분류 모델 없음 — 사용자가 앱에서 종목을 고른다 | **미구현** (범위 축소) |
 | 자세 판단 85% ↑ | 점수·피드백은 작동하나 **정답 라벨 평가 없음** | 미측정 |
-| 60 FPS ↑ | 브라우저 뷰어 119 FPS(캔버스), 폰 MoveNet 은 기기 의존 | 캔버스 기준 달성, 추론 FPS 미측정 |
+| 60 FPS ↑ | 폰 → 서버 전송은 66 ms 간격(≈15 fps)으로 고정, 뷰어의 "119 FPS" 는 응답 간격 기반 표시값 | **미측정** (처리량 수치 없음) |
 | DTW 10 ms ↓ | processed 경로 전체 평균 9.5 ms (DTW 포함, interval) | **달성** |
 | 오류 → 음성 3초 ↓ | 세트 중 음성은 없음, 실시간은 화면 칩 · 음성은 종료 후 TTS | 설계 변경 |
 | LLM 피드백 5분 ↓ | LLM 대신 **결정적 최종 분석**(누적 피드백 집계) | 설계 변경 |
@@ -259,7 +262,7 @@ MediaPipe · MoveNet · MMPose 를 피트니스 데이터 부분집합에서 비
 | 세대 | 기간 | 무엇을 했나 | 왜 넘어갔나 |
 |---|---|---|---|
 | G1 SMPL-X 최적화 피팅 | 04-08 | 2D → SMPL-X 파라미터 Adam 최적화 (15 iter) | ≈540 ms/프레임, 실시간 불가 |
-| G2 MLP 리프터 | 04-09 | 2D → 3D 17관절 MLP, val MPJPE 10.08 | 정확하지만 출력이 **좌표** — SMPL-X 회전이 아님 (06-08 에야 확인) |
+| G2 MLP 리프터 | 04-09 | 2D → 3D 17관절 MLP, val MPJPE 10.08 cm | 출력이 **좌표**라 SMPL-X 회전이 아니고, 서버는 가중치를 싣지도 못했다 (06-08 에야 확인) |
 | G3 Unity SMPL-X 아바타 | 04-11 ~ 29 | 63+3 axis-angle 직접 매핑, Slerp, 좌표계 변환 | Unity + 서버 동시 실행 시 RAM 93~98% |
 | **G4 2D 웹 뷰어 ★전환점** | 04-29 | Unity 없이 Canvas 스켈레톤, OneEuro, Quest 브라우저 접속 | — 이후 모든 개발의 기반 |
 | G5 final/ 재편 | 05-21 ~ 23 | s01~s07 역할 분리, 전처리 통합, DTW 점수 | 매 프레임 DTW 가 FPS 를 깎음 → interval |
@@ -277,8 +280,9 @@ $R = "https://github.com/logan0741/VR-Based-Real-Time-Agent.git"
 git clone -b App $R vr-pt-app ; cd vr-pt-app
 Copy-Item .env.example .env                  # DB_ENABLED=false 기본, 키 없이 돈다
 .\final\scripts\00_pipeline.ps1 -Install     # pip + npm 설치 → py_compile 검증 → React 빌드 → 서버
-#   폰:   http://<PC_IP>:8000/viewer/   (카메라 허용)
 #   Quest: http://<PC_IP>:8000/app/     (종목·세트·횟수 → 운동 시작)
+#   폰:    https://viewer.<내 도메인>/viewer/  — 브라우저가 localhost 가 아닌 http 에서는 카메라를
+#          열어 주지 않으므로 폰은 Cloudflare 터널(HTTPS)로 붙인다 (App 브랜치 README §C)
 .\final\scripts\04_latency_check.ps1         # 지연 측정 → final/latency_lab/results/
 ```
 
