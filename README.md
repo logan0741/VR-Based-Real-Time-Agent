@@ -4,7 +4,7 @@
 
 > [!IMPORTANT]
 > **이 라인은 중단됐다.** 학습 데이터(013 피트니스자세)에 SMPL-X `body_pose`(부모 기준 local 회전) 정답이 없어서, MLP 가 내는 66차원 회전값으로는 아바타가 25~50° 기울거나 뒤로 젖혀졌다.
-> 3D 관절 좌표(MPJPE 10.87mm)로 뼈를 직접 돌리는 우회로도 local/world 회전 불일치로 무너졌고, Unity + SMPL-X 최적화 서버는 메모리 93~98% 까지 찼다.
+> 3D 관절 좌표(val MPJPE ≈10.9 — 단위는 **cm**, 로그의 "mm" 표기는 오기)로 뼈를 직접 돌리는 우회로도 local/world 회전 불일치로 무너졌고, Unity + SMPL-X 최적화 서버는 메모리 93~98% 까지 찼다.
 > 같은 시점 2D 뷰어는 119 FPS 로 정상이었으므로, 최종 결과물은 [`App`](../../tree/App) 브랜치의 **2D 관절점** 방식이다. 자세한 결산은 [`docs/00_왜_중단했나.md`](docs/00_왜_중단했나.md).
 
 이 브랜치는 "무엇을 해봤고 왜 안 됐는지"를 보존한다. 최종 앱은 [`App`](../../tree/App), 리프터 학습·SMPL-X 피팅은 [`Pose3D`](../../tree/Pose3D), 전체 서사는 [`main`](../../tree/main), 재편 이전 작업 공간 전체 스냅샷은 [`docs-archive`](../../tree/docs-archive) 에 있다.
@@ -113,8 +113,8 @@ npm run dev          # http://localhost:5173/app/  — /api, /ws 는 localhost:8
 | Unity 공식 `SMPLX.cs` | `QuatFromRodrigues`: axis = `(−rx, ry, rz)`, angle = `−θ` (왼손 좌표계로 X 반전) | 실험 로그 §2, `unity/.../AvatarController.cs` |
 | `unity_integration/FitnessAvatarController.cs` | 자체 변환: axis 의 **X·Z 반전**, angle `+θ`, `initialRotation × q`, 루트에 `Quaternion.Euler(rootRotationOffset)`(코드 기본값 `(0,0,0)`, 문서상 측면 영상엔 `(0,90,0)`), `Quaternion.Slerp` 보간. 공식 `SMPLX.cs` 와 다른 규약이다 | 코드 |
 | Three.js (`FBXLoader`) | `quatFromRodrigues`: axis = `(rx, −ry, −rz)/θ`, angle `+θ` — `SMPLX.cs` 와 수학적으로 동치. 뼈 목표 = `rest × q` | `app_3d_web/src/utils/smplMath.ts` |
-| **PoseLifterMLP 출력 3D 관절** (`/api/expert-pose3d`) | `pt[0]` = 좌우, `pt[1]` = 깊이, `pt[2]` = 높이(Z-up), cm. Three.js: **`new THREE.Vector3(pt[0], pt[2], -pt[1])`**. 실제 출력으로 해부학 검증됨(코 z≈92 > 어깨 77 > 엉덩이 37 > 무릎 1 > 발목 −35 cm). `(pt[0], pt[1], pt[2])` 를 그대로 쓰면 뼈가 ~72° 돌아가 자세가 깨진다 | 이후 검증 |
-| ↳ 실험 로그의 옛 서술 | 로그 §5 의 "x=깊이, y=좌우, z=높이 → `[y→X, z→Y, x→Z]`" 는 입력 키포인트 공간을 보고 내린 **잘못된 진단이며 이후 정정·되돌려졌다**. 로그는 역사 기록이라 원문 그대로 둔다 | — |
+| **PoseLifterMLP 출력 3D 관절** (013 라벨로 학습한 `fitness_pose_lifter_latest_best.pt` · `v3_pose3d/pose3d_best.pt`) | **`pt[1]` = 높이 (Y-up)**, `pt[0]` = 좌우, `pt[2]` = 깊이, 단위 **cm**. 학습 라벨(013 `-3d.json`, 코 y≈154 · 엉덩이 ≈94)을 변환 없이 회귀하므로 라벨 좌표계가 그대로 나온다. 2026-10-12 체크포인트 출력 48개로 확인(코 pt1≈159 > 어깨 144 > 엉덩이 94 > 무릎 62 > 발목 25). Three.js 는 Y-up 이라 축 교환 없이 **cm→m 스케일 + 골반 원점 이동**만 하면 된다 | Pose3D 브랜치 `docs/20_학습/02_SMPLX_피팅과_좌표계.md` §4 |
+| ↳ 맞지 않는 두 서술 | 실험 로그 §5 의 "x=깊이, y=좌우, z=높이(Z-up) → `[y→X, z→Y, x→Z]`" 와, 이후 세션 메모의 "`pt[2]`=높이 → `Vector3(pt[0], pt[2], −pt[1])`(코 z≈92 … 발목 −35)" 는 **둘 다 위 측정과 맞지 않는다** — 커밋된 어느 경로도 그런 값을 내지 않으므로 다른 입력 공간(입력 2D+깊이 키포인트, 또는 미커밋 코드)을 본 것으로 추정한다. 로그는 역사 기록이라 원문 그대로 둔다. **어떤 소스든 렌더러에 넣기 전에 코·발목의 높이 축 부호와 크기를 직접 찍어 확인할 것** | — |
 | MotionBERT-Lite 3D 관절 (이 스냅샷의 V2·V3 코드) | x = right, y = down, z = depth. Three.js: `(x, −y, z)`, 골반 중심 원점. 6월 8일 마지막 시점 서버가 `/api/expert-pose3d` 로 MotionBERT-Lite 결과를 냈기 때문이다. PoseLifterMLP 출력을 넣을 땐 위 규약으로 바꿔야 한다 | `Skeleton3DCanvasV2.tsx`, `SkeletonWireframe3D.tsx` |
 | 2D 입력 | MoveNet COCO-17 `[y/H, x/W, conf]` (0~1) | 실험 로그 "다음 작업 시 고려사항" |
 
