@@ -81,29 +81,29 @@ Validate the trained pipeline explicitly with the fitness checkpoint:
 
 ```powershell
 cd C:\Project\VR-Based-Real-Time-Agent
-C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe .\model_3d\run_pipeline.py --check-all --lifter-checkpoint .\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest_best.pt
+python .\model_3d\run_pipeline.py --check-all --lifter-checkpoint .\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest_best.pt
 ```
 
 Export Unity-ready sequences only:
 
 ```powershell
 cd C:\Project\VR-Based-Real-Time-Agent
-C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe -m model_3d.export_fitness_unity --split train val --limit 0 --view view1
+python -m model_3d.export_fitness_unity --split train val --limit 0 --view view1
 ```
 
 If you are already inside `model_3d`:
 
 ```powershell
 cd C:\Project\VR-Based-Real-Time-Agent\model_3d
-C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe -m model_3d.train_fitness_lifter --device cuda --epochs 800 --checkpoint ..\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest.pt --best-checkpoint ..\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest_best.pt --artifacts-dir ..\model_3d\artifacts\training\fitness_full
-C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe run_pipeline.py --check-all --lifter-checkpoint ..\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest_best.pt
+python -m model_3d.train_fitness_lifter --device cuda --epochs 800 --checkpoint ..\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest.pt --best-checkpoint ..\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest_best.pt --artifacts-dir ..\model_3d\artifacts\training\fitness_full
+python run_pipeline.py --check-all --lifter-checkpoint ..\model_3d\artifacts\checkpoints\fitness_pose_lifter_latest_best.pt
 ```
 
 Run all available checks from the pipeline runner:
 
 ```powershell
 cd C:\Project\VR-Based-Real-Time-Agent\model_3d
-C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe run_pipeline.py
+python run_pipeline.py
 ```
 
 This checks:
@@ -158,7 +158,7 @@ a 3D body model. Use this command for that exact test:
 
 ```powershell
 cd C:\Project\VR-Based-Real-Time-Agent\model_3d
-C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe run_pipeline.py --smplx-fit-pose3d --pose3d-path pose_3d_v3 --pose3d-split train --max-frames 1 --output artifacts\smplx_coordinate_fit_response.json
+python run_pipeline.py --smplx-fit-pose3d --pose3d-path pose_3d_v3 --pose3d-split train --max-frames 1 --output artifacts\smplx_coordinate_fit_response.json
 ```
 
 This mode:
@@ -189,7 +189,7 @@ If it fails with `No module named 'smplx'`, install `smplx` into the same Python
 interpreter you use to run the script:
 
 ```powershell
-C:\Users\logan\AppData\Local\Programs\Python\Python310\python.exe -m pip install smplx
+python -m pip install smplx
 ```
 
 The local SMPL-X asset already exists at:
