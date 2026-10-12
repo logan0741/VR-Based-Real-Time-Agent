@@ -1,0 +1,36 @@
+{
+  "device": "cuda",
+  "dataset_format": "pose3d_v3",
+  "data_root": "pose_3d_v3",
+  "train_split": "train",
+  "eval_split": "test",
+  "checkpoint": "C:\\Project\\VR-Based-Real-Time-Agent\\model_3d\\artifacts\\checkpoints\\pose_lifter_latest.pt",
+  "train_history": [
+    {
+      "epoch": 1.0,
+      "loss": 0.0371179235731194,
+      "mpjpe": 0.2667263152790658,
+      "samples": 8100.0,
+      "samples_per_sec": 1604.0697586568251
+    },
+    {
+      "epoch": 2.0,
+      "loss": 0.008067800751714795,
+      "mpjpe": 0.14209469820982143,
+      "samples": 8100.0,
+      "samples_per_sec": 4032.671610093458
+    },
+    {
+      "epoch": 3.0,
+      "loss": 0.005748574727985226,
+      "mpjpe": 0.11981546215069147,
+      "samples": 8100.0,
+      "samples_per_sec": 4080.851852127147
+    }
+  ],
+  "eval": {
+    "loss": 0.001770653610152227,
+    "mpjpe": 0.06377173275859267,
+    "samples": 1620.0
+  }
+}

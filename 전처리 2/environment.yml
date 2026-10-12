@@ -1,0 +1,15 @@
+name: vr-real-time-agent
+channels:
+  - conda-forge
+  - defaults
+dependencies:
+  - python=3.10
+  - pip
+  - numpy
+  - pip:
+      - -r requirements.txt
+
+# Notes
+# - GPU/CUDA packages are intentionally not pinned here.
+# - Install framework-specific GPU packages after creating this env,
+#   based on the target machine and driver/CUDA compatibility.

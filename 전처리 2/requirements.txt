@@ -1,0 +1,31 @@
+# Project-only pip dependencies
+# Recommended runtime: Python 3.10
+# GPU/CUDA-enabled deep learning frameworks should be installed through conda
+# per machine, not pinned here.
+
+# Data processing
+numpy>=1.26,<3.0
+pandas>=2.2,<3.0
+scipy>=1.13,<2.0
+scikit-learn>=1.5,<2.0
+matplotlib>=3.9,<4.0
+tqdm>=4.66,<5.0
+
+# Vision / pose estimation
+opencv-python>=4.10,<5.0
+mediapipe>=0.10.14,<0.11
+
+# Posture comparison
+dtw-python>=1.5,<2.0
+
+# App config / feedback
+python-dotenv>=1.0,<2.0
+openai>=1.75,<3.0
+pyttsx3>=2.98,<3.0
+
+# Optional frameworks
+# Install one or both in conda depending on the final training/inference stack.
+# tensorflow
+# torch
+# torchvision
+# torchaudio

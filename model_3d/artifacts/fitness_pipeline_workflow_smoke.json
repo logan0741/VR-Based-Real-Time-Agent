@@ -1,0 +1,35 @@
+{
+  "diagnostics_session": "C:\\Project\\VR-Based-Real-Time-Agent\\model_3d\\artifacts\\pose_debug\\20260409_040511",
+  "checks": {
+    "dummy": {
+      "status": "ok",
+      "backend": "dummy",
+      "frame_id": "check-all-dummy",
+      "feedback": "Good",
+      "knee_angle_deg": 116.1711603917457,
+      "artifact_count": 6
+    },
+    "pose3d_direct": {
+      "status": "ok",
+      "backend": "pose_3d_dataset",
+      "frame_id": "00000000_000",
+      "feedback": "Good",
+      "knee_angle_deg": 79.02742442399912,
+      "artifact_count": 5
+    },
+    "smplx_coordinate_fit": {
+      "status": "unavailable",
+      "reason": "Python package 'smplx' is not installed in this interpreter.",
+      "command": "pip install smplx; python run_pipeline.py --smplx-fit-pose3d --pose3d-path pose_3d_v3 --max-frames 1"
+    },
+    "lifter_checkpoint": {
+      "status": "ok",
+      "backend": "pose_lifter_mlp",
+      "frame_id": "check-all-lifter",
+      "feedback": "Raise your hips slightly",
+      "knee_angle_deg": 42.28418371860619,
+      "artifact_count": 5,
+      "checkpoint": "model_3d\\artifacts\\checkpoints\\fitness_pose_lifter_workflow_smoke_best.pt"
+    }
+  }
+}

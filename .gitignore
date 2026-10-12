@@ -1,0 +1,108 @@
+# ── VR-Based-Real-Time-Agent 공통 .gitignore ─────────────────────────────
+# 모든 브랜치(main · App · Pose3D · Avatar3D · docs-archive)가 같은 파일을 쓴다.
+# 원칙: 깃허브에 못 올리는 것은 ①데이터셋·모델 실물 ②자격증명 ③실행 중 생기는 산출물 셋뿐이다.
+# ★폴더 자체를 무시하면 안쪽에 자리(.gitkeep)를 못 남긴다 — 자리가 필요한 곳은 `폴더/*` + `!폴더/.gitkeep` 로 쓴다.
+
+# ── 개발 잔여물 ──────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*.pyd
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+*.egg-info/
+.venv/
+venv/
+env/
+node_modules/
+.vscode/
+.idea/
+.pdfgen/
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# git worktree 작업 폴더 (브랜치별 체크아웃을 저장소 안에 나란히 둘 때)
+_wt_*/
+
+# ── 자격증명 ─────────────────────────────────────────────────────────────
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.crt
+secrets/
+
+# ── 데이터셋·모델 실물 (수백 MB~GB, 깃허브 100MB 제한) ───────────────────
+/013.피트니스자세/
+/pose_2d/
+/pose_3d_v3/
+/smplx_locked_head/
+/AthletePose3D/
+/MotionBERT/
+/SMPLX-Unity/
+models_smplx_v1_1.zip
+*.pt
+*.pth
+*.ckpt
+*.safetensors
+*.onnx
+*.pkl
+*.npz
+*.h5
+*.hdf5
+*.zip
+*.tar
+*.tar.gz
+*.7z
+
+# 학습 체크포인트·SMPL-X 캐시·QA 프레임 (코드가 다시 만든다). 학습 곡선·지표 json 은 남긴다.
+model_3d/artifacts/checkpoints/
+model_3d/artifacts/smplx_cache/
+model_3d/artifacts/pose_debug/
+model_3d/artifacts/training_smoke/
+/artifacts/
+
+# ── 실행 중 생기는 산출물 ────────────────────────────────────────────────
+# TTS 음성 (운동 종료 때마다 다시 생성된다)
+final/assets/tts/*
+!final/assets/tts/.gitkeep
+# 서버·터널 로그
+*.log
+server_*.txt
+cloudflared_*.txt
+ngrok_*.txt
+tmp_server_*.txt
+# 빌드 산출물 — 단, 최종 앱의 app_dist 는 서버가 바로 서빙하므로 커밋한다
+dist/
+!final/app_dist/
+viewer_3d_web/dist/
+
+# ── 미디어 ───────────────────────────────────────────────────────────────
+# 영상은 깃에 올리지 않는다. 예외: 최종 앱이 서빙하는 전문가 영상·캐시, README 시연 GIF.
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.webm
+*.wav
+*.mp3
+!final/assets/expert_videos/*.mp4
+*.npy
+!final/assets/expert_videos/*.npy
+# SMPL-X 바디 모델 FBX 는 라이선스상 재배포하지 않는다
+*.fbx
+# 논문 PDF 등 문서 실물
+*.pdf
+
+# ── Unity 생성 폴더 ──────────────────────────────────────────────────────
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/

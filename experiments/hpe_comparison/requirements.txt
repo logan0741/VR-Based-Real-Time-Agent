@@ -1,0 +1,22 @@
+# HPE 라이브러리 비교 실험 의존성
+# 기본 설치: pip install -r requirements.txt
+
+# ── 핵심 ──
+numpy>=1.26,<3.0
+pandas>=2.2,<3.0
+opencv-python>=4.10,<5.0
+matplotlib>=3.9,<4.0
+scipy>=1.13,<2.0
+tqdm>=4.66,<5.0
+tabulate>=0.9,<1.0
+
+# ── Pose Estimation 모델 ──
+mediapipe>=0.10.14,<0.11
+
+# MoveNet 용 (tensorflow-cpu 로 가볍게)
+tensorflow-cpu>=2.16,<3.0
+tensorflow-hub>=0.16,<1.0
+
+# ── 선택: MMPose (무거움, 필요 시만 설치) ──
+# pip install -U openmim
+# mim install mmengine mmcv mmdet mmpose
